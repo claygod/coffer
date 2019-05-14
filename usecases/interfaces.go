@@ -16,3 +16,8 @@ type Porter interface {
 type Logger interface {
 	Write(error)
 }
+
+type Journaler interface {
+	Write([]byte)
+	Close()
+}

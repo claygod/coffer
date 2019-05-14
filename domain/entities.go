@@ -13,5 +13,5 @@ type Operation struct {
 
 type Record struct {
 	Key   string
-	Value byte
+	Value []byte
 }
