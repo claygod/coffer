@@ -81,6 +81,33 @@ func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error 
 	return c.loadRecordsFromCheckpoint(fl, repo)
 }
 
+/*
+reset -  so that there are no errors with mismatched time
+*/
+func (c *checkpoint) reset(repo domain.RecordsRepository, fileName string) error {
+	//TODO: del all checkpoints without last
+	//TODO: rename last checkpoint to zero-name `0.checkpoint`
+	return nil
+}
+
+func (c *checkpoint) checkNameLastAndCurrent() error {
+	lastCheckoutName, err := c.getLastCheckPointName()
+	if err != nil {
+		return err
+	}
+
+	numStr := strings.Replace(lastCheckoutName, ".checkpoint", "", 0)
+	numInt64, err := strconv.ParseInt(numStr, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	if curTime := time.Now().Unix(); curTime <= numInt64 {
+		return fmt.Errorf("Last name `%s` >= curTime `%d`", lastCheckoutName, curTime)
+	}
+	return nil
+}
+
 func (c *checkpoint) loadRecordsFromCheckpoint(f *os.File, repo domain.RecordsRepository) error {
 	rSize := make([]byte, 8)
 
@@ -167,7 +194,8 @@ func (c *checkpoint) loadAllFilesList() ([]string, error) {
 
 func (c *checkpoint) getNewCheckPointName() string {
 	for {
-		newFileName := c.dirPath + strconv.Itoa(int(time.Now().Unix())) + ".check"
+		chpNum := time.Now().Unix()
+		newFileName := c.dirPath + strconv.Itoa(int(chpNum)) + ".check"
 		_, err := os.Stat(newFileName)
 		if !os.IsExist(err) {
 			return newFileName
