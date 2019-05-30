@@ -37,29 +37,6 @@ func (c *checkpoint) save(repo domain.RecordsRepository, fileName string) error 
 		return fmt.Errorf("%v %v", err, os.Remove(chpName))
 	}
 	return nil
-	//----------------------------------
-	// chRecord := make(chan *domain.Record, 10) //TODO: size?
-	// repo.Iterator(chRecord) // l.store.iterator(chRecord)
-	// for {
-	// rec := <-chRecord
-	// if rec == nil {
-	// break
-	// }
-	// prb, err := c.prepareRecordToCheckpoint(rec.Key, rec.Value)
-	// if err != nil {
-	// defer os.Remove(chpName)
-	// return err
-	// }
-	// if _, err := f.Write(prb); err != nil {
-	// defer os.Remove(chpName)
-	// return err
-	// }
-	// }
-	// if err := os.Rename(chpName, chpName+"point"); err != nil {
-	// defer os.Remove(chpName)
-	// return err
-	// }
-	// return nil
 }
 
 func (c *checkpoint) saveToFile(repo domain.RecordsRepository, f *os.File) error {
@@ -88,64 +65,10 @@ func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error 
 	}
 	defer f.Close()
 	return c.loadFromFile(repo, f)
-	//------------------------------------
-	// rSize := make([]byte, 8)
-	// //out := map[string][]byte// make([]*reqWrite, 0)
-
-	// //f.Seek(0, 0) // whence: 0 начало файла, 1 текущее положение, and 2 от конца файла.
-	// //var m runtime.MemStats
-	// //runtime.ReadMemStats(&m)
-
-	// for {
-	// _, err := f.Read(rSize)
-	// if err != nil {
-	// if err == io.EOF {
-	// break
-	// }
-	// return err
-	// }
-	// rSuint64 := bytesToUint64(rSize)
-	// sizeKey := int16(rSuint64)
-	// sizeValue := rSuint64 >> 16
-
-	// key := make([]byte, sizeKey)
-	// n, err := f.Read(key)
-	// if err != nil {
-	// // if err == io.EOF { // тут EOF не должно быть?
-	// // break
-	// // }
-	// return err
-	// } else if n != int(sizeKey) {
-	// return fmt.Errorf("The key is not fully loaded (%v)", key)
-	// }
-
-	// value := make([]byte, int(sizeValue))
-	// n, err = f.Read(value)
-	// if err != nil {
-	// // if err == io.EOF { // тут EOF не должно быть?
-	// // break
-	// // }
-	// return err
-	// } else if n != int(sizeValue) {
-	// return fmt.Errorf("The value is not fully loaded, (%v)", value)
-	// }
-	// rec := &domain.Record{
-	// Key: string(key),
-	// Value: value,
-	// }
-	// repo.SetUnsafeRecord(rec)
-	// }
-	// return nil
 }
 
 func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) error {
 	rSize := make([]byte, 8)
-	//out := map[string][]byte// make([]*reqWrite, 0)
-
-	//f.Seek(0, 0) // whence: 0 начало файла, 1 текущее положение, and 2 от конца файла.
-	//var m runtime.MemStats
-	//runtime.ReadMemStats(&m)
-
 	for {
 		_, err := f.Read(rSize)
 		if err != nil {
