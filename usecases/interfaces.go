@@ -21,3 +21,12 @@ type Journaler interface {
 	Write([]byte)
 	Close()
 }
+
+type Starter interface {
+	Start() bool
+	Stop() bool
+	Add() bool
+	Done() bool
+	Total() int64
+	IsReady() bool
+}
