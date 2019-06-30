@@ -27,7 +27,7 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 	}
 	c.porter.Catch(keysList)
 	defer c.porter.Throw(keysList)
-	req := usecases.ReqWriteList{
+	req := &usecases.ReqWriteList{
 		Time: time.Now(), //т.к. время берём ПОСЛЕ операции Catch для конкретно этих записей временных коллизий не будет
 		List: input,
 	}
@@ -50,7 +50,7 @@ func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
 	defer c.checkPanic()
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
-	req := usecases.ReqLoadList{
+	req := &usecases.ReqLoadList{
 		Time: time.Now(),
 		Keys: keys,
 	}
@@ -65,7 +65,7 @@ func (c *Coffer) DeleteList(keys []string) error {
 	defer c.checkPanic()
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
-	req := usecases.ReqDeleteList{
+	req := &usecases.ReqDeleteList{
 		Time: time.Now(),
 		Keys: keys,
 	}
