@@ -9,9 +9,11 @@ import (
 )
 
 const (
-	stateReady    int64 = -1
-	stateRun      int64 = 0
-	maxIterations int   = 1e10
+	stateBlocked   int64 = -2
+	stateReady     int64 = -1
+	stateRun       int64 = 0
+	maxIterations  int   = 1e10
+	blockedBarrier int64 = 1e15
 )
 
 const pauseDefault time.Duration = 10 * time.Microsecond

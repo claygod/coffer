@@ -1,17 +1,13 @@
 package usecases
 
 // Coffer
-// Checkpoint
+// Checkpoint helper
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"time"
-
-	//"unsafe"
 
 	"github.com/claygod/coffer/domain"
 )
@@ -20,8 +16,8 @@ type checkpoint struct {
 	dirPath string
 }
 
-func (c *checkpoint) save(repo domain.RecordsRepository, fileName string) error {
-	chpName := c.getNewCheckPointName()
+func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
+	//chpName := c.getNewCheckPointName()
 	f, err := os.Create(chpName)
 	if err != nil {
 		return err
@@ -102,24 +98,24 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 		} else if n != int(sizeValue) {
 			return fmt.Errorf("The value is not fully loaded, (%v)", value)
 		}
-		rec := &domain.Record{
-			Key:   string(key),
-			Value: value,
-		}
-		repo.SetUnsafeRecord(rec)
+		// rec := &domain.Record{
+		// 	Key:   string(key),
+		// 	Value: value,
+		// }
+		repo.WriteUnsafeRecord(string(key), value) //          SetUnsafeRecord(rec)
 	}
 	return nil
 }
 
-func (c *checkpoint) getNewCheckPointName() string {
-	for {
-		newFileName := c.dirPath + strconv.Itoa(int(time.Now().Unix())) + ".check"
-		if _, err := os.Stat(newFileName); !os.IsExist(err) {
-			return newFileName
-		}
-		time.Sleep(1 * time.Second)
-	}
-}
+// func (c *checkpoint) getNewCheckPointName() string {
+// 	for {
+// 		newFileName := c.dirPath + strconv.Itoa(int(time.Now().Unix())) + ".check"
+// 		if _, err := os.Stat(newFileName); !os.IsExist(err) {
+// 			return newFileName
+// 		}
+// 		time.Sleep(1 * time.Second)
+// 	}
+// }
 
 func (c *checkpoint) prepareRecordToCheckpoint(key string, value []byte) ([]byte, error) {
 	if len(key) > maxKeyLength {

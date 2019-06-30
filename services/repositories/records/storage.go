@@ -23,24 +23,48 @@ func newStorage() *storage {
 	}
 }
 
-func (r *storage) get(keys []string) ([]*domain.Record, error) {
+func (r *storage) readList(keys []string) (map[string][]byte, error) {
 	var errOut error
-	out := make([]*domain.Record, 0, len(keys))
+	list := make(map[string][]byte)
 	for _, key := range keys {
 		if value, ok := r.data[key]; ok {
-			out = append(out, &domain.Record{Key: key, Value: value})
+			list[key] = value
+			//out = append(out, &domain.Record{Key: key, Value: value})
 		} else {
 			errOut = fmt.Errorf("%v %v", errOut, fmt.Errorf("Key `%s` not found", key))
 		}
 	}
-	return out, nil
+	return list, nil
 }
 
-func (r *storage) set(in []*domain.Record) {
-	for _, rec := range in {
-		r.data[rec.Key] = rec.Value
+// func (r *storage) get(keys []string) ([]*domain.Record, error) {
+// 	var errOut error
+// 	out := make([]*domain.Record, 0, len(keys))
+// 	for _, key := range keys {
+// 		if value, ok := r.data[key]; ok {
+// 			out = append(out, &domain.Record{Key: key, Value: value})
+// 		} else {
+// 			errOut = fmt.Errorf("%v %v", errOut, fmt.Errorf("Key `%s` not found", key))
+// 		}
+// 	}
+// 	return out, nil
+// }
+
+func (r *storage) writeList(list map[string][]byte) {
+	for key, value := range list {
+		r.data[key] = value
 	}
 }
+
+func (r *storage) writeOne(key string, value []byte) {
+	r.data[key] = value
+}
+
+// func (r *storage) set(in []*domain.Record) {
+// 	for _, rec := range in {
+// 		r.data[rec.Key] = rec.Value
+// 	}
+// }
 
 func (r *storage) setOne(rec *domain.Record) {
 	r.data[rec.Key] = rec.Value

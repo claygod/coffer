@@ -26,27 +26,49 @@ func New() *Records {
 	}
 }
 
-func (s *Records) GetRecords(keys []string) ([]*domain.Record, error) {
-	s.mtx.RLock()
-	defer s.mtx.RUnlock()
-	return s.store.get(keys)
-}
-
-func (s *Records) SetRecords(in []*domain.Record) {
+func (s *Records) WriteList(list map[string][]byte) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
-	s.store.set(in)
+	s.store.writeList(list)
 }
 
-func (s *Records) DelRecords(keys []string) error {
+func (s *Records) WriteUnsafeRecord(key string, value []byte) {
+	s.store.writeOne(key, value)
+}
+
+func (s *Records) ReadList(list []string) (map[string][]byte, error) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.readList(list)
+}
+
+func (s *Records) DelList(keys []string) error {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	return s.store.del(keys)
 }
 
-func (s *Records) SetUnsafeRecord(rec *domain.Record) {
-	s.store.setOne(rec)
-}
+// func (s *Records) GetRecords(keys []string) ([]*domain.Record, error) {
+// 	s.mtx.RLock()
+// 	defer s.mtx.RUnlock()
+// 	return s.store.get(keys)
+// }
+
+// func (s *Records) SetRecords(in []*domain.Record) {
+// 	s.mtx.Lock()
+// 	defer s.mtx.Unlock()
+// 	s.store.set(in)
+// }
+
+// func (s *Records) DelRecords(keys []string) error {
+// 	s.mtx.Lock()
+// 	defer s.mtx.Unlock()
+// 	return s.store.del(keys)
+// }
+
+// func (s *Records) SetUnsafeRecord(rec *domain.Record) {
+// 	s.store.setOne(rec)
+// }
 
 // func (s *Records) transaction(v interface{}, curValues map[string][]byte, f *domain.Handler) (map[string][]byte, error) {
 // 	s.mtx.RLock()
