@@ -12,6 +12,7 @@ import (
 	//"io"
 	"io/ioutil"
 	//"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -20,20 +21,23 @@ import (
 
 type FollowInteractor struct {
 	logger Logger
+	config *Config
 	chp    *checkpoint
 	opr    *operations
+	//coder  *ReqCoder
 	//trn                *transaction
 	//reqCoder *ReqCoder
 	repo domain.RecordsRepository
 	//handlers HandleStore
 	//resoureControl     Resourcer
-	pause              time.Duration //TODO: в отдельный конфиг
-	chagesByCheckpoint int64         //TODO: в отдельный конфиг - сколько изменений допустимо в одном чекпойнте
-	changesCounter     int64
-	lastFileNameLog    string
-	logDir             string //TODO: в отдельный конфиг
+	changesCounter  int64
+	lastFileNameLog string
+	hasp            Starter
+}
 
-	hasp Starter
+func NewFollowInteractor() *FollowInteractor {
+	//TODO:
+	return &FollowInteractor{}
 }
 
 func (f *FollowInteractor) Start() bool {
@@ -70,7 +74,7 @@ func (f *FollowInteractor) worker() {
 			return
 		}
 		f.hasp.Done()
-		time.Sleep(f.pause)
+		time.Sleep(f.config.FollowPause)
 	}
 }
 
@@ -88,7 +92,7 @@ func (f *FollowInteractor) follow() error {
 			return err
 		}
 		f.addChangesCounter(ops)
-		if f.changesCounter > f.chagesByCheckpoint && logFileName != f.lastFileNameLog {
+		if f.changesCounter > f.config.ChagesByCheckpoint && logFileName != f.lastFileNameLog {
 			if err := f.newCheckpoint(logFileName); err != nil {
 				return err
 			}
@@ -142,17 +146,17 @@ func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
 // 	return nil
 // }
 
-func (f *FollowInteractor) convertReqWriteListToRecords(req *ReqWriteList) []*domain.Record {
-	recs := make([]*domain.Record, 0, len(req.List))
-	for key, value := range req.List {
-		rec := &domain.Record{
-			Key:   key,
-			Value: value,
-		}
-		recs = append(recs, rec)
-	}
-	return recs
-}
+// func (f *FollowInteractor) convertReqWriteListToRecords(req *ReqWriteList) []*domain.Record {
+// 	recs := make([]*domain.Record, 0, len(req.List))
+// 	for key, value := range req.List {
+// 		rec := &domain.Record{
+// 			Key:   key,
+// 			Value: value,
+// 		}
+// 		recs = append(recs, rec)
+// 	}
+// 	return recs
+// }
 
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 	fNamesList, err := f.getFilesByExtList(".log")
@@ -160,10 +164,10 @@ func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 		return nil, err
 	}
 	ln := len(fNamesList)
-	switch { // последний лог мы никогда не берём чтобы не ткнуться в ещё наполняемый лог
+	switch {
 	case ln == 0:
 		return fNamesList, nil
-	case ln == 1:
+	case ln == 1: // последний лог мы никогда не берём чтобы не ткнуться в ещё наполняемый лог
 		return make([]string, 0), nil
 	default:
 		for num, fName := range fNamesList[:ln-1] { // если ничего не найдём, значит ещё не брали логи в работу
@@ -173,19 +177,19 @@ func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 			}
 		}
 	}
-
+	sort.Strings(fNamesList)
 	return fNamesList, nil
 }
 
 func (f *FollowInteractor) getFilesByExtList(ext string) ([]string, error) {
-	files, err := ioutil.ReadDir(f.logDir)
+	files, err := ioutil.ReadDir(f.config.DirPath)
 	if err != nil {
 		return nil, err
 	}
 	list := make([]string, 0, len(files))
-	for _, f := range files {
-		if strings.HasSuffix(f.Name(), ext) {
-			list = append(list, f.Name())
+	for _, fl := range files {
+		if strings.HasSuffix(fl.Name(), ext) {
+			list = append(list, fl.Name())
 		}
 	}
 	return list, nil
@@ -201,9 +205,7 @@ func (f *FollowInteractor) newCheckpoint(logFileName string) error {
 func (f *FollowInteractor) getNewCheckpointName(logFileName string) string { // просто меняем расширение файла
 	// strs := strings.Split(logFileName, ".")
 	// return strs[0] + ".check"
-
 	return strings.Replace(logFileName, ".log", ".check", 1)
-
 	// strNum := strconv.FormatInt(f.lastNumCheckpoint, 10)
 	// strNum += ".check"
 	// f.lastNumCheckpoint++

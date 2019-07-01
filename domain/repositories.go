@@ -8,6 +8,7 @@ type RecordsRepository interface {
 	WriteList(map[string][]byte)
 	WriteUnsafeRecord(string, []byte)
 	ReadList([]string) (map[string][]byte, error)
+	DelList([]string) error
 
 	//GetRecords([]string) ([]*Record, error) // (map[string][]byte, error)
 	//SetRecords([]*Record) error             // map[string][]byte

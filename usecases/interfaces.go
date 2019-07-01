@@ -18,12 +18,10 @@ type Porter interface {
 }
 
 type Logger interface {
-	//Write(error)
-
 	//Fatal(...interface{})
 	Error(...interface{})
 	Info(...interface{})
-	Debug(...interface{})
+	//Debug(...interface{})
 }
 
 type Journaler interface {
@@ -39,6 +37,7 @@ type Starter interface {
 	Total() int64
 	IsReady() bool
 	Block() bool
+	Unblock() bool
 }
 
 type HandleStore interface {

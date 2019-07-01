@@ -20,6 +20,7 @@ func (c *Coffer) Write(key string, value []byte) error {
 }
 
 func (c *Coffer) WriteList(input map[string][]byte) error {
+	//TODO: контроль максимально допустимого количества добавленных записей за одну операцию
 	defer c.checkPanic()
 	keysList := make([]string, 0, len(input))
 	for key, _ := range input {
@@ -47,6 +48,7 @@ func (c *Coffer) Read(key string) ([]byte, error) {
 }
 
 func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
+	//TODO: контроль максимально допустимого количества чтения записей за одну операцию
 	defer c.checkPanic()
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
@@ -75,4 +77,26 @@ func (c *Coffer) DeleteList(keys []string) error {
 func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) error {
 	defer c.checkPanic()
 	return nil //TODO:
+}
+
+func (c *Coffer) copySlice(inList []string) ([]string, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
+	outList := make([]string, len(inList))
+	n := copy(outList, inList)
+	if n != len(inList) {
+		return nil, fmt.Errorf("Slice (strings) copy failed.")
+	}
+	return outList, nil
+}
+
+func (c *Coffer) copyMap(inMap map[string][]byte) (map[string][]byte, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
+	outMap := make(map[string][]byte, len(inMap))
+	for k, v := range inMap {
+		list := make([]byte, len(v))
+		n := copy(list, v)
+		if n != len(v) {
+			return nil, fmt.Errorf("Slice (bytes) copy failed.")
+		}
+		outMap[k] = list
+	}
+	return outMap, nil
 }

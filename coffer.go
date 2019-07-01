@@ -27,17 +27,58 @@ func New(dataPath string) *Coffer {
 }
 
 func (c *Coffer) Start() bool { // return prev state
-	return c.hasp.Start()
+	defer c.checkPanic()
+	if !c.recInteractor.Start() {
+		return false
+	}
+	if c.folInteractor.Start() {
+		c.recInteractor.Stop()
+		return false
+	}
+	if !c.hasp.Start() {
+		c.recInteractor.Stop()
+		c.folInteractor.Stop()
+		return false
+	}
+	return true
 }
 
-func (c *Coffer) Stop() bool { // return prev state
-	return c.hasp.Stop()
+func (c *Coffer) Stop() bool {
+	defer c.checkPanic()
+	if !c.hasp.Block() {
+		return false
+	}
+	defer c.hasp.Unblock()
+	if !c.folInteractor.Stop() {
+		return false
+	}
+	if !c.recInteractor.Stop() {
+		c.folInteractor.Start()
+		return false
+	}
+	return true
+}
+
+func (c *Coffer) StopHard() error {
+	defer c.checkPanic()
+	var errOut error
+	if !c.hasp.Block() {
+		errOut = fmt.Errorf("Hasp is not stopped.")
+	}
+	if !c.folInteractor.Stop() {
+		errOut = fmt.Errorf("%v Follow Interactor is not stopped.", errOut)
+	}
+	if !c.recInteractor.Stop() {
+		errOut = fmt.Errorf("%v Records Interactor is not stopped.", errOut)
+	}
+	return errOut
 }
 
 /*
 SetHandler - add handler. This can be done both before launch and during database operation.
 */
 func (c *Coffer) SetHandler(handlerName string, handlerMethod func(interface{}, map[string][]byte) (map[string][]byte, error)) error {
+	defer c.checkPanic()
 	if !c.hasp.IsReady() {
 		return fmt.Errorf("Handles cannot be added while the application is running.")
 	}

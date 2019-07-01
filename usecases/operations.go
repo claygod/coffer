@@ -14,10 +14,19 @@ import (
 )
 
 type operations struct {
-	dirPath    string
+	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
 	trn        *transaction
+}
+
+func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *transaction) *operations {
+	return &operations{
+		config:     config,
+		reqCoder:   reqCoder,
+		resControl: resControl,
+		trn:        trn,
+	}
 }
 
 func (o *operations) doOperations(ops []*domain.Operation, repo domain.RecordsRepository) error {
@@ -69,6 +78,9 @@ func (o *operations) loadFromFile(filePath string) ([]*domain.Operation, error) 
 }
 
 func (o *operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
+	// st, _ := fl.Stat()
+	// flSize := st.Size()
+	counReadedBytes := 0
 	ops := make([]*domain.Operation, 0, 16)
 	rSize := make([]byte, 8)
 	for {
@@ -79,6 +91,7 @@ func (o *operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 			}
 			return nil, err
 		}
+		counReadedBytes += 8
 		rSuint64 := bytesToUint64(rSize)
 		bTotal := make([]byte, int(rSuint64))
 		n, err := fl.Read(bTotal)

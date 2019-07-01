@@ -6,7 +6,7 @@ package usecases
 
 import (
 	"bytes"
-	"encoding/gob"
+	//"encoding/gob"
 	"unsafe"
 )
 
@@ -37,18 +37,18 @@ func bytesToUint64(b []byte) uint64 {
 // 	}
 // }
 
-func bodyOperationEncode(req interface{}, code byte) ([]byte, error) {
-	var reqBuf bytes.Buffer
-	enc := gob.NewEncoder(&reqBuf)
-	if err := enc.Encode(req); err != nil {
-		return nil, err
-	}
-	toSaveLog, err := prepareOperatToLog(code, reqBuf.Bytes())
-	if err != nil {
-		return nil, err
-	}
-	return toSaveLog, nil
-}
+// func bodyOperationEncode(req interface{}, code byte) ([]byte, error) {
+// 	var reqBuf bytes.Buffer
+// 	enc := gob.NewEncoder(&reqBuf)
+// 	if err := enc.Encode(req); err != nil {
+// 		return nil, err
+// 	}
+// 	toSaveLog, err := prepareOperatToLog(code, reqBuf.Bytes())
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return toSaveLog, nil
+// }
 
 func prepareOperatToLog(code byte, value []byte) ([]byte, error) {
 	var buf bytes.Buffer
@@ -64,10 +64,10 @@ func prepareOperatToLog(code byte, value []byte) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func getKeysFromMap(arr map[string][]byte) []string {
-	keys := make([]string, 0, len(arr))
-	for key, _ := range arr {
-		keys = append(keys, key)
-	}
-	return keys
-}
+// func getKeysFromMap(arr map[string][]byte) []string {
+// 	keys := make([]string, 0, len(arr))
+// 	for key, _ := range arr {
+// 		keys = append(keys, key)
+// 	}
+// 	return keys
+// }

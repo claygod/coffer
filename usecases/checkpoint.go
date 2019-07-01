@@ -13,7 +13,13 @@ import (
 )
 
 type checkpoint struct {
-	dirPath string
+	config *Config
+}
+
+func NewCheckpoint(config *Config) *checkpoint {
+	return &checkpoint{
+		config: config,
+	}
 }
 
 func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
@@ -55,7 +61,7 @@ func (c *checkpoint) saveToFile(repo domain.RecordsRepository, f *os.File) error
 }
 
 func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error {
-	f, err := os.Open(c.dirPath + fileName)
+	f, err := os.Open(c.config.DirPath + "/" + fileName)
 	if err != nil {
 		return err
 	}
@@ -118,11 +124,11 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 // }
 
 func (c *checkpoint) prepareRecordToCheckpoint(key string, value []byte) ([]byte, error) {
-	if len(key) > maxKeyLength {
-		return nil, fmt.Errorf("Key length %d is greater than permissible %d", len(key), maxKeyLength)
+	if len(key) > c.config.MaxKeyLength {
+		return nil, fmt.Errorf("Key length %d is greater than permissible %d", len(key), c.config.MaxKeyLength)
 	}
-	if len(value) > maxValueLength {
-		return nil, fmt.Errorf("Value length %d is greater than permissible %d", len(value), maxValueLength)
+	if len(value) > c.config.MaxValueLength {
+		return nil, fmt.Errorf("Value length %d is greater than permissible %d", len(value), c.config.MaxValueLength)
 	}
 
 	var size uint64 = uint64(len([]byte(value)))
