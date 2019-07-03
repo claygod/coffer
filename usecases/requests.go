@@ -71,7 +71,7 @@ type ReqDeleteList struct {
 }
 
 type ReqTransaction struct {
-	Time        int64
+	Time        time.Time
 	HandlerName string
 	Keys        []string
 	Value       interface{}

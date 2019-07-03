@@ -194,8 +194,8 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 // func (r *RecordsInteractor) SetUnsafeRecord(*domain.Record) error {
 // 	return nil
 // }
+
 func (r *RecordsInteractor) Transaction(req *ReqTransaction) error { // interface{}, map[string][]byte, *domain.Handler
-	//TODO:
 	if !r.hasp.Add() {
 		return fmt.Errorf("RecordsInteractor is stopped")
 	}

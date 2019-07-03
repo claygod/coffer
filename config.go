@@ -4,17 +4,22 @@ package coffer
 // Config
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
+type Config struct {
+	//DataPath            string
+	MaxRecsPerOperation int
+	MaxKeyLength        int
+	MaxValueLength      int
+}
+
 const (
 	stateStopped int64 = iota
 	stateStarted
 	statePanic
 )
 
-const (
-	maxKeyLength   int   = int(uint64(1)<<16) - 1
-	maxValueLength int   = int(uint64(1)<<48) - 1
-	megabyte       int64 = 1024 * 1024
-)
+// const (
+// 	megabyte int64 = 1024 * 1024
+// )
 
 const (
 	codeWriteList byte = iota //codeWrite
