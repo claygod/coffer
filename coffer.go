@@ -6,27 +6,83 @@ package coffer
 
 import (
 	"fmt"
-	//"runtime"
-	//"sync/atomic"
-	//"time"
 
 	"github.com/claygod/coffer/domain"
+	"github.com/claygod/coffer/services"
+	"github.com/claygod/coffer/services/filenamer"
+	"github.com/claygod/coffer/services/journal"
+	"github.com/claygod/coffer/services/repositories/handlers"
+	"github.com/claygod/coffer/services/repositories/records"
+	"github.com/claygod/coffer/services/resources"
+	"github.com/claygod/coffer/services/startstop"
 	"github.com/claygod/coffer/usecases"
+	"github.com/claygod/tools/logger"
+	"github.com/claygod/tools/porter"
 )
 
 type Coffer struct {
-	config   *Config
-	logger   usecases.Logger
-	porter   usecases.Porter
-	handlers domain.HandlersRepository
-	//dataPath      string
+	config        *Config
+	logger        usecases.Logger
+	porter        usecases.Porter
+	handlers      domain.HandlersRepository
 	recInteractor *usecases.RecordsInteractor
 	folInteractor *usecases.FollowInteractor
 	hasp          usecases.Starter
 }
 
-func New(dataPath string) *Coffer {
-	return &Coffer{} //TODO:
+func New(config *Config) (*Coffer, error) {
+	c := &Coffer{
+		config:   config,
+		logger:   logger.New(services.NewLog(logPrefix)),
+		porter:   porter.New(),
+		handlers: handlers.New(),
+		hasp:     startstop.New(),
+	}
+
+	resControl, err := resources.New(c.config.ResourcesConfig)
+	if err != nil {
+		return nil, err
+	}
+	recordsRepo := records.New()
+	reqCoder := usecases.NewReqCoder()
+	fileNamer := filenamer.NewFileNamer(c.config.UsecasesConfig.DirPath)
+	trn := usecases.NewTransaction(c.handlers)
+	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
+	opr := usecases.NewOperations(c.config.UsecasesConfig, reqCoder, resControl, trn)
+	jrn, err := journal.New(c.config.UsecasesConfig.DirPath, 1000, fileNamer, c.alarmFunc)
+	if err != nil {
+		return nil, err
+	}
+
+	// RecordsInteractor
+	ri, err := usecases.NewRecordsInteractor(
+		c.config.UsecasesConfig,
+		c.logger,
+		chp,
+		opr,
+		reqCoder,
+		recordsRepo,
+		c.handlers,
+		resControl,
+		c.porter,
+		jrn,
+		startstop.New(),
+	)
+	if err != nil {
+		return nil, err
+	}
+	c.recInteractor = ri
+
+	// FollowInteractor
+	c.folInteractor = usecases.NewFollowInteractor(
+		c.logger,
+		c.config.UsecasesConfig, //config *Config,
+		chp,                     //*checkpoint,
+		opr,                     // *operations,
+		recordsRepo,
+		startstop.New(),
+	)
+	return c, nil
 }
 
 func (c *Coffer) Start() bool { // return prev state
@@ -95,46 +151,5 @@ func (c *Coffer) Save() error {
 	if !c.Start() {
 		return fmt.Errorf("After stopping to write, the application could not be started.")
 	}
-
-	// curState := l.Stop()
-	// if curState == stateStarted {
-	// 	defer l.Start()
-	// }
-	// chpName := getNewCheckPointName(l.filePath)
-	// f, err := os.Create(chpName)
-	// if err != nil {
-	// 	return err
-	// }
-	// defer f.Close()
-
-	// chRecord := make(chan *repo.Record, 10) //TODO: size?
-	// l.store.iterator(chRecord)
-	// for {
-	// 	rec := <-chRecord
-	// 	if rec == nil {
-	// 		break
-	// 	}
-	// 	prb, err := l.prepareRecordToCheckpoint(rec.Key, rec.Body)
-	// 	if err != nil {
-	// 		defer os.Remove(chpName)
-	// 		return err
-	// 	}
-	// 	if _, err := f.Write(prb); err != nil {
-	// 		defer os.Remove(chpName)
-	// 		return err
-	// 	}
-	// }
-	// if err := os.Rename(chpName, chpName+"point"); err != nil {
-	// 	defer os.Remove(chpName)
-	// 	return err
-	// }
 	return nil
-}
-
-func (c *Coffer) checkPanic() {
-	if err := recover(); err != nil {
-		c.hasp.Block()
-		//atomic.StoreInt64(&c.hasp, statePanic)
-		fmt.Println(err)
-	}
 }

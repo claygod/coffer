@@ -12,6 +12,7 @@ import (
 
 	//"time"
 
+	"github.com/claygod/coffer/services/filenamer"
 	"github.com/claygod/tools/batcher"
 )
 
@@ -78,7 +79,10 @@ func BenchmarkBatcherClient(b *testing.B) { // go tool pprof -web ./batcher.test
 
 func BenchmarkNew1(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
-	j := New("./", forTestAlarmer, nil, 2000)
+	j, err := New("./", 2000, filenamer.NewFileNamer("./"), forTestAlarmer)
+	if err != nil {
+		b.Error(err)
+	}
 	defer j.client.Close()
 	dummy := forTestGetDummy(100)
 	u := 0
@@ -97,7 +101,10 @@ func BenchmarkNew1(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.tx
 
 func BenchmarkNew2(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
-	j := New("./", forTestAlarmer, nil, 2000)
+	j, err := New("./", 2000, filenamer.NewFileNamer("./"), forTestAlarmer)
+	if err != nil {
+		b.Error(err)
+	}
 	defer j.client.Close()
 	dummy := forTestGetDummy(100)
 	u := 0

@@ -24,7 +24,10 @@ const (
 )
 
 const (
-	megabyte int64 = 1024 * 1024
+	extLog   string = ".log"
+	extCheck string = ".check"
+	extPoint string = "point"
+	megabyte int64  = 1024 * 1024
 )
 
 const (

@@ -12,7 +12,7 @@ type RecordsRepository interface {
 
 	//GetRecords([]string) ([]*Record, error) // (map[string][]byte, error)
 	//SetRecords([]*Record) error             // map[string][]byte
-	DelRecords([]string) error
+	//DelRecords([]string) error
 	//SetUnsafeRecord(*Record)
 	//Transaction(interface{}, map[string][]byte, *Handler) (map[string][]byte, error)
 	Iterator(chan *Record)

@@ -34,7 +34,7 @@ func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
 		os.Remove(chpName)
 		return err
 	}
-	if err := os.Rename(chpName, chpName+"point"); err != nil {
+	if err := os.Rename(chpName, chpName+extPoint); err != nil {
 		// err2 := os.Remove(chpName)
 		return fmt.Errorf("%v %v", err, os.Remove(chpName))
 	}

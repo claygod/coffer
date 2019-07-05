@@ -13,6 +13,10 @@ import (
 type ReqCoder struct {
 }
 
+func NewReqCoder() *ReqCoder {
+	return &ReqCoder{}
+}
+
 func (r *ReqCoder) ReqWriteListEncode(req *ReqWriteList) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)

@@ -10,12 +10,18 @@ import (
 	"github.com/claygod/coffer/domain"
 )
 
-type transaction struct {
+type Transaction struct {
 	//repo domain.RecordsRepository
 	handlers HandleStore
 }
 
-func (t *transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) error {
+func NewTransaction(handlers HandleStore) *Transaction {
+	return &Transaction{
+		handlers: handlers,
+	}
+}
+
+func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) error {
 	// находим хандлер
 	hdlx, err := t.handlers.Get(reqTr.HandlerName)
 	if err != nil {
@@ -65,7 +71,7 @@ func (t *transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	// }
 	// удаление записей (при необходимости)
 	if len(delRecsList) != 0 {
-		repo.DelRecords(delRecsList)
+		repo.DelList(delRecsList)
 	}
 	return nil
 }

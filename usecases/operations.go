@@ -13,15 +13,15 @@ import (
 	"github.com/claygod/coffer/domain"
 )
 
-type operations struct {
+type Operations struct {
 	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
-	trn        *transaction
+	trn        *Transaction
 }
 
-func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *transaction) *operations {
-	return &operations{
+func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
+	return &Operations{
 		config:     config,
 		reqCoder:   reqCoder,
 		resControl: resControl,
@@ -29,7 +29,7 @@ func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn
 	}
 }
 
-func (o *operations) doOperations(ops []*domain.Operation, repo domain.RecordsRepository) error {
+func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRepository) error {
 	for _, op := range ops {
 		if !o.resControl.GetPermission(int64(len(op.Body))) {
 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
@@ -56,7 +56,7 @@ func (o *operations) doOperations(ops []*domain.Operation, repo domain.RecordsRe
 			reqDL, err := o.reqCoder.ReqDeleteListDecode(op.Body)
 			if err != nil {
 				return err
-			} else if err := repo.DelRecords(reqDL.Keys); err != nil {
+			} else if err := repo.DelList(reqDL.Keys); err != nil {
 				return err
 			}
 		default:
@@ -67,7 +67,7 @@ func (o *operations) doOperations(ops []*domain.Operation, repo domain.RecordsRe
 	return nil
 }
 
-func (o *operations) loadFromFile(filePath string) ([]*domain.Operation, error) {
+func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error) {
 	opFile, err := os.Open(filePath)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (o *operations) loadFromFile(filePath string) ([]*domain.Operation, error) 
 	return ops, err
 }
 
-func (o *operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
+func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
 	// st, _ := fl.Stat()
 	// flSize := st.Size()
 	counReadedBytes := 0
@@ -112,7 +112,7 @@ func (o *operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 	return ops, nil
 }
 
-func (o *operations) operatToLog(op *domain.Operation) ([]byte, error) {
+func (o *Operations) operatToLog(op *domain.Operation) ([]byte, error) {
 	var buf bytes.Buffer
 	if _, err := buf.Write(uint64ToBytes(uint64(len(op.Body) + 1))); err != nil {
 		return nil, err
@@ -126,7 +126,7 @@ func (o *operations) operatToLog(op *domain.Operation) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func (o *operations) logToOperat(in []byte) (*domain.Operation, error) {
+func (o *Operations) logToOperat(in []byte) (*domain.Operation, error) {
 	if len(in) < 3 { //TODO: разобраться с минимальной цифрой (через тесты)
 		return nil, fmt.Errorf("Len of input operation array == %d", len(in))
 	}

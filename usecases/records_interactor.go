@@ -10,7 +10,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
+
+	//"time"
 
 	"github.com/claygod/coffer/domain"
 	//"github.com/claygod/coffer/services/journal"
@@ -20,30 +21,29 @@ type RecordsInteractor struct {
 	config     *Config
 	logger     Logger
 	chp        *checkpoint
-	opr        *operations
+	opr        *Operations
 	coder      *ReqCoder
 	repo       domain.RecordsRepository
 	handlers   domain.HandlersRepository
 	resControl Resourcer
 	porter     Porter
 	journal    Journaler
-	//pathDir    string
-	hasp Starter
+	filenamer  FileNamer
+	hasp       Starter
 }
 
 func NewRecordsInteractor(
 	config *Config,
 	logger Logger,
 	chp *checkpoint,
-	opr *operations,
+	opr *Operations,
 	coder *ReqCoder,
 	repo domain.RecordsRepository,
 	handlers domain.HandlersRepository,
 	resControl Resourcer,
 	porter Porter,
 	journal Journaler,
-	hasp Starter,
-	pathDir string) (*RecordsInteractor, error) {
+	hasp Starter) (*RecordsInteractor, error) {
 
 	r := &RecordsInteractor{
 		config:     config,
@@ -92,14 +92,23 @@ func (r *RecordsInteractor) Stop() bool {
 	}
 	defer r.hasp.Unblock()
 	if err := r.save(); err != nil {
-		r.logger.Error(err)
+		r.logger.Error(err).
+			Context("Object", "RecordsInteractor").
+			Context("Method", "Stop").
+			Send()
+		//r.logger.Error(err)
 		return false
 	}
 	return true
 }
 
 func (r *RecordsInteractor) save() error {
-	novName := strconv.FormatInt(time.Now().Unix(), 10) + ".check"
+	novName, err := r.filenamer.GetNewFileName(extCheck + extPoint)
+	if err != nil {
+		return err
+	}
+	novName = strings.Replace(novName, extCheck+extPoint, extCheck, 1)
+	//novName := strconv.FormatInt(time.Now().Unix(), 10) + ".check"
 	return r.chp.save(r.repo, novName)
 }
 
@@ -257,12 +266,16 @@ func (r *RecordsInteractor) loadLogs(fList []string) error {
 		if err != nil {
 			err = fmt.Errorf("Загрузка логов остановлена на файле `%s` с ошибкой `%s`", fName, err.Error())
 			if r.config.AllowStartupErrLoadLogs {
-				r.logger.Info(err)
+				r.logger.Info(err).
+					Context("Object", "RecordsInteractor").
+					Context("Method", "loadLogs").
+					Send()
+				//r.logger.Info(err)
 				return nil
 			}
 			return err
 		}
-		if err := r.opr.doOperations(ops, r.repo); err != nil {
+		if err := r.opr.DoOperations(ops, r.repo); err != nil {
 			return err
 		}
 	}

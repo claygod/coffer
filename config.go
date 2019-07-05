@@ -4,7 +4,15 @@ package coffer
 // Config
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
+import (
+	"github.com/claygod/coffer/services/resources"
+	"github.com/claygod/coffer/usecases"
+)
+
 type Config struct {
+	UsecasesConfig  *usecases.Config
+	ResourcesConfig *resources.Config
+
 	//DataPath            string
 	MaxRecsPerOperation int
 	MaxKeyLength        int
@@ -17,9 +25,10 @@ const (
 	statePanic
 )
 
-// const (
-// 	megabyte int64 = 1024 * 1024
-// )
+const (
+	logPrefix string = "Coffer "
+	//megabyte  int64  = 1024 * 1024
+)
 
 const (
 	codeWriteList byte = iota //codeWrite

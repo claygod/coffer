@@ -5,13 +5,8 @@ package usecases
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	//"bytes"
-	//"encoding/gob"
-	"fmt"
-
-	//"io"
+	//"fmt"
 	"io/ioutil"
-	//"os"
 	"sort"
 	"strings"
 	"time"
@@ -20,24 +15,35 @@ import (
 )
 
 type FollowInteractor struct {
-	logger Logger
-	config *Config
-	chp    *checkpoint
-	opr    *operations
-	//coder  *ReqCoder
-	//trn                *transaction
-	//reqCoder *ReqCoder
-	repo domain.RecordsRepository
-	//handlers HandleStore
-	//resoureControl     Resourcer
+	logger          Logger
+	config          *Config
+	chp             *checkpoint
+	opr             *Operations
+	repo            domain.RecordsRepository
 	changesCounter  int64
 	lastFileNameLog string
 	hasp            Starter
 }
 
-func NewFollowInteractor() *FollowInteractor {
-	//TODO:
-	return &FollowInteractor{}
+func NewFollowInteractor(
+	logger Logger,
+	config *Config,
+	chp *checkpoint,
+	opr *Operations,
+	repo domain.RecordsRepository,
+	//changesCounter  int64,
+	//lastFileNameLog string,
+	hasp Starter,
+
+) *FollowInteractor {
+	return &FollowInteractor{
+		logger: logger,
+		config: config,
+		chp:    chp,
+		opr:    opr,
+		repo:   repo,
+		hasp:   hasp,
+	}
 }
 
 func (f *FollowInteractor) Start() bool {
@@ -69,8 +75,13 @@ func (f *FollowInteractor) worker() {
 			f.hasp.Done()
 			f.Stop()
 			f.hasp.Block()
-			f.logger.Error(err)
-			f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
+			f.logger.Error(err).
+				Context("Object", "FollowInteractor").
+				Context("Method", "worker").
+				Context("Message", "Follow interactor is STOPPED!").
+				Send()
+			// f.logger.Error(err)
+			// f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
 			return
 		}
 		f.hasp.Done()
@@ -88,7 +99,7 @@ func (f *FollowInteractor) follow() error {
 		if err != nil {
 			return err
 		}
-		if err := f.opr.doOperations(ops, f.repo); err != nil {
+		if err := f.opr.DoOperations(ops, f.repo); err != nil {
 			return err
 		}
 		f.addChangesCounter(ops)
@@ -110,56 +121,8 @@ func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
 	return nil
 }
 
-// func (f *FollowInteractor) doOperations(ops []*domain.Operation) error {
-// 	for _, op := range ops {
-// 		if !f.resoureControl.GetPermission(int64(len(op.Body))) {
-// 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
-// 		}
-// 		switch op.Code {
-// 		case codeWriteList:
-// 			reqWL, err := f.reqCoder.ReqWriteListDecode(op.Body)
-// 			if err != nil {
-// 				return err
-// 			} else if err := f.repo.SetRecords(f.convertReqWriteListToRecords(reqWL)); err != nil {
-// 				return err
-// 			}
-// 		case codeTransaction:
-// 			reqTr, err := f.reqCoder.ReqTransactionDecode(op.Body)
-// 			if err != nil {
-// 				return err
-// 			}
-// 			if err := f.trn.doOperationTransaction(reqTr, f.repo); err != nil {
-// 				return err
-// 			}
-// 		case codeDeleteList:
-// 			reqDL, err := f.reqCoder.ReqDeleteListDecode(op.Body)
-// 			if err != nil {
-// 				return err
-// 			} else if err := f.repo.DelRecords(reqDL.Keys); err != nil {
-// 				return err
-// 			}
-// 		default:
-// 			return fmt.Errorf("Unknown operation `%d`", op.Code)
-// 		}
-// 		f.changesCounter += int64(len(op.Body)) //считаем в байтах
-// 	}
-// 	return nil
-// }
-
-// func (f *FollowInteractor) convertReqWriteListToRecords(req *ReqWriteList) []*domain.Record {
-// 	recs := make([]*domain.Record, 0, len(req.List))
-// 	for key, value := range req.List {
-// 		rec := &domain.Record{
-// 			Key:   key,
-// 			Value: value,
-// 		}
-// 		recs = append(recs, rec)
-// 	}
-// 	return recs
-// }
-
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
-	fNamesList, err := f.getFilesByExtList(".log")
+	fNamesList, err := f.getFilesByExtList(extLog)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +168,7 @@ func (f *FollowInteractor) newCheckpoint(logFileName string) error {
 func (f *FollowInteractor) getNewCheckpointName(logFileName string) string { // просто меняем расширение файла
 	// strs := strings.Split(logFileName, ".")
 	// return strs[0] + ".check"
-	return strings.Replace(logFileName, ".log", ".check", 1)
+	return strings.Replace(logFileName, extLog, extCheck, 1)
 	// strNum := strconv.FormatInt(f.lastNumCheckpoint, 10)
 	// strNum += ".check"
 	// f.lastNumCheckpoint++

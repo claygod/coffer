@@ -6,6 +6,7 @@ package usecases
 
 import (
 	"github.com/claygod/coffer/domain"
+	"github.com/claygod/tools/logger"
 )
 
 type Resourcer interface {
@@ -19,8 +20,11 @@ type Porter interface {
 
 type Logger interface {
 	//Fatal(...interface{})
-	Error(...interface{})
-	Info(...interface{})
+	Error(interface{}) *logger.Logger
+	Warning(interface{}) *logger.Logger
+	Info(interface{}) *logger.Logger
+	Context(string, interface{}) *logger.Logger
+	Send() (int, error)
 	//Debug(...interface{})
 }
 
@@ -43,4 +47,8 @@ type Starter interface {
 type HandleStore interface {
 	Get(string) (*domain.Handler, error)
 	Set(string, *domain.Handler) error
+}
+
+type FileNamer interface {
+	GetNewFileName(ext string) (string, error)
 }
