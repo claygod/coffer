@@ -31,8 +31,7 @@ func NewFollowInteractor(
 	chp *checkpoint,
 	opr *Operations,
 	repo domain.RecordsRepository,
-	//changesCounter  int64,
-	//lastFileNameLog string,
+
 	hasp Starter,
 
 ) *FollowInteractor {
@@ -80,8 +79,6 @@ func (f *FollowInteractor) worker() {
 				Context("Method", "worker").
 				Context("Message", "Follow interactor is STOPPED!").
 				Send()
-			// f.logger.Error(err)
-			// f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
 			return
 		}
 		f.hasp.Done()
