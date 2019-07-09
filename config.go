@@ -15,8 +15,8 @@ type Config struct {
 
 	//DataPath            string
 	MaxRecsPerOperation int
-	MaxKeyLength        int
-	MaxValueLength      int
+	//MaxKeyLength        int
+	//MaxValueLength      int
 }
 
 const (
@@ -27,7 +27,7 @@ const (
 
 const (
 	logPrefix string = "Coffer "
-	//megabyte  int64  = 1024 * 1024
+	megabyte  int64  = 1024 * 1024
 )
 
 const (

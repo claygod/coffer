@@ -28,9 +28,9 @@ type ResourcesControl struct {
 
 func New(cnf *Config) (*ResourcesControl, error) {
 	m := &ResourcesControl{config: cnf}
-	if m.config.DickPath != "" {
-		if stat, err := os.Stat(m.config.DickPath); err != nil || !stat.IsDir() {
-			return nil, fmt.Errorf("Invalid disk path: %s ", m.config.DickPath)
+	if m.config.DirPath != "" {
+		if stat, err := os.Stat(m.config.DirPath); err != nil || !stat.IsDir() {
+			return nil, fmt.Errorf("Invalid disk path: %s ", m.config.DirPath)
 		}
 	}
 	if err := m.setFreeResources(); err != nil {
@@ -71,10 +71,10 @@ func (r *ResourcesControl) setFreeResources() error {
 }
 
 func (r *ResourcesControl) setFreeDisk() error {
-	if r.config.DickPath == "" {
+	if r.config.DirPath == "" {
 		return nil
 	}
-	us, err := disk.Usage(r.config.DickPath)
+	us, err := disk.Usage(r.config.DirPath)
 	if err != nil {
 		atomic.StoreInt64(&r.freeDisk, 0)
 		return err
@@ -96,7 +96,7 @@ func (r *ResourcesControl) setFreeMemory() error {
 }
 
 func (r *ResourcesControl) getPermissionDisk(size int64) bool {
-	if r.config.DickPath == "" {
+	if r.config.DirPath == "" {
 		return true
 	}
 	for {

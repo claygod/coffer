@@ -43,6 +43,7 @@ func NewRecordsInteractor(
 	resControl Resourcer,
 	porter Porter,
 	journal Journaler,
+	filenamer FileNamer,
 	hasp Starter) (*RecordsInteractor, error) {
 
 	r := &RecordsInteractor{
@@ -56,6 +57,7 @@ func NewRecordsInteractor(
 		resControl: resControl,
 		porter:     porter,
 		journal:    journal,
+		filenamer:  filenamer,
 		hasp:       hasp,
 	}
 
@@ -63,10 +65,12 @@ func NewRecordsInteractor(
 	fChName, err := r.findLatestCheckpoint()
 	if err != nil {
 		return nil, err
+	} else if !strings.HasPrefix(fChName, "-1.") {
+		if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
+			return nil, err
+		}
 	}
-	if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
-		return nil, err
-	}
+
 	// загрузить и выполнить все имеющиеся последующие логи
 	logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
@@ -283,16 +287,16 @@ func (r *RecordsInteractor) loadLogs(fList []string) error {
 }
 
 func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, error) {
-	logBarrier, err := strconv.ParseInt(strings.Replace(chpName, ".checkpoint", "", 1), 10, 64)
+	logBarrier, err := strconv.ParseInt(strings.Replace(chpName, extCheck+extPoint, "", 1), 10, 64)
 	if err != nil {
 		return nil, err
 	}
-	logsNames, err := r.getFilesByExtList(".log")
+	logsNames, err := r.getFilesByExtList(extLog)
 	if err != nil {
 		return nil, err
 	}
 	for i, logName := range logsNames {
-		num, err := strconv.ParseInt(strings.Replace(logName, ".log", "", 1), 10, 64)
+		num, err := strconv.ParseInt(strings.Replace(logName, extLog, "", 1), 10, 64)
 		if err != nil {
 			return nil, err
 		}
@@ -304,12 +308,12 @@ func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, e
 }
 
 func (r *RecordsInteractor) findLatestCheckpoint() (string, error) {
-	fNamesList, err := r.getFilesByExtList(".checkpoint")
+	fNamesList, err := r.getFilesByExtList(extCheck + extPoint)
 	if err != nil {
 		return "", err
 	}
 	if len(fNamesList) == 0 {
-		return "", fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
+		return "-1" + extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
 	}
 	return fNamesList[len(fNamesList)-1], nil
 }

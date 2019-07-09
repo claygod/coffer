@@ -33,11 +33,11 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 		return fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
 	}
 	for key, value := range input {
-		if ln := len(key); ln > c.config.MaxKeyLength { // контроль максимально допустимой длины ключа
-			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.MaxKeyLength, ln)
+		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength { // контроль максимально допустимой длины ключа
+			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
 		}
-		if ln := len(value); ln > c.config.MaxValueLength { // контроль максимально допустимой длины значения
-			return fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.MaxValueLength, ln)
+		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
+			return fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
 		}
 	}
 	keysList := make([]string, 0, len(input))
@@ -79,8 +79,8 @@ func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
 		return nil, fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
 	}
 	for _, key := range keys { // контроль максимально допустимой длины ключа
-		if ln := len(key); ln > c.config.MaxKeyLength {
-			return nil, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.MaxKeyLength, ln)
+		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength {
+			return nil, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
 		}
 	}
 	c.porter.Catch(keys)
@@ -129,8 +129,8 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 		return fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
 	}
 	for _, key := range keys { // контроль максимально допустимой длины ключа
-		if ln := len(key); ln > c.config.MaxKeyLength {
-			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.MaxKeyLength, ln)
+		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength {
+			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
 		}
 	}
 	c.porter.Catch(keys)

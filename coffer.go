@@ -31,6 +31,7 @@ type Coffer struct {
 }
 
 func New(config *Config) (*Coffer, error) {
+	//TODO: проверять получаемый конфиг
 	c := &Coffer{
 		config:   config,
 		logger:   logger.New(services.NewLog(logPrefix)),
@@ -54,8 +55,7 @@ func New(config *Config) (*Coffer, error) {
 		return nil, err
 	}
 
-	// RecordsInteractor
-	ri, err := usecases.NewRecordsInteractor(
+	ri, err := usecases.NewRecordsInteractor( // RecordsInteractor
 		c.config.UsecasesConfig,
 		c.logger,
 		chp,
@@ -66,6 +66,7 @@ func New(config *Config) (*Coffer, error) {
 		resControl,
 		c.porter,
 		jrn,
+		fileNamer,
 		startstop.New(),
 	)
 	if err != nil {
@@ -73,8 +74,7 @@ func New(config *Config) (*Coffer, error) {
 	}
 	c.recInteractor = ri
 
-	// FollowInteractor
-	c.folInteractor = usecases.NewFollowInteractor(
+	c.folInteractor = usecases.NewFollowInteractor( // FollowInteractor
 		c.logger,
 		c.config.UsecasesConfig, //config *Config,
 		chp,                     //*checkpoint,

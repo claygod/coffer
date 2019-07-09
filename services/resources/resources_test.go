@@ -39,12 +39,12 @@ func TestGetPermissionWithoutDiskLimit100(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 100,
 		LimitDisk:   100,
-		DickPath:    "",
+		DirPath:    "",
 	}
 	if runtime.GOOS == "windows" {
-		cnf.DickPath = "c:\\"
+		cnf.DirPath = "c:\\"
 	} else {
-		cnf.DickPath = "/"
+		cnf.DirPath = "/"
 	}
 
 	r, err := New(cnf)
@@ -63,7 +63,7 @@ func TestGetPermissionWithoutDiskLimit10000000000(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 100,
 		LimitDisk:   1000000000000,
-		DickPath:    "",
+		DirPath:    "",
 	}
 	_, err := New(cnf)
 	if err == nil {
@@ -75,7 +75,7 @@ func TestGetPermissionWithoutMemoryLimit10000000000(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 1000000000000,
 		LimitDisk:   100,
-		DickPath:    "",
+		DirPath:    "",
 	}
 	_, err := New(cnf)
 	if err == nil {
@@ -91,9 +91,9 @@ func TestGetPermissionWithDisk(t *testing.T) {
 		//AddRatioDisk:   5,
 	}
 	if runtime.GOOS == "windows" {
-		cnf.DickPath = "c:\\"
+		cnf.DirPath = "c:\\"
 	} else {
-		cnf.DickPath = "/"
+		cnf.DirPath = "/"
 	}
 	r, err := New(cnf)
 	if err != nil {
@@ -115,13 +115,13 @@ func TestGetPermissionWithDiskBadPath(t *testing.T) {
 		//AddRatioDisk:   5,
 	}
 	if runtime.GOOS == "windows" {
-		cnf.DickPath = badPathWin
+		cnf.DirPath = badPathWin
 	} else {
-		cnf.DickPath = badPathNix
+		cnf.DirPath = badPathNix
 	}
 	_, err := New(cnf)
 	if err == nil {
-		t.Errorf("Wrong path %s should have caused an error", cnf.DickPath)
+		t.Errorf("Wrong path %s should have caused an error", cnf.DirPath)
 	}
 }
 
@@ -134,9 +134,9 @@ func BenchmarkSetFreeMemory(b *testing.B) { // go tool pprof -web ./batcher.test
 		//AddRatioDisk:   5,
 	}
 	if runtime.GOOS == "windows" {
-		cnf.DickPath = "c:\\"
+		cnf.DirPath = "c:\\"
 	} else {
-		cnf.DickPath = "/"
+		cnf.DirPath = "/"
 	}
 	r, err := New(cnf)
 	if err != nil {
@@ -157,9 +157,9 @@ func BenchmarkSetFreeDisk(b *testing.B) { // go tool pprof -web ./batcher.test .
 		//AddRatioDisk:   5,
 	}
 	if runtime.GOOS == "windows" {
-		cnf.DickPath = "c:\\"
+		cnf.DirPath = "c:\\"
 	} else {
-		cnf.DickPath = "/"
+		cnf.DirPath = "/"
 	}
 	r, err := New(cnf)
 	if err != nil {
