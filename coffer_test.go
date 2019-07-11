@@ -5,6 +5,10 @@ package coffer
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
+	//"fmt"
+	"os"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -22,10 +26,11 @@ import (
 )
 
 func TestNewCoffer(t *testing.T) {
+	//defer forTestClearDir("./test/")
 	ucCnf := &usecases.Config{
 		FollowPause:             1 * time.Second,
 		ChagesByCheckpoint:      100,
-		DirPath:                 "test",
+		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
 		MaxValueLength:          10000,
@@ -33,7 +38,7 @@ func TestNewCoffer(t *testing.T) {
 	rcCnf := &resources.Config{
 		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
 		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     "test",
+		DirPath:     "./test/",       // "/home/ed/goPath/src/github.com/claygod/coffer/test"
 	}
 
 	cnf := &Config{
@@ -46,8 +51,46 @@ func TestNewCoffer(t *testing.T) {
 	cof, err := New(cnf)
 	if err != nil {
 		t.Error(err)
+		return
 	}
 	if cof.Start() {
 		defer cof.Stop()
+	} else {
+		t.Errorf("Failed to start")
+		return
 	}
+	for i := 0; i < 10; i++ {
+		if err := cof.Write("aaa"+strconv.Itoa(i), []byte("bbb")); err != nil {
+			t.Error(err)
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+
+}
+
+func forTestClearDir(dir string) error {
+	if !strings.HasSuffix(dir, "/") {
+		dir += "/"
+	}
+
+	d, err := os.Open(dir)
+	if err != nil {
+		return err
+	}
+	defer d.Close()
+	names, err := d.Readdirnames(-1)
+	if err != nil {
+		return err
+	}
+	for _, name := range names {
+		//fmt.Println(name)
+		if strings.HasSuffix(name, ".log") || strings.HasSuffix(name, ".check") || strings.HasSuffix(name, ".checkpoint") {
+			os.Remove(dir + name)
+		}
+		//		err = os.RemoveAll(filepath.Join(dir, name))
+		//		if err != nil {
+		//			return err
+		//		}
+	}
+	return nil
 }

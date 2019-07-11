@@ -80,6 +80,7 @@ func New(config *Config) (*Coffer, error) {
 		chp,                     //*checkpoint,
 		opr,                     // *operations,
 		recordsRepo,
+		fileNamer,
 		startstop.New(),
 	)
 	return c, nil
@@ -90,10 +91,12 @@ func (c *Coffer) Start() bool { // return prev state
 	if !c.recInteractor.Start() {
 		return false
 	}
-	if c.folInteractor.Start() {
+	fmt.Println("recInteractor.Start")
+	if !c.folInteractor.Start() {
 		c.recInteractor.Stop()
 		return false
 	}
+	fmt.Println("folInteractor.Start")
 	if !c.hasp.Start() {
 		c.recInteractor.Stop()
 		c.folInteractor.Stop()

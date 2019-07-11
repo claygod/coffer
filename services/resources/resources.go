@@ -42,6 +42,7 @@ func New(cnf *Config) (*ResourcesControl, error) {
 	if m.freeMemory < m.config.LimitMemory*2 {
 		return nil, fmt.Errorf("Low available memory: %d bytes", m.freeMemory)
 	}
+	m.setFreeResources()
 	go m.freeResourceSetter()
 	return m, nil
 }
@@ -101,8 +102,10 @@ func (r *ResourcesControl) getPermissionDisk(size int64) bool {
 	}
 	for {
 		curFree := atomic.LoadInt64(&r.freeDisk)
+		//fmt.Println("R:R:curFree: ", curFree, size, r.config.LimitDisk)
 		if curFree-size > r.config.LimitDisk &&
 			atomic.CompareAndSwapInt64(&r.freeDisk, curFree, curFree-size) {
+			//fmt.Println("R:R:curFree: ", true)
 			return true
 		} else if curFree-size <= r.config.LimitDisk {
 			return false
@@ -114,8 +117,10 @@ func (r *ResourcesControl) getPermissionDisk(size int64) bool {
 func (r *ResourcesControl) getPermissionMemory(size int64) bool {
 	for {
 		curFree := atomic.LoadInt64(&r.freeMemory)
+		//fmt.Println("R:M:curFree: ", curFree, size, r.config.LimitMemory)
 		if curFree-size > r.config.LimitMemory &&
 			atomic.CompareAndSwapInt64(&r.freeMemory, curFree, curFree-size) {
+			//fmt.Println("R:M:curFree: ", true)
 			return true
 		} else if curFree-size <= r.config.LimitMemory {
 			return false

@@ -65,10 +65,12 @@ func NewRecordsInteractor(
 	fChName, err := r.findLatestCheckpoint()
 	if err != nil {
 		return nil, err
-	} else if !strings.HasPrefix(fChName, "-1.") {
+	} else if fChName != extCheck+extPoint {
 		if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
 			return nil, err
 		}
+	} else {
+		fChName = "-1" + extCheck + extPoint
 	}
 
 	// загрузить и выполнить все имеющиеся последующие логи
@@ -84,10 +86,11 @@ func NewRecordsInteractor(
 }
 
 func (r *RecordsInteractor) Start() bool {
-	if !r.hasp.Start() {
-		return false
-	}
-	return true
+	return r.hasp.Start()
+	// if !r.hasp.Start() {
+	// 	return false
+	// }
+	// return true
 }
 
 func (r *RecordsInteractor) Stop() bool {
@@ -127,9 +130,10 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) error {
 		return err
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
-	if r.resControl.GetPermission(int64(len(opBytes))) {
+	if !r.resControl.GetPermission(int64(len(opBytes))) {
 		return fmt.Errorf("Insufficient resources (memory, disk)")
 	}
+	//fmt.Println("RI: step 1")
 	// блокируем нужные записи
 	keys := r.getKeysFromMap(req.List)
 	r.porter.Catch(keys)
@@ -225,7 +229,7 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) error { // interfac
 		return err
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
-	if r.resControl.GetPermission(int64(len(opBytes))) {
+	if !r.resControl.GetPermission(int64(len(opBytes))) {
 		return fmt.Errorf("Insufficient resources (memory, disk)")
 	}
 	// блокируем нужные записи
@@ -287,6 +291,7 @@ func (r *RecordsInteractor) loadLogs(fList []string) error {
 }
 
 func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, error) {
+	//fmt.Println("RI:findLogsAfterCheckpoint: ", chpName)
 	logBarrier, err := strconv.ParseInt(strings.Replace(chpName, extCheck+extPoint, "", 1), 10, 64)
 	if err != nil {
 		return nil, err
@@ -307,13 +312,13 @@ func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, e
 	return make([]string, 0), nil
 }
 
-func (r *RecordsInteractor) findLatestCheckpoint() (string, error) {
+func (r *RecordsInteractor) findLatestCheckpoint() (string, error) { //TODO: перести в filenamer
 	fNamesList, err := r.getFilesByExtList(extCheck + extPoint)
 	if err != nil {
 		return "", err
 	}
 	if len(fNamesList) == 0 {
-		return "-1" + extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
+		return extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
 	}
 	return fNamesList[len(fNamesList)-1], nil
 }

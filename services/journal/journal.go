@@ -25,18 +25,18 @@ const limitRecordsPerLogfile int64 = 100000
 Journal - transactions logs saver (WAL).
 */
 type Journal struct {
-	m                 sync.Mutex
-	fileNamer         *filenamer.FileNamer
-	counter           int64
-	client            *batcher.Client
-	dirPath           string
+	m         sync.Mutex
+	fileNamer *filenamer.FileNamer
+	counter   int64
+	client    *batcher.Client
+	//dirPath           string
 	alarmFunc         func(error)
 	batchSize         int
 	countBatchClients int64
 }
 
-func New(dirPath string, batchSize int, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) {
-	nName, err := fn.GetNewFileName(dirPath)
+func New(dirPath string, batchSize int, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) { //TODO: убрать dirPath
+	nName, err := fn.GetNewFileName(".log") //dirPath
 	if err != nil {
 		return nil, err
 	}
@@ -45,8 +45,8 @@ func New(dirPath string, batchSize int, fn *filenamer.FileNamer, alarmFunc func(
 		return nil, err
 	}
 	return &Journal{
-		client:    clt,
-		dirPath:   dirPath,
+		client: clt,
+		//dirPath:   dirPath,
 		alarmFunc: alarmFunc,
 		batchSize: batchSize,
 	}, nil
@@ -76,7 +76,7 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	defer j.m.Unlock()
 	if j.counter > limitRecordsPerLogfile {
 		oldClt := j.client
-		nName, err := j.fileNamer.GetNewFileName(j.dirPath)
+		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		if err != nil {
 			return nil, err
 		}

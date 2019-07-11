@@ -20,8 +20,10 @@ type FollowInteractor struct {
 	chp             *checkpoint
 	opr             *Operations
 	repo            domain.RecordsRepository
+	filenamer       FileNamer
 	changesCounter  int64
 	lastFileNameLog string
+	lastFileNum     int64
 	hasp            Starter
 }
 
@@ -31,18 +33,23 @@ func NewFollowInteractor(
 	chp *checkpoint,
 	opr *Operations,
 	repo domain.RecordsRepository,
-
+	filenamer FileNamer,
+	//changesCounter  int64,
+	//lastFileNameLog string,
 	hasp Starter,
 
 ) *FollowInteractor {
-	return &FollowInteractor{
-		logger: logger,
-		config: config,
-		chp:    chp,
-		opr:    opr,
-		repo:   repo,
-		hasp:   hasp,
+	fi := &FollowInteractor{
+		logger:    logger,
+		config:    config,
+		chp:       chp,
+		opr:       opr,
+		repo:      repo,
+		filenamer: filenamer,
+		hasp:      hasp,
 	}
+	//TODO: закачать последний чекпойнт и выставить его номер
+	return fi
 }
 
 func (f *FollowInteractor) Start() bool {
@@ -79,6 +86,8 @@ func (f *FollowInteractor) worker() {
 				Context("Method", "worker").
 				Context("Message", "Follow interactor is STOPPED!").
 				Send()
+			// f.logger.Error(err)
+			// f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
 			return
 		}
 		f.hasp.Done()
