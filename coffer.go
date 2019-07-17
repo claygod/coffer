@@ -50,7 +50,7 @@ func New(config *Config) (*Coffer, error) {
 	trn := usecases.NewTransaction(c.handlers)
 	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
 	opr := usecases.NewOperations(c.config.UsecasesConfig, reqCoder, resControl, trn)
-	jrn, err := journal.New(c.config.UsecasesConfig.DirPath, 1000, fileNamer, c.alarmFunc)
+	jrn, err := journal.New(c.config.JournalConfig, fileNamer, c.alarmFunc)
 	if err != nil {
 		return nil, err
 	}

@@ -158,7 +158,7 @@ func (f *FollowInteractor) getFilesByExtList(ext string) ([]string, error) {
 	list := make([]string, 0, len(files))
 	for _, fl := range files {
 		if strings.HasSuffix(fl.Name(), ext) {
-			list = append(list, fl.Name())
+			list = append(list, f.config.DirPath+fl.Name())
 		}
 	}
 	return list, nil

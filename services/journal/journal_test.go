@@ -79,7 +79,12 @@ func BenchmarkBatcherClient(b *testing.B) { // go tool pprof -web ./batcher.test
 
 func BenchmarkNew1(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
-	j, err := New("./", 2000, filenamer.NewFileNamer("./"), forTestAlarmer)
+	cnf := &Config{
+		//DirPath:                "./",
+		BatchSize:              2000,
+		LimitRecordsPerLogfile: 100000,
+	}
+	j, err := New(cnf, filenamer.NewFileNamer("./"), forTestAlarmer)
 	if err != nil {
 		b.Error(err)
 	}
@@ -101,7 +106,12 @@ func BenchmarkNew1(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.tx
 
 func BenchmarkNew2(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
-	j, err := New("./", 2000, filenamer.NewFileNamer("./"), forTestAlarmer)
+	cnf := &Config{
+		//DirPath:                "./",
+		BatchSize:              2000,
+		LimitRecordsPerLogfile: 100000,
+	}
+	j, err := New(cnf, filenamer.NewFileNamer("./"), forTestAlarmer)
 	if err != nil {
 		b.Error(err)
 	}

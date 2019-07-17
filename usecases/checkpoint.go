@@ -8,11 +8,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 
 	"github.com/claygod/coffer/domain"
 )
 
 type checkpoint struct {
+	m      sync.Mutex
 	config *Config
 }
 
@@ -23,6 +25,8 @@ func NewCheckpoint(config *Config) *checkpoint {
 }
 
 func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
+	c.m.Lock()
+	defer c.m.Unlock()
 	//chpName := c.getNewCheckPointName()
 	f, err := os.Create(chpName)
 	if err != nil {

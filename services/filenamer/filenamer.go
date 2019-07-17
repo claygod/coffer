@@ -69,10 +69,10 @@ func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 	case ln == 0:
 		return "", nil
 	case ln == 1:
-		return fNamesList[0], nil
+		return f.dirPath + fNamesList[0], nil
 	default:
 		sort.Strings(fNamesList)
-		return fNamesList[len(fNamesList)-1], nil
+		return f.dirPath + fNamesList[len(fNamesList)-1], nil
 	}
 }
 

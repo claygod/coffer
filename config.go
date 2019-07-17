@@ -5,11 +5,13 @@ package coffer
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
+	"github.com/claygod/coffer/services/journal"
 	"github.com/claygod/coffer/services/resources"
 	"github.com/claygod/coffer/usecases"
 )
 
 type Config struct {
+	JournalConfig   *journal.Config
 	UsecasesConfig  *usecases.Config
 	ResourcesConfig *resources.Config
 

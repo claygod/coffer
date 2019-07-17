@@ -26,29 +26,31 @@ Journal - transactions logs saver (WAL).
 */
 type Journal struct {
 	m         sync.Mutex
+	config    *Config
 	fileNamer *filenamer.FileNamer
 	counter   int64
 	client    *batcher.Client
 	//dirPath           string
-	alarmFunc         func(error)
-	batchSize         int
+	alarmFunc func(error)
+	//batchSize         int
 	countBatchClients int64
 }
 
-func New(dirPath string, batchSize int, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) { //TODO: убрать dirPath
+func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) { //TODO: убрать dirPath
 	nName, err := fn.GetNewFileName(".log") //dirPath
 	if err != nil {
 		return nil, err
 	}
-	clt, err := batcher.Open(nName, batchSize)
+	clt, err := batcher.Open(nName, cnf.BatchSize)
 	if err != nil {
 		return nil, err
 	}
 	return &Journal{
+		config: cnf,
 		client: clt,
 		//dirPath:   dirPath,
 		alarmFunc: alarmFunc,
-		batchSize: batchSize,
+		//batchSize: batchSize,
 	}, nil
 }
 
@@ -74,13 +76,13 @@ func (j *Journal) Close() {
 func (j *Journal) getClient() (*batcher.Client, error) {
 	j.m.Lock()
 	defer j.m.Unlock()
-	if j.counter > limitRecordsPerLogfile {
+	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		if err != nil {
 			return nil, err
 		}
-		clt, err := batcher.Open(nName, j.batchSize)
+		clt, err := batcher.Open(nName, j.config.BatchSize)
 		if err != nil {
 			return nil, err
 		}

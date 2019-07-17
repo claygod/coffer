@@ -18,7 +18,9 @@ import (
 	// "github.com/claygod/coffer/services/journal"
 	// "github.com/claygod/coffer/services/repositories/handlers"
 	// "github.com/claygod/coffer/services/repositories/records"
+	"github.com/claygod/coffer/services/journal"
 	"github.com/claygod/coffer/services/resources"
+
 	// "github.com/claygod/coffer/services/startstop"
 	"github.com/claygod/coffer/usecases"
 	// "github.com/claygod/tools/logger"
@@ -27,6 +29,10 @@ import (
 
 func TestNewCoffer(t *testing.T) {
 	//defer forTestClearDir("./test/")
+	jCnf := &journal.Config{
+		BatchSize:              2000,
+		LimitRecordsPerLogfile: 100000,
+	}
 	ucCnf := &usecases.Config{
 		FollowPause:             1 * time.Second,
 		ChagesByCheckpoint:      100,
@@ -42,6 +48,7 @@ func TestNewCoffer(t *testing.T) {
 	}
 
 	cnf := &Config{
+		JournalConfig:       jCnf,
 		UsecasesConfig:      ucCnf,
 		ResourcesConfig:     rcCnf,
 		MaxRecsPerOperation: 100,
@@ -59,11 +66,11 @@ func TestNewCoffer(t *testing.T) {
 		t.Errorf("Failed to start")
 		return
 	}
-	for i := 0; i < 10; i++ {
-		if err := cof.Write("aaa"+strconv.Itoa(i), []byte("bbb")); err != nil {
+	for i := 20; i < 30; i++ {
+		if err := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); err != nil {
 			t.Error(err)
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(900 * time.Millisecond)
 	}
 
 }
