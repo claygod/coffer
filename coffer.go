@@ -24,6 +24,7 @@ type Coffer struct {
 	config        *Config
 	logger        usecases.Logger
 	porter        usecases.Porter
+	resControl    *resources.ResourcesControl
 	handlers      domain.HandlersRepository
 	recInteractor *usecases.RecordsInteractor
 	folInteractor *usecases.FollowInteractor
@@ -32,18 +33,20 @@ type Coffer struct {
 
 func New(config *Config) (*Coffer, error) {
 	//TODO: проверять получаемый конфиг
-	c := &Coffer{
-		config:   config,
-		logger:   logger.New(services.NewLog(logPrefix)),
-		porter:   porter.New(),
-		handlers: handlers.New(),
-		hasp:     startstop.New(),
-	}
-
-	resControl, err := resources.New(c.config.ResourcesConfig)
+	resControl, err := resources.New(config.ResourcesConfig)
 	if err != nil {
 		return nil, err
 	}
+
+	c := &Coffer{
+		config:     config,
+		logger:     logger.New(services.NewLog(logPrefix)),
+		porter:     porter.New(),
+		resControl: resControl,
+		handlers:   handlers.New(),
+		hasp:       startstop.New(),
+	}
+
 	recordsRepo := records.New()
 	reqCoder := usecases.NewReqCoder()
 	fileNamer := filenamer.NewFileNamer(c.config.UsecasesConfig.DirPath)
@@ -83,46 +86,58 @@ func New(config *Config) (*Coffer, error) {
 		fileNamer,
 		startstop.New(),
 	)
+	fmt.Println(fileNamer)
 	return c, nil
 }
 
 func (c *Coffer) Start() bool { // return prev state
-	defer c.checkPanic()
+	//defer c.checkPanic()
+	if !c.resControl.Start() {
+		return false
+	}
 	if !c.recInteractor.Start() {
+		c.resControl.Stop()
 		return false
 	}
 	fmt.Println("recInteractor.Start")
-	if !c.folInteractor.Start() {
-		c.recInteractor.Stop()
-		return false
-	}
-	fmt.Println("folInteractor.Start")
+	// if !c.folInteractor.Start() {
+	// 	c.resControl.Stop()
+	// 	c.recInteractor.Stop()
+	// 	return false
+	// }
+	// fmt.Println("folInteractor.Start")
 	if !c.hasp.Start() {
+		c.resControl.Stop()
 		c.recInteractor.Stop()
-		c.folInteractor.Stop()
+		//c.folInteractor.Stop()
 		return false
 	}
 	return true
 }
 
 func (c *Coffer) Stop() bool {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.Block() {
 		return false
 	}
 	defer c.hasp.Unblock()
-	if !c.folInteractor.Stop() {
+	if !c.resControl.Stop() {
 		return false
 	}
+	// if !c.folInteractor.Stop() {
+	// 	c.resControl.Start()
+	// 	return false
+	// }
 	if !c.recInteractor.Stop() {
-		c.folInteractor.Start()
+		c.resControl.Start()
+		//c.folInteractor.Start()
 		return false
 	}
 	return true
 }
 
 func (c *Coffer) StopHard() error {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	var errOut error
 	if !c.hasp.Block() {
 		errOut = fmt.Errorf("Hasp is not stopped.")
@@ -140,7 +155,7 @@ func (c *Coffer) StopHard() error {
 SetHandler - add handler. This can be done both before launch and during database operation.
 */
 func (c *Coffer) SetHandler(handlerName string, handlerMethod *domain.Handler) error {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.IsReady() {
 		return fmt.Errorf("Handles cannot be added while the application is running.")
 	}

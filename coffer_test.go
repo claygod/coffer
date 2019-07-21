@@ -31,11 +31,11 @@ func TestNewCoffer(t *testing.T) {
 	//defer forTestClearDir("./test/")
 	jCnf := &journal.Config{
 		BatchSize:              2000,
-		LimitRecordsPerLogfile: 100000,
+		LimitRecordsPerLogfile: 5,
 	}
 	ucCnf := &usecases.Config{
 		FollowPause:             1 * time.Second,
-		ChagesByCheckpoint:      100,
+		ChagesByCheckpoint:      8,
 		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
@@ -66,7 +66,7 @@ func TestNewCoffer(t *testing.T) {
 		t.Errorf("Failed to start")
 		return
 	}
-	for i := 20; i < 30; i++ {
+	for i := 40; i < 70; i++ {
 		if err := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); err != nil {
 			t.Error(err)
 		}

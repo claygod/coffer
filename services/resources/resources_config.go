@@ -11,7 +11,7 @@ import (
 type Config struct {
 	LimitMemory int64 // minimum available memory (bytes)
 	LimitDisk   int64 // minimum free disk space
-	DirPath    string
+	DirPath     string
 }
 
-const timeRefresh time.Duration = 200 * time.Millisecond
+const timeRefresh time.Duration = 1 * time.Millisecond

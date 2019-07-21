@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/claygod/coffer/services/startstop"
 	"github.com/shirou/gopsutil/disk"
 	"github.com/shirou/gopsutil/mem"
 )
@@ -24,10 +25,15 @@ type ResourcesControl struct {
 	freeMemory int64
 	freeDisk   int64
 	counter    int64
+	starter    *startstop.StartStop
+	//hasp       int64
 }
 
 func New(cnf *Config) (*ResourcesControl, error) {
-	m := &ResourcesControl{config: cnf}
+	m := &ResourcesControl{
+		config:  cnf,
+		starter: startstop.New(),
+	}
 	if m.config.DirPath != "" {
 		if stat, err := os.Stat(m.config.DirPath); err != nil || !stat.IsDir() {
 			return nil, fmt.Errorf("Invalid disk path: %s ", m.config.DirPath)
@@ -42,9 +48,26 @@ func New(cnf *Config) (*ResourcesControl, error) {
 	if m.freeMemory < m.config.LimitMemory*2 {
 		return nil, fmt.Errorf("Low available memory: %d bytes", m.freeMemory)
 	}
-	m.setFreeResources()
-	go m.freeResourceSetter()
+	//m.starter.Start()
+	//atomic.StoreInt64(&m.hasp, 1)
+	//m.setFreeResources()
+	//go m.freeResourceSetter()
 	return m, nil
+}
+
+func (r *ResourcesControl) Start() bool {
+	res := r.starter.Start()
+	if res {
+		r.setFreeResources()
+		go r.freeResourceSetter()
+	}
+	return res
+	//atomic.StoreInt64(&r.hasp, 0)
+}
+
+func (r *ResourcesControl) Stop() bool {
+	return r.starter.Stop()
+	//atomic.StoreInt64(&r.hasp, 0)
 }
 
 /*
@@ -130,8 +153,21 @@ func (r *ResourcesControl) getPermissionMemory(size int64) bool {
 }
 
 func (r *ResourcesControl) freeResourceSetter() {
+	var counter int64
 	ticker := time.NewTicker(timeRefresh)
 	for range ticker.C {
-		r.setFreeResources()
+		if r.starter.IsReady() {
+			return
+		}
+		// if atomic.LoadInt64(&m.hasp) == 0 {
+		// 	return
+		// }
+		if !r.starter.Add() {
+			return
+		}
+		if byte(counter) == 0 {
+			r.setFreeResources()
+		}
+		r.starter.Done()
 	}
 }

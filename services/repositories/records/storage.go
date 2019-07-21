@@ -99,7 +99,9 @@ func (r *storage) del(keys []string) error {
 // }
 
 func (r *storage) iterator(chRecord chan *domain.Record, chFinish chan struct{}) {
+	//fmt.Println(r.data)
 	for key, value := range r.data {
+		//fmt.Println("++++++ ", key, value)
 		chRecord <- &domain.Record{
 			Key:   key,
 			Value: value,

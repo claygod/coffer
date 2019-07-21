@@ -47,6 +47,7 @@ func NewFileNamer(dirPath string) *FileNamer {
 // }
 
 func (f *FileNamer) GetNewFileName(ext string) (string, error) {
+
 	f.m.Lock()
 	defer f.m.Unlock()
 	latestNum, err := f.findLatestNum()

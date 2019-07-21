@@ -24,7 +24,7 @@ func (c *Coffer) WriteListSafe(input map[string][]byte) error { // A method with
 }
 
 func (c *Coffer) WriteList(input map[string][]byte) error {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.Add() {
 		return fmt.Errorf("Coffer is stopped")
 	}
@@ -74,7 +74,7 @@ func (c *Coffer) ReadListSafe(keys []string) (map[string][]byte, error) { // A m
 }
 
 func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.Add() {
 		return nil, fmt.Errorf("Coffer is stopped")
 	}
@@ -109,7 +109,7 @@ func (c *Coffer) DeleteListSafe(keys []string) error { // A method with little p
 }
 
 func (c *Coffer) DeleteList(keys []string) error {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.Add() {
 		return fmt.Errorf("Coffer is stopped")
 	}
@@ -132,7 +132,7 @@ func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interfac
 }
 
 func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) error {
-	defer c.checkPanic()
+	//defer c.checkPanic()
 	if !c.hasp.Add() {
 		return fmt.Errorf("Coffer is stopped")
 	}

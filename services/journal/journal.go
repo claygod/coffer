@@ -5,7 +5,7 @@ package journal
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	//"fmt"
+	"fmt"
 	//"io/ioutil"
 	//"os"
 	//"sort"
@@ -46,8 +46,9 @@ func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal,
 		return nil, err
 	}
 	return &Journal{
-		config: cnf,
-		client: clt,
+		config:    cnf,
+		fileNamer: fn,
+		client:    clt,
 		//dirPath:   dirPath,
 		alarmFunc: alarmFunc,
 		//batchSize: batchSize,
@@ -78,10 +79,12 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	defer j.m.Unlock()
 	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
+		fmt.Println("Journal-1", j.fileNamer)
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Journal-2")
 		clt, err := batcher.Open(nName, j.config.BatchSize)
 		if err != nil {
 			return nil, err

@@ -30,14 +30,14 @@ func (c *Coffer) copyMap(inMap map[string][]byte) (map[string][]byte, error) { /
 	return outMap, nil
 }
 
-func (c *Coffer) checkPanic() {
-	if err := recover(); err != nil {
-		c.hasp.Block()
-		//atomic.StoreInt64(&c.hasp, statePanic)
-		//fmt.Println(err)
-		c.logger.Error(err).Context("Object", "Coffer").Context("Method", "checkPanic").Send()
-	}
-}
+// func (c *Coffer) checkPanic() {
+// 	if err := recover(); err != nil {
+// 		c.hasp.Block()
+// 		//atomic.StoreInt64(&c.hasp, statePanic)
+// 		//fmt.Println(err)
+// 		c.logger.Error(err).Context("Object", "Coffer").Context("Method", "checkPanic").Send()
+// 	}
+// }
 
 func (c *Coffer) alarmFunc(err error) { // для журнала
 	c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
