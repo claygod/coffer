@@ -79,23 +79,32 @@ func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 
 func (f *FileNamer) findLatestNum() (int64, error) {
 	var max int64
-	extList := []string{".log", ".check", ".checkout"} //TODO: нужен ли ".check" ???
+	extList := []string{".log", ".check", ".checkpoint"} //TODO: нужен ли ".check" ???
 	for _, ext := range extList {
-		latestName, err := f.findLatestFile(ext)
-		fmt.Println("LATEST: ", latestName)
-		if err != nil {
-			return 0, err
-		} else if latestName == "" {
-			continue
-		}
-		strs := strings.Split(latestName, ".")
-		if len(strs) == 0 {
-			continue
-		}
-		num, err := strconv.ParseInt(strs[0], 10, 64)
+		num, err := f.findMaxFile(ext)
 		if err == nil && num > max {
 			max = num
 		}
+		if err != nil {
+			continue
+		}
+
+		//latestName, err := f.findLatestFile(ext)
+		fmt.Println("LATEST: ", num)
+
+		// if err != nil {
+		// 	return 0, err
+		// } else if latestName == "" {
+		// 	continue
+		// }
+		// strs := strings.Split(latestName, ".")
+		// if len(strs) == 0 {
+		// 	continue
+		// }
+		// num, err := strconv.ParseInt(strs[0], 10, 64)
+		// if err == nil && num > max {
+		// 	max = num
+		// }
 	}
 	return max, nil
 }
@@ -114,6 +123,34 @@ func (f *FileNamer) findLatestFile(ext string) (string, error) {
 	default:
 		sort.Strings(fNamesList)
 		return fNamesList[len(fNamesList)-1], nil
+	}
+	//return fNamesList, nil
+}
+
+func (f *FileNamer) findMaxFile(ext string) (int64, error) {
+	fNamesList, err := f.getFilesByExtList(ext)
+	if err != nil {
+		return 0, err
+	}
+	ln := len(fNamesList)
+	switch {
+	case ln == 0:
+		return 0, nil
+	// case ln == 1:
+	// 	return fNamesList[0], nil
+	default:
+		var max int64
+		for _, name := range fNamesList {
+			strs := strings.Split(name, ".")
+			if len(strs) == 0 {
+				continue
+			}
+			num, err := strconv.ParseInt(strs[0], 10, 64)
+			if err == nil && num > max {
+				max = num
+			}
+		}
+		return max, nil
 	}
 	//return fNamesList, nil
 }
