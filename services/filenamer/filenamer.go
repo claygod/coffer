@@ -50,7 +50,7 @@ func (f *FileNamer) GetNewFileName(ext string) (string, error) {
 
 	f.m.Lock()
 	defer f.m.Unlock()
-	latestNum, err := f.findLatestNum()
+	latestNum, err := f.findLatestNum([]string{".log", ".check", ".checkpoint"})
 	if err != nil {
 		return "", fmt.Errorf("Error finding a new name: %v", err)
 	}
@@ -77,9 +77,51 @@ func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 	}
 }
 
-func (f *FileNamer) findLatestNum() (int64, error) {
+func (f *FileNamer) GetAfterLatest(last string) ([]string, error) {
+	f.m.Lock()
+	defer f.m.Unlock()
+	lst := strings.Split(last, ".")
+	lastInt, err := strconv.Atoi(lst[0]) //      strconv.ParseInt(fNumStr, 10, 64)
+	if err != nil || len(lst) != 2 {
+		return nil, fmt.Errorf("Filenamer parse string (%s) error: %v", last, err)
+	}
+
+	fNamesList, err := f.getFilesByExtList(lst[1])
+	if err != nil {
+		return nil, fmt.Errorf("Error finding files by ext: %v", err)
+	}
+	fmt.Println("FileNamer: fNamesList: ", lastInt, lst, fNamesList)
+	numList := make([]int, 0, len(fNamesList))
+	for _, fName := range fNamesList {
+		fNumStr := strings.Replace(fName, "."+lst[1], "", 1)
+		fNumInt, err := strconv.Atoi(fNumStr) //      strconv.ParseInt(fNumStr, 10, 64)
+		if err != nil {
+			//TODO: info
+			continue
+		}
+		numList = append(numList, fNumInt)
+	}
+	sort.Ints(numList)
+	fmt.Println("FileNamer: numList: ", numList)
+	outListInt := make([]int, 0, len(numList))
+	for i, fNum := range numList {
+		if fNum > lastInt {
+			outListInt = numList[i : len(numList)-1]
+			break
+		}
+	}
+	fmt.Println("FileNamer: outListInt: ", outListInt)
+	outListStr := make([]string, 0, len(outListInt))
+	for _, v := range outListInt {
+		outListStr = append(outListStr, strconv.Itoa(v)+"."+lst[1])
+	}
+	fmt.Println("FileNamer: outListStr: ", outListStr)
+	return outListStr, nil
+}
+
+func (f *FileNamer) findLatestNum(extList []string) (int64, error) {
 	var max int64
-	extList := []string{".log", ".check", ".checkpoint"} //TODO: нужен ли ".check" ???
+	//extList := []string{".log", ".check", ".checkpoint"} //TODO: нужен ли ".check" ???
 	for _, ext := range extList {
 		num, err := f.findMaxFile(ext)
 		if err == nil && num > max {

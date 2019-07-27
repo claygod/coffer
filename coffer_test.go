@@ -66,7 +66,7 @@ func TestNewCoffer(t *testing.T) {
 		t.Errorf("Failed to start")
 		return
 	}
-	for i := 40; i < 70; i++ {
+	for i := 80; i < 100; i++ {
 		if err := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); err != nil {
 			t.Error(err)
 		}

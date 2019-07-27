@@ -100,16 +100,16 @@ func (c *Coffer) Start() bool { // return prev state
 		return false
 	}
 	fmt.Println("recInteractor.Start")
-	// if !c.folInteractor.Start() {
-	// 	c.resControl.Stop()
-	// 	c.recInteractor.Stop()
-	// 	return false
-	// }
-	// fmt.Println("folInteractor.Start")
+	if !c.folInteractor.Start() {
+		c.resControl.Stop()
+		c.recInteractor.Stop()
+		return false
+	}
+	fmt.Println("folInteractor.Start")
 	if !c.hasp.Start() {
 		c.resControl.Stop()
 		c.recInteractor.Stop()
-		//c.folInteractor.Stop()
+		c.folInteractor.Stop()
 		return false
 	}
 	return true
@@ -124,13 +124,13 @@ func (c *Coffer) Stop() bool {
 	if !c.resControl.Stop() {
 		return false
 	}
-	// if !c.folInteractor.Stop() {
-	// 	c.resControl.Start()
-	// 	return false
-	// }
+	if !c.folInteractor.Stop() {
+		c.resControl.Start()
+		return false
+	}
 	if !c.recInteractor.Stop() {
 		c.resControl.Start()
-		//c.folInteractor.Start()
+		c.folInteractor.Start()
 		return false
 	}
 	return true
