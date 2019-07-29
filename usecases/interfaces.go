@@ -52,4 +52,5 @@ type HandleStore interface {
 type FileNamer interface {
 	GetNewFileName(ext string) (string, error)
 	GetAfterLatest(last string) ([]string, error)
+	GetLatestFileName(ext string) (string, error)
 }

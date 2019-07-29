@@ -77,7 +77,7 @@ func New(config *Config) (*Coffer, error) {
 	}
 	c.recInteractor = ri
 
-	c.folInteractor = usecases.NewFollowInteractor( // FollowInteractor
+	fi, err := usecases.NewFollowInteractor( // FollowInteractor
 		c.logger,
 		c.config.UsecasesConfig, //config *Config,
 		chp,                     //*checkpoint,
@@ -86,6 +86,11 @@ func New(config *Config) (*Coffer, error) {
 		fileNamer,
 		startstop.New(),
 	)
+	if err != nil {
+		return nil, err
+	}
+	c.folInteractor = fi
+
 	fmt.Println(fileNamer)
 	return c, nil
 }

@@ -14,6 +14,7 @@ import (
 )
 
 type Operations struct {
+	//TODO: add logger
 	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
@@ -72,11 +73,19 @@ func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error) 
 	if err != nil {
 		return nil, err
 	}
+	defer opFile.Close()
 	ops, err := o.loadOperationsFromFile(opFile)
-	opFile.Close()
-	return ops, err
+	if err != nil {
+		//TODO: тут логировать эту ошибку, т.к. она скорее warning
+	}
+	return ops, nil
 }
 
+/*
+loadOperationsFromFile - скачиваем операции из файла, возвращаемая ошибка
+скорей всего означает, что какая-то операция не полностью была записана и невозможно
+было её прочитать. Соответственно, ошибки не критические, и скорее нужны для логов.
+*/
 func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
 	// st, _ := fl.Stat()
 	// flSize := st.Size()

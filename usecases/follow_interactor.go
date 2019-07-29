@@ -7,8 +7,6 @@ package usecases
 import (
 	"fmt"
 	"io/ioutil"
-
-	//"sort"
 	"strings"
 	"time"
 
@@ -39,7 +37,7 @@ func NewFollowInteractor(
 	//lastFileNameLog string,
 	hasp Starter,
 
-) *FollowInteractor {
+) (*FollowInteractor, error) {
 	fi := &FollowInteractor{
 		logger:          logger,
 		config:          config,
@@ -50,8 +48,20 @@ func NewFollowInteractor(
 		lastFileNameLog: "-1.log", //TODO: in config
 		hasp:            hasp,
 	}
-	//TODO: закачать последний чекпойнт и выставить его номер
-	return fi
+	// закачать последний чекпойнт и выставить его номер
+	fChName, err := fi.filenamer.GetLatestFileName(extCheck + extPoint)
+	if err != nil {
+		return nil, err
+	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
+		if err := fi.chp.load(fi.repo, fChName); err != nil { //загружаем последний checkpoint
+			return nil, err
+		}
+		fi.lastFileNameLog = strings.Replace(fChName, extCheck+extPoint, extLog, 1)
+	} /* else {
+		fChName = "-1" + extCheck + extPoint
+	}*/
+
+	return fi, nil
 }
 
 func (f *FollowInteractor) Start() bool {
@@ -105,7 +115,7 @@ func (f *FollowInteractor) follow() error {
 	fmt.Println("F:запущен follow, list: ", list)
 	for _, lFileName := range list {
 		logFileName := f.config.DirPath + lFileName
-		ops, err := f.opr.loadFromFile(logFileName) //TODO: тут ошибка возвращается, проверить
+		ops, err := f.opr.loadFromFile(logFileName) //тут ошибка возвращается только если нет каталога или ещё что-то подобное
 		if err != nil {
 			fmt.Println("F:err1: ", err)
 			return err

@@ -62,10 +62,11 @@ func NewRecordsInteractor(
 	}
 
 	// загрузить последнюю версию checkpoint
-	fChName, err := r.findLatestCheckpoint()
+	fChName, err := r.filenamer.GetLatestFileName(extCheck + extPoint)
+	// fChName, err := r.findLatestCheckpoint()
 	if err != nil {
 		return nil, err
-	} else if fChName != extCheck+extPoint {
+	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
 		if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
 			return nil, err
 		}
@@ -73,13 +74,22 @@ func NewRecordsInteractor(
 		fChName = "-1" + extCheck + extPoint
 	}
 
-	// загрузить и выполнить все имеющиеся последующие логи
+	// загрузить все имеющиеся последующие логи
 	logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
 		return nil, err
 	}
-	if err := r.loadLogs(logsList); err != nil {
-		return nil, err
+
+	// выполнить все имеющиеся последующие логи
+	if len(logsList) > 0 {
+		// eсли последний по номеру не `checkpoint`, значит была аварийная остановка,
+		// и нужно загрузить всё, что можно, сохранить, и только потом продолжить
+		if err := r.loadLogs(logsList); err != nil {
+			return nil, err
+		}
+		if err := r.save(); err != nil {
+			return nil, err
+		}
 	}
 
 	return r, nil
@@ -312,16 +322,16 @@ func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, e
 	return make([]string, 0), nil
 }
 
-func (r *RecordsInteractor) findLatestCheckpoint() (string, error) { //TODO: перести в filenamer
-	fNamesList, err := r.getFilesByExtList(extCheck + extPoint)
-	if err != nil {
-		return "", err
-	}
-	if len(fNamesList) == 0 {
-		return extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
-	}
-	return fNamesList[len(fNamesList)-1], nil
-}
+// func (r *RecordsInteractor) findLatestCheckpoint() (string, error) { //TODO: перести в filenamer
+// 	fNamesList, err := r.getFilesByExtList(extCheck + extPoint)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	if len(fNamesList) == 0 {
+// 		return extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
+// 	}
+// 	return fNamesList[len(fNamesList)-1], nil
+// }
 
 func (r *RecordsInteractor) getFilesByExtList(ext string) ([]string, error) {
 	files, err := ioutil.ReadDir(r.config.DirPath)
