@@ -154,7 +154,7 @@ func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 		return nil, err
 	}
 	ln := len(fNamesList)
-	fmt.Println("F:len(fNamesList):", len(fNamesList))
+	//fmt.Println("F:len(fNamesList):", len(fNamesList))
 	if ln <= 1 { // последний лог мы тоже не берём чтобы не ткнуться в ещё наполняемый лог
 		return make([]string, 0), nil
 	}

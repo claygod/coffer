@@ -68,7 +68,7 @@ func (c *checkpoint) saveToFile(repo domain.RecordsRepository, f *os.File) error
 }
 
 func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error {
-	f, err := os.Open(c.config.DirPath + "/" + fileName)
+	f, err := os.Open(fileName) // c.config.DirPath + "/" +
 	if err != nil {
 		return err
 	}

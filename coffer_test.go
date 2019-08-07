@@ -34,8 +34,8 @@ func TestNewCoffer(t *testing.T) {
 		LimitRecordsPerLogfile: 5,
 	}
 	ucCnf := &usecases.Config{
-		FollowPause:             1 * time.Second,
-		ChagesByCheckpoint:      8,
+		FollowPause:             400 * time.Millisecond,
+		ChagesByCheckpoint:      2,
 		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,

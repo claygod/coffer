@@ -75,8 +75,10 @@ func NewRecordsInteractor(
 	}
 
 	// загрузить все имеющиеся последующие логи
-	logsList, err := r.findLogsAfterCheckpoint(fChName)
+	logsList, err := r.filenamer.GetAfterLatest(fChName)
+	//logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
+		fmt.Println(22220001, fChName, err)
 		return nil, err
 	}
 

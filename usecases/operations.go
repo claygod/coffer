@@ -14,15 +14,16 @@ import (
 )
 
 type Operations struct {
-	//TODO: add logger
+	logger     Logger
 	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
 	trn        *Transaction
 }
 
-func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
+func NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
 	return &Operations{
+		logger:     logger,
 		config:     config,
 		reqCoder:   reqCoder,
 		resControl: resControl,
@@ -35,6 +36,7 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 		if !o.resControl.GetPermission(int64(len(op.Body))) {
 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
 		}
+		fmt.Println("Operation: ", string(op.Body))
 		switch op.Code {
 		case codeWriteList:
 			reqWL, err := o.reqCoder.ReqWriteListDecode(op.Body)
@@ -77,6 +79,7 @@ func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error) 
 	ops, err := o.loadOperationsFromFile(opFile)
 	if err != nil {
 		//TODO: тут логировать эту ошибку, т.к. она скорее warning
+		o.logger.Warning(err)
 	}
 	return ops, nil
 }
@@ -92,13 +95,15 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 	counReadedBytes := 0
 	ops := make([]*domain.Operation, 0, 16)
 	rSize := make([]byte, 8)
+	var errOut error
 	for {
 		_, err := fl.Read(rSize)
 		if err != nil {
-			if err == io.EOF {
-				break
+			if err != io.EOF {
+				errOut = err //o.logger.Warning(err)
 			}
-			return nil, err
+			break
+			//return nil, err
 		}
 		counReadedBytes += 8
 		rSuint64 := bytesToUint64(rSize)
@@ -108,17 +113,25 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 			// if err == io.EOF { // тут EOF не должно быть?????
 			// break
 			// }
-			return nil, err
+
+			errOut = err //o.logger.Warning(err)
+			break
+			//return nil, err
 		} else if n != int(rSuint64) {
-			return nil, fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
+			errOut = fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
+			//o.logger.Warning(fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64))
+			break
+			//return nil, fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
 		}
 		op, err := o.logToOperat(bTotal)
 		if err != nil {
-			return nil, err
+			errOut = err // o.logger.Warning(err)
+			break
+			//return nil, err
 		}
 		ops = append(ops, op)
 	}
-	return ops, nil
+	return ops, errOut
 }
 
 func (o *Operations) operatToLog(op *domain.Operation) ([]byte, error) {

@@ -77,10 +77,11 @@ func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 	}
 }
 
-func (f *FileNamer) GetAfterLatest(last string) ([]string, error) {
+func (f *FileNamer) GetAfterLatest(last string) ([]string, error) { //TODO: тут названия файлов возвращаются БЕЗ директории
 	f.m.Lock()
 	defer f.m.Unlock()
-	lst := strings.Split(last, ".")
+	lstTemp := strings.Split(last, "/") // на случай, если аргумент прилетел вместе с путём (директорией)
+	lst := strings.Split(lstTemp[len(lstTemp)-1], ".")
 	lastInt, err := strconv.Atoi(lst[0]) //      strconv.ParseInt(fNumStr, 10, 64)
 	if err != nil || len(lst) != 2 {
 		return nil, fmt.Errorf("Filenamer parse string (%s) error: %v", last, err)
@@ -90,7 +91,7 @@ func (f *FileNamer) GetAfterLatest(last string) ([]string, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error finding files by ext: %v", err)
 	}
-	fmt.Println("FileNamer: fNamesList: ", lastInt, lst, fNamesList)
+	//fmt.Println("FileNamer: fNamesList: ", lastInt, lst, fNamesList)
 	numList := make([]int, 0, len(fNamesList))
 	for _, fName := range fNamesList {
 		fNumStr := strings.Replace(fName, "."+lst[1], "", 1)
@@ -102,7 +103,7 @@ func (f *FileNamer) GetAfterLatest(last string) ([]string, error) {
 		numList = append(numList, fNumInt)
 	}
 	sort.Ints(numList)
-	fmt.Println("FileNamer: numList: ", numList)
+	//fmt.Println("FileNamer: numList: ", numList)
 	outListInt := make([]int, 0, len(numList))
 	for i, fNum := range numList {
 		if fNum > lastInt {
@@ -110,12 +111,12 @@ func (f *FileNamer) GetAfterLatest(last string) ([]string, error) {
 			break
 		}
 	}
-	fmt.Println("FileNamer: outListInt: ", outListInt)
+	//fmt.Println("FileNamer: outListInt: ", outListInt)
 	outListStr := make([]string, 0, len(outListInt))
 	for _, v := range outListInt {
 		outListStr = append(outListStr, strconv.Itoa(v)+"."+lst[1])
 	}
-	fmt.Println("FileNamer: outListStr: ", outListStr)
+	//fmt.Println("FileNamer: outListStr: ", outListStr)
 	return outListStr, nil
 }
 
