@@ -6,6 +6,7 @@ package coffer
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/services"
@@ -94,6 +95,7 @@ func New(config *Config) (*Coffer, error) {
 }
 
 func (c *Coffer) Start() bool { // return prev state
+	time.Sleep(1 * time.Second) //TODO: del
 	//defer c.checkPanic()
 	if !c.resControl.Start() {
 		return false

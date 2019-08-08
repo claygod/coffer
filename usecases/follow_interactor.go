@@ -120,11 +120,14 @@ func (f *FollowInteractor) follow() error {
 			fmt.Println("F:err1: ", err)
 			return err
 		}
+		if ops == nil { //значит файл пустой
+			continue
+		}
 		if err := f.opr.DoOperations(ops, f.repo); err != nil {
 			fmt.Println("F:err2: ", err)
 			return err
 		}
-		fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint)
+		fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint, f.lastFileNameLog)
 		f.addChangesCounter(ops)
 		if f.changesCounter > f.config.ChagesByCheckpoint && logFileName != f.lastFileNameLog {
 			fmt.Println("F:создал новый checkpoint: ", logFileName)
@@ -133,8 +136,8 @@ func (f *FollowInteractor) follow() error {
 				return err
 			}
 			f.changesCounter = 0
-			f.lastFileNameLog = logFileName
 		}
+		f.lastFileNameLog = logFileName
 	}
 	return nil
 }

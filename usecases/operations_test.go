@@ -12,8 +12,9 @@ import (
 	"testing"
 	"time"
 
-	// "github.com/claygod/coffer/domain"
+	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/services"
+
 	// "github.com/claygod/coffer/services/filenamer"
 	// "github.com/claygod/coffer/services/journal"
 	// "github.com/claygod/coffer/services/repositories/handlers"
@@ -30,7 +31,7 @@ func TestNewOperations(t *testing.T) {
 	ucCnf := &Config{
 		FollowPause:             400 * time.Millisecond,
 		ChagesByCheckpoint:      2,
-		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+		DirPath:                 "../test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
 		MaxValueLength:          10000,
@@ -38,17 +39,36 @@ func TestNewOperations(t *testing.T) {
 	rcCnf := &resources.Config{
 		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
 		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     "./test/",       // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+		DirPath:     "../test/",      // "/home/ed/goPath/src/github.com/claygod/coffer/test"
 	}
 	resControl, err := resources.New(rcCnf)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	trn := usecases.NewTransaction(c.handlers)
+	hdl := newMockHandler()
+	trn := NewTransaction(hdl)
 	logger := logger.New(services.NewLog("Coffer "))
 	reqCoder := NewReqCoder()
 
 	//NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations
 	NewOperations(logger, ucCnf, reqCoder, resControl, trn)
+	//TODO oper.DoOperations()
+}
+
+type mockHandler struct {
+}
+
+func newMockHandler() *mockHandler {
+	return &mockHandler{}
+}
+
+func (m *mockHandler) Get(handlerName string) (*domain.Handler, error) {
+	hdl := domain.Handler(func(params interface{}, inMap map[string][]byte) (map[string][]byte, error) {
+		return inMap, nil
+	})
+	return &hdl, nil //TODO
+}
+func (m *mockHandler) Set(handlerName string, handler *domain.Handler) error {
+	return nil //TODO
 }

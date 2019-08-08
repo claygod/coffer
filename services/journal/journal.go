@@ -55,6 +55,10 @@ func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal,
 	}, nil
 }
 
+func (j *Journal) Restart() {
+	atomic.StoreInt64(&j.counter, j.config.LimitRecordsPerLogfile+1)
+}
+
 func (j *Journal) Write(toSave []byte) {
 	clt, err := j.getClient()
 	if err != nil {

@@ -31,6 +31,7 @@ type Logger interface {
 type Journaler interface {
 	Write([]byte)
 	Close()
+	Restart()
 }
 
 type Starter interface {

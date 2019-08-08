@@ -75,23 +75,30 @@ func NewRecordsInteractor(
 	}
 
 	// загрузить все имеющиеся последующие логи
-	logsList, err := r.filenamer.GetAfterLatest(fChName)
+	//strings.Replace(fChName, extCheck+extPoint, extLog )
+
+	logsList, err := r.filenamer.GetAfterLatest(strings.Replace(fChName, extCheck+extPoint, extLog, -1))
 	//logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
-		fmt.Println(22220001, fChName, err)
+		//fmt.Println(22220001, fChName, err)
 		return nil, err
 	}
+	//fmt.Println(22220005, fChName, "logsList: ", len(logsList), logsList)
 
 	// выполнить все имеющиеся последующие логи
 	if len(logsList) > 0 {
+		fmt.Println("====TU++++100")
 		// eсли последний по номеру не `checkpoint`, значит была аварийная остановка,
 		// и нужно загрузить всё, что можно, сохранить, и только потом продолжить
 		if err := r.loadLogs(logsList); err != nil {
+			fmt.Println("====TU++++200", err)
 			return nil, err
 		}
-		if err := r.save(); err != nil {
+		//fmt.Println("Так как `len(logsList) > 0` то мы пробуем ссохраниться в ", strings.Replace(logsList[len(logsList)-1], extLog, extCheck+extPoint, 1))
+		if err := r.save(); err != nil { // strings.Replace(logsList[len(logsList)-1], extLog, extCheck+extPoint, 1)
 			return nil, err
 		}
+		//time.Sleep(1 * time.Second) //TODO: del
 	}
 
 	return r, nil
@@ -121,14 +128,25 @@ func (r *RecordsInteractor) Stop() bool {
 	return true
 }
 
-func (r *RecordsInteractor) save() error {
-	novName, err := r.filenamer.GetNewFileName(extCheck + extPoint)
-	if err != nil {
+func (r *RecordsInteractor) save(args ...string) error {
+	var novName string
+	if len(args) == 1 {
+		novName = args[0]
+	} else {
+		nm, err := r.filenamer.GetNewFileName(extCheck + extPoint)
+		if err != nil {
+			return err
+		} else {
+			novName = nm
+		}
+	}
+	novName = strings.Replace(novName, extCheck+extPoint, extCheck, 1) // r.config.DirPath +
+	//novName := strconv.FormatInt(time.Now().Unix(), 10) + ".check"
+	if err := r.chp.save(r.repo, novName); err != nil {
 		return err
 	}
-	novName = strings.Replace(novName, extCheck+extPoint, extCheck, 1)
-	//novName := strconv.FormatInt(time.Now().Unix(), 10) + ".check"
-	return r.chp.save(r.repo, novName)
+	r.journal.Restart()
+	return nil
 }
 
 func (r *RecordsInteractor) WriteList(req *ReqWriteList) error {

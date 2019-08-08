@@ -32,9 +32,9 @@ func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("save-1")
+	fmt.Println("save-1", chpName)
 	err = c.saveToFile(repo, f)
-	fmt.Println("save-2")
+	fmt.Println("save-2", err)
 	f.Close()
 	if err != nil {
 		os.Remove(chpName)

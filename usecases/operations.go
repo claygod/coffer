@@ -36,7 +36,7 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 		if !o.resControl.GetPermission(int64(len(op.Body))) {
 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
 		}
-		fmt.Println("Operation: ", string(op.Body))
+		//fmt.Println("Operation: ", string(op.Body))
 		switch op.Code {
 		case codeWriteList:
 			reqWL, err := o.reqCoder.ReqWriteListDecode(op.Body)
@@ -76,6 +76,13 @@ func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error) 
 		return nil, err
 	}
 	defer opFile.Close()
+	fInfo, err := opFile.Stat()
+	if err != nil {
+		o.logger.Warning(err)
+		return make([]*domain.Operation, 0), nil //тут можно и nil возвращать, но лучше всё же пустой список
+	} else if fInfo.Size() == 0 {
+		return make([]*domain.Operation, 0), nil //тут можно и nil возвращать, но лучше всё же пустой список
+	}
 	ops, err := o.loadOperationsFromFile(opFile)
 	if err != nil {
 		//TODO: тут логировать эту ошибку, т.к. она скорее warning
@@ -99,27 +106,31 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 	for {
 		_, err := fl.Read(rSize)
 		if err != nil {
+			//fmt.Println("OP:LD:err1: ", err)
 			if err != io.EOF {
 				errOut = err //o.logger.Warning(err)
 			}
 			break
 			//return nil, err
 		}
+		//fmt.Println("OP:LD:1:rSize: ", rSize)
 		counReadedBytes += 8
 		rSuint64 := bytesToUint64(rSize)
+		//fmt.Println("OP:LD:1:rSuint64: ", rSuint64)
 		bTotal := make([]byte, int(rSuint64))
 		n, err := fl.Read(bTotal)
 		if err != nil {
 			// if err == io.EOF { // тут EOF не должно быть?????
 			// break
 			// }
-
+			//fmt.Println("OP:LD:err2: ", err)
 			errOut = err //o.logger.Warning(err)
 			break
 			//return nil, err
 		} else if n != int(rSuint64) {
 			errOut = fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
 			//o.logger.Warning(fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64))
+			//fmt.Println("OP:LD:err3: ", n, int(rSuint64), rSuint64)
 			break
 			//return nil, fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
 		}
@@ -129,6 +140,7 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 			break
 			//return nil, err
 		}
+		//fmt.Println("OP:LD:OP: ", op)
 		ops = append(ops, op)
 	}
 	return ops, errOut
@@ -136,7 +148,7 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 
 func (o *Operations) operatToLog(op *domain.Operation) ([]byte, error) {
 	var buf bytes.Buffer
-	if _, err := buf.Write(uint64ToBytes(uint64(len(op.Body) + 1))); err != nil {
+	if _, err := buf.Write(uint64ToBytes(uint64(len(op.Body) + 2))); err != nil { //TODO +1
 		return nil, err
 	}
 	if err := buf.WriteByte(op.Code); err != nil {

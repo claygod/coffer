@@ -50,11 +50,26 @@ func (f *FileNamer) GetNewFileName(ext string) (string, error) {
 
 	f.m.Lock()
 	defer f.m.Unlock()
+	//if ext == ".log" {
 	latestNum, err := f.findLatestNum([]string{".log", ".check", ".checkpoint"})
 	if err != nil {
 		return "", fmt.Errorf("Error finding a new name: %v", err)
 	}
 	return f.dirPath + strconv.FormatInt(latestNum+1, 10) + ext, nil
+	// }
+	// latestNumLog, err := f.findLatestNum([]string{".log"}) // для ".checkpoint"
+	// if err != nil {
+	// 	return "", fmt.Errorf("Error finding a new name: %v", err)
+	// }
+	// latestNumChPn, err := f.findLatestNum([]string{".check", ".checkpoint"}) // для ".checkpoint"
+	// if err != nil {
+	// 	return "", fmt.Errorf("Error finding a new name: %v", err)
+	// }
+	// if latestNumLog > latestNumChPn {
+	// 	return f.dirPath + strconv.FormatInt(latestNumLog, 10) + ext, nil
+	// }
+	// return f.dirPath + strconv.FormatInt(latestNumChPn+1, 10) + ext, nil
+
 }
 
 func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
@@ -152,23 +167,23 @@ func (f *FileNamer) findLatestNum(extList []string) (int64, error) {
 	return max, nil
 }
 
-func (f *FileNamer) findLatestFile(ext string) (string, error) {
-	fNamesList, err := f.getFilesByExtList(ext)
-	if err != nil {
-		return "", err
-	}
-	ln := len(fNamesList)
-	switch {
-	case ln == 0:
-		return "", nil
-	case ln == 1:
-		return fNamesList[0], nil
-	default:
-		sort.Strings(fNamesList)
-		return fNamesList[len(fNamesList)-1], nil
-	}
-	//return fNamesList, nil
-}
+// func (f *FileNamer) findLatestFile(ext string) (string, error) {
+// 	fNamesList, err := f.getFilesByExtList(ext)
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	ln := len(fNamesList)
+// 	switch {
+// 	case ln == 0:
+// 		return "", nil
+// 	case ln == 1:
+// 		return fNamesList[0], nil
+// 	default:
+// 		sort.Strings(fNamesList)
+// 		return fNamesList[len(fNamesList)-1], nil
+// 	}
+// 	//return fNamesList, nil
+// }
 
 func (f *FileNamer) findMaxFile(ext string) (int64, error) {
 	fNamesList, err := f.getFilesByExtList(ext)
