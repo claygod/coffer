@@ -7,13 +7,17 @@ package usecases
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
+
+	//"sync"
 
 	"github.com/claygod/coffer/domain"
 )
 
 type FollowInteractor struct {
+	//m               sync.Mutex
 	logger          Logger
 	config          *Config
 	chp             *checkpoint
@@ -51,7 +55,8 @@ func NewFollowInteractor(
 	// закачать последний чекпойнт и выставить его номер
 	fChName, err := fi.filenamer.GetLatestFileName(extCheck + extPoint)
 	if err != nil {
-		return nil, err
+		return nil, err //TODO: тут надо реализовать кучу попыток с переходами к предыдущим номерам при неудаче!!!!!! - в отдельном методе
+		//TODO: может быть битые чекпоинты переименовывать?
 	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
 		if err := fi.chp.load(fi.repo, fChName); err != nil { //загружаем последний checkpoint
 			return nil, err
@@ -135,11 +140,43 @@ func (f *FollowInteractor) follow() error {
 				fmt.Println("F:что-то пошло не так: ", err)
 				return err
 			}
+			if f.config.RemoveUnlessLogs {
+				f.removingUselessLogs(logFileName)
+			}
 			f.changesCounter = 0
 		}
 		f.lastFileNameLog = logFileName
 	}
 	return nil
+}
+
+func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: учёт и удаление ненужных логов при усложнении вынести в отдельную сущность
+	// f.m.Lock()
+	// defer f.m.Unlock()
+	fmt.Println("_______lastLogPath_______: ", lastLogPath)
+	list1, err := f.filenamer.GetHalf(lastLogPath, false)
+	if err != nil {
+		f.logger.Warning(err)
+	}
+	//fmt.Println("_______list1_______: ", list1)
+	for _, lgName := range list1 {
+		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
+		if err != nil {
+			f.logger.Warning(err)
+		}
+	}
+
+	list2, err := f.filenamer.GetHalf(strings.Replace(lastLogPath, extLog, extCheck+extPoint, 1), false)
+	if err != nil {
+		f.logger.Warning(err)
+	}
+	//fmt.Println("_______list2_______: ", list2)
+	for _, lgName := range list2 {
+		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
+		if err != nil {
+			f.logger.Warning(err)
+		}
+	}
 }
 
 func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {

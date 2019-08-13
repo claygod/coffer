@@ -40,6 +40,7 @@ func TestNewCoffer(t *testing.T) {
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
 		MaxValueLength:          10000,
+		RemoveUnlessLogs:        true, // чистим логи после использования
 	}
 	rcCnf := &resources.Config{
 		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)

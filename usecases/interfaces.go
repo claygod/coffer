@@ -53,5 +53,6 @@ type HandleStore interface {
 type FileNamer interface {
 	GetNewFileName(ext string) (string, error)
 	GetAfterLatest(last string) ([]string, error)
+	GetHalf(last string, more bool) ([]string, error)
 	GetLatestFileName(ext string) (string, error)
 }

@@ -65,7 +65,7 @@ func NewRecordsInteractor(
 	fChName, err := r.filenamer.GetLatestFileName(extCheck + extPoint)
 	// fChName, err := r.findLatestCheckpoint()
 	if err != nil {
-		return nil, err
+		return nil, err //TODO: тут надо реализовать кучу попыток с переходами к предыдущим номерам при неудаче!!!!!! - в отдельном методе
 	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
 		if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
 			return nil, err
@@ -124,6 +124,8 @@ func (r *RecordsInteractor) Stop() bool {
 			Send()
 		//r.logger.Error(err)
 		return false
+	} else if r.config.RemoveUnlessLogs {
+		//TODO: тут можно удалять всё старьё кроме последнего чекпоинта
 	}
 	return true
 }
