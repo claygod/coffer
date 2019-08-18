@@ -64,40 +64,32 @@ func NewRecordsInteractor(
 		hasp:       hasp,
 	}
 
-	// загрузить последнюю версию checkpoint
-	fChName, err := r.loadLatestValidCheckpoint()
+	chpList, err := r.filenamer.GetHalf("-1"+extCheck+extPoint, true)
+	if err != nil {
+		return nil, err
+	}
+	fChName, err := r.loader.LoadLatestValidCheckpoint(chpList, r.repo) // загрузить последнюю валидную версию checkpoint
 	if err != nil {
 		r.logger.Warning(err)
 		fChName = "-1" + extCheck + extPoint
 	}
 
 	// загрузить все имеющиеся последующие логи
-	//strings.Replace(fChName, extCheck+extPoint, extLog )
-
 	logsList, err := r.filenamer.GetHalf(strings.Replace(fChName, extCheck+extPoint, extLog, -1), true) // GetAfterLatest(strings.Replace(fChName, extCheck+extPoint, extLog, -1))
-	//logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
 		//fmt.Println(22220001, fChName, err)
 		return nil, err
 	}
-	fmt.Println("----------------Найден список логов ", logsList)
-	//fmt.Println(22220005, fChName, "logsList: ", len(logsList), logsList)
-
 	// выполнить все имеющиеся последующие логи
 	if len(logsList) > 0 {
-		fmt.Println("====TU++++100")
 		// eсли последний по номеру не `checkpoint`, значит была аварийная остановка,
 		// и нужно загрузить всё, что можно, сохранить, и только потом продолжить
-
-		if err := r.loader.LoadLogs(logsList); err != nil {
-			fmt.Println("====TU++++200", err)
+		if err := r.loader.LoadLogs(logsList, r.repo); err != nil {
 			return nil, err
 		}
-		//fmt.Println("Так как `len(logsList) > 0` то мы пробуем ссохраниться в ", strings.Replace(logsList[len(logsList)-1], extLog, extCheck+extPoint, 1))
-		if err := r.save(); err != nil { // strings.Replace(logsList[len(logsList)-1], extLog, extCheck+extPoint, 1)
+		if err := r.save(); err != nil {
 			return nil, err
 		}
-		//time.Sleep(1 * time.Second) //TODO: del
 	}
 
 	return r, nil
@@ -142,7 +134,6 @@ func (r *RecordsInteractor) save(args ...string) error {
 		}
 	}
 	novName = strings.Replace(novName, extCheck+extPoint, extCheck, 1) // r.config.DirPath +
-	//novName := strconv.FormatInt(time.Now().Unix(), 10) + ".check"
 	if err := r.chp.save(r.repo, novName); err != nil {
 		return err
 	}
@@ -164,7 +155,6 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) error {
 	if !r.resControl.GetPermission(int64(len(opBytes))) {
 		return fmt.Errorf("Insufficient resources (memory, disk)")
 	}
-	//fmt.Println("RI: step 1")
 	// блокируем нужные записи
 	keys := r.getKeysFromMap(req.List)
 	r.porter.Catch(keys)
@@ -199,28 +189,6 @@ func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) error {
 	return r.repo.DelList(req.Keys)
 }
 
-func (r *RecordsInteractor) loadLatestValidCheckpoint() (string, error) {
-	chpList, err := r.filenamer.GetHalf("-1"+extCheck+extPoint, true)
-	if err != nil {
-		return "", err
-	}
-	fmt.Println("----------------Найден список чекпоинтов ", chpList)
-	for i := len(chpList) - 1; i >= 0; i-- {
-		fChName := r.config.DirPath + chpList[i]
-		fmt.Println("----------------currrrrrrrent ---- ", fChName)
-		if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
-			if err := r.loader.LoadCheckpoint(fChName); err != nil { //загружаем последний checkpoint // chp.  load(r.repo, fChName)
-				r.logger.Info("=================" + err.Error())
-			} else {
-				fmt.Println("----------------Найден чекпоинт ", fChName)
-				fmt.Println("----------------Вот сколько теперь записей: ", r.repo.CountRecords())
-				return fChName, nil
-			}
-		}
-	}
-	return "-1" + extCheck + extPoint, nil
-}
-
 func (r *RecordsInteractor) reqWriteListToLog(req *ReqWriteList) ([]byte, error) {
 	// req маршаллим в байты
 	reqBytes, err := r.coder.ReqWriteListEncode(req)
@@ -250,20 +218,6 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	// операцию маршаллим в байты
 	return r.opr.operatToLog(op)
 }
-
-// func (r *RecordsInteractor) GetRecords([]string) ([]*domain.Record, error) { // (map[string][]byte, error)
-// 	return nil, nil
-// }
-
-// func (r *RecordsInteractor) SetRecords([]*domain.Record) error { // map[string][]byte
-// 	return nil
-// }
-// func (r *RecordsInteractor) DelRecords([]string) error {
-// 	return nil
-// }
-// func (r *RecordsInteractor) SetUnsafeRecord(*domain.Record) error {
-// 	return nil
-// }
 
 func (r *RecordsInteractor) Transaction(req *ReqTransaction) error { // interface{}, map[string][]byte, *domain.Handler
 	if !r.hasp.Add() {
@@ -321,30 +275,7 @@ func (r *RecordsInteractor) findExtraKeys(writeList map[string][]byte, curMap ma
 	return nil
 }
 
-// func (r *RecordsInteractor) loadLogs(fList []string) error {
-// 	for _, fName := range fList {
-// 		ops, err := r.opr.loadFromFile(r.config.DirPath + fName)
-// 		if err != nil {
-// 			err = fmt.Errorf("Загрузка логов остановлена на файле `%s` с ошибкой `%s`", fName, err.Error())
-// 			if r.config.AllowStartupErrLoadLogs {
-// 				r.logger.Info(err).
-// 					Context("Object", "RecordsInteractor").
-// 					Context("Method", "loadLogs").
-// 					Send()
-// 				//r.logger.Info(err)
-// 				return nil
-// 			}
-// 			return err
-// 		}
-// 		if err := r.opr.DoOperations(ops, r.repo); err != nil {
-// 			return err
-// 		}
-// 	}
-// 	return nil
-// }
-
 func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, error) {
-	//fmt.Println("RI:findLogsAfterCheckpoint: ", chpName)
 	logBarrier, err := strconv.ParseInt(strings.Replace(chpName, extCheck+extPoint, "", 1), 10, 64)
 	if err != nil {
 		return nil, err
@@ -364,17 +295,6 @@ func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, e
 	}
 	return make([]string, 0), nil
 }
-
-// func (r *RecordsInteractor) findLatestCheckpoint() (string, error) { //TODO: перести в filenamer
-// 	fNamesList, err := r.getFilesByExtList(extCheck + extPoint)
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	if len(fNamesList) == 0 {
-// 		return extCheck + extPoint, nil //fmt.Errorf("Checkpoint not found (path: %s)", r.config.DirPath)
-// 	}
-// 	return fNamesList[len(fNamesList)-1], nil
-// }
 
 func (r *RecordsInteractor) getFilesByExtList(ext string) ([]string, error) {
 	files, err := ioutil.ReadDir(r.config.DirPath)

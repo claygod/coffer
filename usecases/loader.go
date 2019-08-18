@@ -15,34 +15,43 @@ type Loader struct {
 	logger Logger
 	chp    *checkpoint
 	opr    *Operations
-	riRepo domain.RecordsRepository
-	fiRepo domain.RecordsRepository
 }
 
-func NewLoader(config *Config, lgr Logger, chp *checkpoint, opr *Operations, riRepo domain.RecordsRepository, fiRepo domain.RecordsRepository) *Loader {
+func NewLoader(config *Config, lgr Logger, chp *checkpoint, opr *Operations) *Loader {
 	return &Loader{
 		config: config,
 		logger: lgr,
 		chp:    chp,
 		opr:    opr,
-		riRepo: riRepo,
-		fiRepo: fiRepo,
 	}
 }
 
-func (l *Loader) LoadCheckpoint(chpName string) error {
-	if err := l.chp.load(l.riRepo, chpName); err != nil { //загружаем последний checkpoint
-		l.riRepo.Reset() //TODO:  это делается в checkpoins, но можно и продублировать (пока)
-		return err
-	} else if err := l.chp.load(l.fiRepo, chpName); err != nil {
-		l.riRepo.Reset() //TODO:  это делается в checkpoins, но можно и продублировать (пока)
-		l.fiRepo.Reset() //TODO:  это делается в checkpoins, но можно и продублировать (пока)
+func (l *Loader) LoadLatestValidCheckpoint(chpList []string, repo domain.RecordsRepository) (string, error) {
+	for i := len(chpList) - 1; i >= 0; i-- {
+		fChName := l.config.DirPath + chpList[i]
+		//fmt.Println("--------77--------currrrrrrrent ---- ", fChName)
+		if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
+			if err := l.LoadCheckpoint(fChName, repo); err != nil { //загружаем последний checkpoint // chp.  load(r.repo, fChName)
+				l.logger.Info(err)
+			} else {
+				//fmt.Println("-------77---------Найден чекпоинт ", fChName)
+				//fmt.Println("--------77--------Вот сколько теперь записей: ", repo.CountRecords())
+				return fChName, nil
+			}
+		}
+	}
+	return "-1" + extCheck + extPoint, nil
+}
+
+func (l *Loader) LoadCheckpoint(chpName string, repo domain.RecordsRepository) error {
+	if err := l.chp.load(repo, chpName); err != nil { //загружаем последний checkpoint
+		repo.Reset() //TODO:  это делается в checkpoins, но можно и продублировать (пока)
 		return err
 	}
 	return nil
 }
 
-func (l *Loader) LoadLogs(fList []string) error {
+func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) error {
 	for _, fName := range fList {
 		ops, err := l.opr.loadFromFile(l.config.DirPath + fName) //TODO: тут добавляем директорию к пути
 		if err != nil {
@@ -56,10 +65,7 @@ func (l *Loader) LoadLogs(fList []string) error {
 			}
 			return err
 		}
-		if err := l.opr.DoOperations(ops, l.riRepo); err != nil {
-			return err
-		}
-		if err := l.opr.DoOperations(ops, l.fiRepo); err != nil {
+		if err := l.opr.DoOperations(ops, repo); err != nil {
 			return err
 		}
 	}
