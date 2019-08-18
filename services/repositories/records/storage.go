@@ -109,3 +109,7 @@ func (r *storage) iterator(chRecord chan *domain.Record, chFinish chan struct{})
 	}
 	close(chFinish)
 }
+
+func (r *storage) countRecords() int {
+	return len(r.data)
+}

@@ -20,6 +20,7 @@ import (
 type RecordsInteractor struct {
 	config     *Config
 	logger     Logger
+	loader     *Loader
 	chp        *checkpoint
 	opr        *Operations
 	coder      *ReqCoder
@@ -35,6 +36,7 @@ type RecordsInteractor struct {
 func NewRecordsInteractor(
 	config *Config,
 	logger Logger,
+	loader *Loader,
 	chp *checkpoint,
 	opr *Operations,
 	coder *ReqCoder,
@@ -49,6 +51,7 @@ func NewRecordsInteractor(
 	r := &RecordsInteractor{
 		config:     config,
 		logger:     logger,
+		loader:     loader,
 		chp:        chp,
 		opr:        opr,
 		coder:      coder,
@@ -62,27 +65,22 @@ func NewRecordsInteractor(
 	}
 
 	// загрузить последнюю версию checkpoint
-	fChName, err := r.filenamer.GetLatestFileName(extCheck + extPoint)
-	// fChName, err := r.findLatestCheckpoint()
+	fChName, err := r.loadLatestValidCheckpoint()
 	if err != nil {
-		return nil, err //TODO: тут надо реализовать кучу попыток с переходами к предыдущим номерам при неудаче!!!!!! - в отдельном методе
-	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
-		if err := r.chp.load(r.repo, fChName); err != nil { //загружаем последний checkpoint
-			return nil, err
-		}
-	} else {
+		r.logger.Warning(err)
 		fChName = "-1" + extCheck + extPoint
 	}
 
 	// загрузить все имеющиеся последующие логи
 	//strings.Replace(fChName, extCheck+extPoint, extLog )
 
-	logsList, err := r.filenamer.GetAfterLatest(strings.Replace(fChName, extCheck+extPoint, extLog, -1))
+	logsList, err := r.filenamer.GetHalf(strings.Replace(fChName, extCheck+extPoint, extLog, -1), true) // GetAfterLatest(strings.Replace(fChName, extCheck+extPoint, extLog, -1))
 	//logsList, err := r.findLogsAfterCheckpoint(fChName)
 	if err != nil {
 		//fmt.Println(22220001, fChName, err)
 		return nil, err
 	}
+	fmt.Println("----------------Найден список логов ", logsList)
 	//fmt.Println(22220005, fChName, "logsList: ", len(logsList), logsList)
 
 	// выполнить все имеющиеся последующие логи
@@ -90,7 +88,8 @@ func NewRecordsInteractor(
 		fmt.Println("====TU++++100")
 		// eсли последний по номеру не `checkpoint`, значит была аварийная остановка,
 		// и нужно загрузить всё, что можно, сохранить, и только потом продолжить
-		if err := r.loadLogs(logsList); err != nil {
+
+		if err := r.loader.LoadLogs(logsList); err != nil {
 			fmt.Println("====TU++++200", err)
 			return nil, err
 		}
@@ -200,6 +199,28 @@ func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) error {
 	return r.repo.DelList(req.Keys)
 }
 
+func (r *RecordsInteractor) loadLatestValidCheckpoint() (string, error) {
+	chpList, err := r.filenamer.GetHalf("-1"+extCheck+extPoint, true)
+	if err != nil {
+		return "", err
+	}
+	fmt.Println("----------------Найден список чекпоинтов ", chpList)
+	for i := len(chpList) - 1; i >= 0; i-- {
+		fChName := r.config.DirPath + chpList[i]
+		fmt.Println("----------------currrrrrrrent ---- ", fChName)
+		if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
+			if err := r.loader.LoadCheckpoint(fChName); err != nil { //загружаем последний checkpoint // chp.  load(r.repo, fChName)
+				r.logger.Info("=================" + err.Error())
+			} else {
+				fmt.Println("----------------Найден чекпоинт ", fChName)
+				fmt.Println("----------------Вот сколько теперь записей: ", r.repo.CountRecords())
+				return fChName, nil
+			}
+		}
+	}
+	return "-1" + extCheck + extPoint, nil
+}
+
 func (r *RecordsInteractor) reqWriteListToLog(req *ReqWriteList) ([]byte, error) {
 	// req маршаллим в байты
 	reqBytes, err := r.coder.ReqWriteListEncode(req)
@@ -300,27 +321,27 @@ func (r *RecordsInteractor) findExtraKeys(writeList map[string][]byte, curMap ma
 	return nil
 }
 
-func (r *RecordsInteractor) loadLogs(fList []string) error {
-	for _, fName := range fList {
-		ops, err := r.opr.loadFromFile(r.config.DirPath + fName)
-		if err != nil {
-			err = fmt.Errorf("Загрузка логов остановлена на файле `%s` с ошибкой `%s`", fName, err.Error())
-			if r.config.AllowStartupErrLoadLogs {
-				r.logger.Info(err).
-					Context("Object", "RecordsInteractor").
-					Context("Method", "loadLogs").
-					Send()
-				//r.logger.Info(err)
-				return nil
-			}
-			return err
-		}
-		if err := r.opr.DoOperations(ops, r.repo); err != nil {
-			return err
-		}
-	}
-	return nil
-}
+// func (r *RecordsInteractor) loadLogs(fList []string) error {
+// 	for _, fName := range fList {
+// 		ops, err := r.opr.loadFromFile(r.config.DirPath + fName)
+// 		if err != nil {
+// 			err = fmt.Errorf("Загрузка логов остановлена на файле `%s` с ошибкой `%s`", fName, err.Error())
+// 			if r.config.AllowStartupErrLoadLogs {
+// 				r.logger.Info(err).
+// 					Context("Object", "RecordsInteractor").
+// 					Context("Method", "loadLogs").
+// 					Send()
+// 				//r.logger.Info(err)
+// 				return nil
+// 			}
+// 			return err
+// 		}
+// 		if err := r.opr.DoOperations(ops, r.repo); err != nil {
+// 			return err
+// 		}
+// 	}
+// 	return nil
+// }
 
 func (r *RecordsInteractor) findLogsAfterCheckpoint(chpName string) ([]string, error) {
 	//fmt.Println("RI:findLogsAfterCheckpoint: ", chpName)

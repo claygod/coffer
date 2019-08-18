@@ -35,7 +35,7 @@ func TestNewCoffer(t *testing.T) {
 	}
 	ucCnf := &usecases.Config{
 		FollowPause:             400 * time.Millisecond,
-		ChagesByCheckpoint:      2000,
+		ChagesByCheckpoint:      1000,
 		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
@@ -68,7 +68,7 @@ func TestNewCoffer(t *testing.T) {
 		t.Errorf("Failed to start")
 		return
 	}
-	for i := 100; i < 150; i++ {
+	for i := 70; i < 99; i++ {
 		if err := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); err != nil {
 			t.Error(err)
 		}
