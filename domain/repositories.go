@@ -5,7 +5,6 @@ package domain
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 type RecordsRepository interface {
-	Reset()
 	WriteList(map[string][]byte)
 	WriteUnsafeRecord(string, []byte)
 	ReadList([]string) (map[string][]byte, error)
@@ -17,7 +16,6 @@ type RecordsRepository interface {
 	//SetUnsafeRecord(*Record)
 	//Transaction(interface{}, map[string][]byte, *Handler) (map[string][]byte, error)
 	Iterator(chan *Record)
-	CountRecords() int
 }
 
 type HandlersRepository interface {

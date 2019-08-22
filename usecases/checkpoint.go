@@ -73,9 +73,6 @@ func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error 
 		return err
 	}
 	defer f.Close()
-	if err := c.loadFromFile(repo, f); err != nil {
-		return err
-	}
 	return c.loadFromFile(repo, f)
 }
 
@@ -87,7 +84,6 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 			if err == io.EOF {
 				break
 			}
-			repo.Reset()
 			return err
 		}
 		rSuint64 := bytesToUint64(rSize)
@@ -102,7 +98,6 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 			// }
 			return err
 		} else if n != int(sizeKey) {
-			repo.Reset()
 			return fmt.Errorf("The key is not fully loaded (%v)", key)
 		}
 
@@ -112,10 +107,8 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 			// if err == io.EOF { // тут EOF не должно быть?
 			// break
 			// }
-			repo.Reset()
 			return err
 		} else if n != int(sizeValue) {
-			repo.Reset()
 			return fmt.Errorf("The value is not fully loaded, (%v)", value)
 		}
 		// rec := &domain.Record{

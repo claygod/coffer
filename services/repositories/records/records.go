@@ -26,12 +26,6 @@ func New() *Records {
 	}
 }
 
-func (s *Records) Reset() {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	s.store = newStorage()
-}
-
 func (s *Records) WriteList(list map[string][]byte) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
@@ -89,10 +83,4 @@ func (s *Records) Iterator(chRecord chan *domain.Record) {
 	s.store.iterator(chRecord, chFinish)
 	<-chFinish
 	close(chRecord)
-}
-
-func (s *Records) CountRecords() int {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	return s.store.countRecords()
 }

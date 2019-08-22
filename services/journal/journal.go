@@ -5,7 +5,12 @@ package journal
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	//"fmt"
+	"fmt"
+	//"io/ioutil"
+	//"os"
+	//"sort"
+	//"strconv"
+	//"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -78,11 +83,12 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	defer j.m.Unlock()
 	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
-		//fmt.Println("Journal-1", j.fileNamer)
+		fmt.Println("Journal-1", j.fileNamer)
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		if err != nil {
 			return nil, err
 		}
+		fmt.Println("Journal-2")
 		clt, err := batcher.Open(nName, j.config.BatchSize)
 		if err != nil {
 			return nil, err
@@ -100,3 +106,50 @@ func (j *Journal) clientBatchClose(clt *batcher.Client) {
 	clt.Close()
 	atomic.AddInt64(&j.countBatchClients, -1)
 }
+
+// func (j *Journal) getNewFileName(dirPath string) (string, error) {
+// 	for i := 0; i < 60; i++ {
+// 		if latestName, err := j.findLatestLog(); err == nil {
+
+// 		}
+
+// 		newFileName := dirPath + strconv.Itoa(int(time.Now().Unix())) + ".log"
+// 		if _, err := os.Stat(newFileName); !os.IsExist(err) {
+// 			return newFileName, nil
+// 		}
+// 		time.Sleep(1 * time.Second)
+// 	}
+// 	return "", fmt.Errorf("Error finding a new name.")
+// }
+
+// func (j *Journal) findLatestLog() (string, error) {
+// 	fNamesList, err := j.getFilesByExtList(".log")
+// 	if err != nil {
+// 		return "", err
+// 	}
+// 	ln := len(fNamesList)
+// 	switch {
+// 	case ln == 0:
+// 		return "0.log", nil
+// 	case ln == 1: // последний лог мы никогда не берём чтобы не ткнуться в ещё наполняемый лог
+// 		return fNamesList[0], nil
+// 	default:
+// 		sort.Strings(fNamesList)
+// 		return fNamesList[len(fNamesList)-1], nil
+// 	}
+// 	//return fNamesList, nil
+// }
+
+// func (j *Journal) getFilesByExtList(ext string) ([]string, error) {
+// 	files, err := ioutil.ReadDir(j.dirPath)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	list := make([]string, 0, len(files))
+// 	for _, fl := range files {
+// 		if strings.HasSuffix(fl.Name(), ext) {
+// 			list = append(list, fl.Name())
+// 		}
+// 	}
+// 	return list, nil
+// }
