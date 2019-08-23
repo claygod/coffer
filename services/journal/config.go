@@ -21,3 +21,9 @@ type Config struct {
 	BatchSize              int
 	LimitRecordsPerLogfile int64
 }
+
+const (
+	stateStopped int64 = iota
+	stateStarted
+	statePanic
+)

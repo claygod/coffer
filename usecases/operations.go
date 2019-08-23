@@ -70,31 +70,26 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 	return nil
 }
 
-func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error) {
+func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error, error) {
 	opFile, err := os.Open(filePath)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 	defer opFile.Close()
 	fInfo, err := opFile.Stat()
-	if err != nil {
-		o.logger.Warning(err)
-		return make([]*domain.Operation, 0), nil //тут можно и nil возвращать, но лучше всё же пустой список
-	} else if fInfo.Size() == 0 {
-		return make([]*domain.Operation, 0), nil //тут можно и nil возвращать, но лучше всё же пустой список
+	if err != nil || fInfo.Size() == 0 {
+		return make([]*domain.Operation, 0), nil, nil //тут можно и nil возвращать, но лучше всё же пустой список
 	}
-	ops, err := o.loadOperationsFromFile(opFile)
-	if err != nil {
-		//TODO: тут логировать эту ошибку, т.к. она скорее warning
-		o.logger.Warning(err)
-	}
-	return ops, nil
+	ops, wrn := o.loadOperationsFromFile(opFile)
+	return ops, nil, wrn
 }
 
 /*
 loadOperationsFromFile - скачиваем операции из файла, возвращаемая ошибка
 скорей всего означает, что какая-то операция не полностью была записана и невозможно
 было её прочитать. Соответственно, ошибки не критические, и скорее нужны для логов.
+(Так как критические, были бы при невозможности открыть файл, отсутствии директории,
+а в данном случае в аргументах уже открытый файл, осталось его только прочитать.)
 */
 func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
 	// st, _ := fl.Stat()

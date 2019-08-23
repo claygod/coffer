@@ -19,6 +19,7 @@ import (
 type FollowInteractor struct {
 	//m               sync.Mutex
 	logger          Logger
+	loader          *Loader
 	config          *Config
 	chp             *checkpoint
 	opr             *Operations
@@ -26,24 +27,23 @@ type FollowInteractor struct {
 	filenamer       FileNamer
 	changesCounter  int64
 	lastFileNameLog string
-	//lastFileNum     int64
-	hasp Starter
+	hasp            Starter
 }
 
 func NewFollowInteractor(
 	logger Logger,
+	loader *Loader,
 	config *Config,
 	chp *checkpoint,
 	opr *Operations,
 	repo domain.RecordsRepository,
 	filenamer FileNamer,
-	//changesCounter  int64,
-	//lastFileNameLog string,
 	hasp Starter,
 
 ) (*FollowInteractor, error) {
 	fi := &FollowInteractor{
 		logger:          logger,
+		loader:          loader,
 		config:          config,
 		chp:             chp,
 		opr:             opr,
@@ -52,19 +52,17 @@ func NewFollowInteractor(
 		lastFileNameLog: "-1.log", //TODO: in config
 		hasp:            hasp,
 	}
-	// закачать последний чекпойнт и выставить его номер
-	fChName, err := fi.filenamer.GetLatestFileName(extCheck + extPoint)
+
+	chpList, err := fi.filenamer.GetHalf("-1"+extCheck+extPoint, true)
 	if err != nil {
-		return nil, err //TODO: тут надо реализовать кучу попыток с переходами к предыдущим номерам при неудаче!!!!!! - в отдельном методе
-		//TODO: может быть битые чекпоинты переименовывать?
-	} else if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
-		if err := fi.chp.load(fi.repo, fChName); err != nil { //загружаем последний checkpoint
-			return nil, err
-		}
-		fi.lastFileNameLog = strings.Replace(fChName, extCheck+extPoint, extLog, 1)
-	} /* else {
+		return nil, err
+	}
+	fChName, err := fi.loader.LoadLatestValidCheckpoint(chpList, fi.repo) // загрузить последнюю валидную версию checkpoint
+	if err != nil {
+		fi.logger.Warning(err)
 		fChName = "-1" + extCheck + extPoint
-	}*/
+	}
+	fi.lastFileNameLog = strings.Replace(fChName, extCheck+extPoint, extLog, 1) //  и выставить его номер
 
 	return fi, nil
 }
@@ -117,19 +115,20 @@ func (f *FollowInteractor) follow() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("F:запущен follow, list: ", list)
+	//fmt.Println("F:запущен follow, list: ", list)
 	for _, lFileName := range list {
 		logFileName := f.config.DirPath + lFileName
-		ops, err := f.opr.loadFromFile(logFileName) //тут ошибка возвращается только если нет каталога или ещё что-то подобное
+		ops, err, wrn := f.opr.loadFromFile(logFileName) //если нет каталога или ещё что-то подобное
 		if err != nil {
-			fmt.Println("F:err1: ", err)
 			return err
+		}
+		if wrn != nil { // wrn означает, что в логе битый файл, а значит, надо остановить фолловера, т.к. дальше могут быть неконсистентные результаты
+			return wrn
 		}
 		if ops == nil { //значит файл пустой
 			continue
 		}
 		if err := f.opr.DoOperations(ops, f.repo); err != nil {
-			fmt.Println("F:err2: ", err)
 			return err
 		}
 		fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint, f.lastFileNameLog)
@@ -153,12 +152,10 @@ func (f *FollowInteractor) follow() error {
 func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: учёт и удаление ненужных логов при усложнении вынести в отдельную сущность
 	// f.m.Lock()
 	// defer f.m.Unlock()
-	fmt.Println("_______lastLogPath_______: ", lastLogPath)
 	list1, err := f.filenamer.GetHalf(lastLogPath, false)
 	if err != nil {
 		f.logger.Warning(err)
 	}
-	//fmt.Println("_______list1_______: ", list1)
 	for _, lgName := range list1 {
 		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
 		if err != nil {
@@ -170,7 +167,6 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 	if err != nil {
 		f.logger.Warning(err)
 	}
-	//fmt.Println("_______list2_______: ", list2)
 	for _, lgName := range list2 {
 		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
 		if err != nil {
@@ -188,9 +184,11 @@ func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
 
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 	//тут будем брать последние из filenamer
-	fNamesList, err := f.filenamer.GetAfterLatest(f.lastFileNameLog)
+	fNamesList, err := f.filenamer.GetHalf(f.lastFileNameLog, true)
+
+	//fNamesList, err := f.filenamer.GetAfterLatest(f.lastFileNameLog)
 	if err != nil {
-		fmt.Println("F:err7:", err)
+		//fmt.Println("F:err7:", err)
 		return nil, err
 	}
 	ln := len(fNamesList)

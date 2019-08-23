@@ -135,6 +135,9 @@ func (f *FileNamer) GetAfterLatest(last string) ([]string, error) { //TODO: ту
 	return outListStr, nil
 }
 
+/*
+GetHalf - получить список файлов, номера которых больше или меньше того, что в аргументе
+*/
 func (f *FileNamer) GetHalf(last string, more bool) ([]string, error) { //TODO: тут названия файлов возвращаются БЕЗ директории
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -165,7 +168,7 @@ func (f *FileNamer) GetHalf(last string, more bool) ([]string, error) { //TODO: 
 	outListInt := make([]int, 0, len(numList))
 	for i, fNum := range numList {
 		if more && fNum > lastInt {
-			outListInt = numList[i : len(numList)-1]
+			outListInt = numList[i:len(numList)]
 			break
 		} else if !more && fNum >= lastInt {
 			outListInt = numList[0:i]

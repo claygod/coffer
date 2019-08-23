@@ -6,7 +6,7 @@ package coffer
 
 import (
 	"fmt"
-	"time"
+	//"time"
 
 	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/services"
@@ -48,11 +48,14 @@ func New(config *Config) (*Coffer, error) {
 		hasp:       startstop.New(),
 	}
 	//recordsRepo := records.New()
+	riRepo := records.New()
+	fiRepo := records.New()
 	reqCoder := usecases.NewReqCoder()
 	fileNamer := filenamer.NewFileNamer(c.config.UsecasesConfig.DirPath)
 	trn := usecases.NewTransaction(c.handlers)
 	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
 	opr := usecases.NewOperations(c.logger, c.config.UsecasesConfig, reqCoder, resControl, trn)
+	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, opr)
 	jrn, err := journal.New(c.config.JournalConfig, fileNamer, c.alarmFunc)
 	if err != nil {
 		return nil, err
@@ -60,10 +63,11 @@ func New(config *Config) (*Coffer, error) {
 	ri, err := usecases.NewRecordsInteractor( // RecordsInteractor
 		c.config.UsecasesConfig,
 		c.logger,
+		ldr,
 		chp,
 		opr,
 		reqCoder,
-		records.New(), //recordsRepo,
+		riRepo, //recordsRepo,
 		c.handlers,
 		resControl,
 		c.porter,
@@ -78,10 +82,11 @@ func New(config *Config) (*Coffer, error) {
 
 	fi, err := usecases.NewFollowInteractor( // FollowInteractor
 		c.logger,
+		ldr,
 		c.config.UsecasesConfig, //config *Config,
 		chp,                     //*checkpoint,
 		opr,                     // *operations,
-		records.New(),           //recordsRepo,
+		fiRepo,                  //recordsRepo,
 		fileNamer,
 		startstop.New(),
 	)
@@ -95,7 +100,6 @@ func New(config *Config) (*Coffer, error) {
 }
 
 func (c *Coffer) Start() bool { // return prev state
-	time.Sleep(1 * time.Second) //TODO: del
 	//defer c.checkPanic()
 	if !c.resControl.Start() {
 		return false

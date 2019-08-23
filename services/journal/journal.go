@@ -6,11 +6,6 @@ package journal
 
 import (
 	"fmt"
-	//"io/ioutil"
-	//"os"
-	//"sort"
-	//"strconv"
-	//"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -34,6 +29,7 @@ type Journal struct {
 	alarmFunc func(error)
 	//batchSize         int
 	countBatchClients int64
+	state             int64
 }
 
 func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) { //TODO: убрать dirPath
@@ -52,23 +48,32 @@ func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal,
 		//dirPath:   dirPath,
 		alarmFunc: alarmFunc,
 		//batchSize: batchSize,
+		state: stateStarted,
 	}, nil
 }
 
 func (j *Journal) Restart() {
+	//TODO: по идее стейт тут не меняется и его проверять не нужно.
 	atomic.StoreInt64(&j.counter, j.config.LimitRecordsPerLogfile+1)
 }
 
-func (j *Journal) Write(toSave []byte) {
+func (j *Journal) Write(toSave []byte) error {
+	if st := atomic.LoadInt64(&j.state); st != stateStarted {
+		return fmt.Errorf("State is `%d` (not started).", st)
+	}
 	clt, err := j.getClient()
 	if err != nil {
 		j.alarmFunc(err)
+		atomic.StoreInt64(&j.state, statePanic)
+		return err
 	} else {
 		clt.Write(toSave)
 	}
+	return nil
 }
 
 func (j *Journal) Close() {
+	atomic.CompareAndSwapInt64(&j.state, stateStarted, stateStopped) //если не сработает, значит мы уже стопнуты или в панике
 	j.client.Close()
 	for {
 		if atomic.LoadInt64(&j.countBatchClients) == 0 {
@@ -83,12 +88,11 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	defer j.m.Unlock()
 	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
-		fmt.Println("Journal-1", j.fileNamer)
+		//fmt.Println("Journal-1", j.fileNamer)
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		if err != nil {
 			return nil, err
 		}
-		fmt.Println("Journal-2")
 		clt, err := batcher.Open(nName, j.config.BatchSize)
 		if err != nil {
 			return nil, err
@@ -106,50 +110,3 @@ func (j *Journal) clientBatchClose(clt *batcher.Client) {
 	clt.Close()
 	atomic.AddInt64(&j.countBatchClients, -1)
 }
-
-// func (j *Journal) getNewFileName(dirPath string) (string, error) {
-// 	for i := 0; i < 60; i++ {
-// 		if latestName, err := j.findLatestLog(); err == nil {
-
-// 		}
-
-// 		newFileName := dirPath + strconv.Itoa(int(time.Now().Unix())) + ".log"
-// 		if _, err := os.Stat(newFileName); !os.IsExist(err) {
-// 			return newFileName, nil
-// 		}
-// 		time.Sleep(1 * time.Second)
-// 	}
-// 	return "", fmt.Errorf("Error finding a new name.")
-// }
-
-// func (j *Journal) findLatestLog() (string, error) {
-// 	fNamesList, err := j.getFilesByExtList(".log")
-// 	if err != nil {
-// 		return "", err
-// 	}
-// 	ln := len(fNamesList)
-// 	switch {
-// 	case ln == 0:
-// 		return "0.log", nil
-// 	case ln == 1: // последний лог мы никогда не берём чтобы не ткнуться в ещё наполняемый лог
-// 		return fNamesList[0], nil
-// 	default:
-// 		sort.Strings(fNamesList)
-// 		return fNamesList[len(fNamesList)-1], nil
-// 	}
-// 	//return fNamesList, nil
-// }
-
-// func (j *Journal) getFilesByExtList(ext string) ([]string, error) {
-// 	files, err := ioutil.ReadDir(j.dirPath)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	list := make([]string, 0, len(files))
-// 	for _, fl := range files {
-// 		if strings.HasSuffix(fl.Name(), ext) {
-// 			list = append(list, fl.Name())
-// 		}
-// 	}
-// 	return list, nil
-// }

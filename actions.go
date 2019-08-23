@@ -50,7 +50,13 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 		Time: time.Now(), //т.к. время берём ПОСЛЕ операции Catch для конкретно этих записей временных коллизий не будет
 		List: input,
 	}
-	return c.recInteractor.WriteList(req)
+	//TODO: если интерактор возвращает ошибку, возможно нужно всё остановить
+	err, wrn := c.recInteractor.WriteList(req)
+	if err != nil {
+		c.Stop()
+		return err
+	}
+	return wrn
 }
 
 func (c *Coffer) Read(key string) ([]byte, error) {
