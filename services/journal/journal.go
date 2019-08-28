@@ -32,7 +32,7 @@ type Journal struct {
 	state             int64
 }
 
-func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) { //TODO: убрать dirPath
+func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) {
 	nName, err := fn.GetNewFileName(".log") //dirPath
 	if err != nil {
 		return nil, err

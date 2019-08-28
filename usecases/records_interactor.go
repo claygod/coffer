@@ -180,21 +180,50 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) (map[string][]byte, error
 	return r.repo.ReadList(req.Keys)
 }
 
-func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) error {
+func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) (error, error) {
 	if !r.hasp.Add() {
-		return fmt.Errorf("RecordsInteractor is stopped")
+		return fmt.Errorf("RecordsInteractor is stopped"), nil
 	}
 	defer r.hasp.Done()
+	// подготавливаем байтовую версию операции для лога
+	opBytes, err := r.reqDeleteListToLog(req)
+	if err != nil {
+		return nil, err
+	}
+	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
+	if !r.resControl.GetPermission(int64(len(opBytes))) {
+		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
+	}
 	// блокируем нужные записи
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// выполняем
-	return r.repo.DelList(req.Keys)
+	wrn := r.repo.DelList(req.Keys)                  // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+		r.hasp.Stop()
+		return err, wrn
+	}
+	return nil, wrn //TODO: возвращать структуру с отчётом, что удалено а что нет
 }
 
 func (r *RecordsInteractor) reqWriteListToLog(req *ReqWriteList) ([]byte, error) {
 	// req маршаллим в байты
 	reqBytes, err := r.coder.ReqWriteListEncode(req)
+	if err != nil {
+		return nil, err
+	}
+	// формируем операцию
+	op := &domain.Operation{
+		Code: codeWriteList,
+		Body: reqBytes,
+	}
+	// операцию маршаллим в байты
+	return r.opr.operatToLog(op)
+}
+
+func (r *RecordsInteractor) reqDeleteListToLog(req *ReqDeleteList) ([]byte, error) {
+	// req маршаллим в байты
+	reqBytes, err := r.coder.ReqDeleteListEncode(req)
 	if err != nil {
 		return nil, err
 	}
@@ -222,25 +251,25 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	return r.opr.operatToLog(op)
 }
 
-func (r *RecordsInteractor) Transaction(req *ReqTransaction) error { // interface{}, map[string][]byte, *domain.Handler
+func (r *RecordsInteractor) Transaction(req *ReqTransaction) (error, error) { // interface{}, map[string][]byte, *domain.Handler
 	if !r.hasp.Add() {
-		return fmt.Errorf("RecordsInteractor is stopped")
+		return fmt.Errorf("RecordsInteractor is stopped"), nil
 	}
 	defer r.hasp.Done()
 	// ищем хэндлер
 	hdl, err := r.handlers.Get(req.HandlerName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	handler := *hdl
 	// подготавливаем байтовую версию операции для лога
 	opBytes, err := r.reqTransactionToLog(req)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
 	if !r.resControl.GetPermission(int64(len(opBytes))) {
-		return fmt.Errorf("Insufficient resources (memory, disk)")
+		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
 	}
 	// блокируем нужные записи
 	r.porter.Catch(req.Keys)
@@ -248,21 +277,24 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) error { // interfac
 	// берём текущие значения в записях
 	curMap, err := r.repo.ReadList(req.Keys)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// выполняем транзакцию
 	writeList, err := handler(req.Value, curMap)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// проверяем, нет ли "лишних" ключей в ответе
 	if err := r.findExtraKeys(writeList, curMap); err != nil {
-		return err
+		return nil, err
 	}
 	// записываем результат
-	r.repo.WriteList(writeList) // проводим операцию  с inmemory хранилищем
-	r.journal.Write(opBytes)    // журналируем операцию
-	return nil
+	r.repo.WriteList(writeList)                      // проводим операцию  с inmemory хранилищем
+	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+		r.hasp.Stop()
+		return err, nil
+	}
+	return nil, nil
 }
 
 func (r *RecordsInteractor) findExtraKeys(writeList map[string][]byte, curMap map[string][]byte) error {

@@ -53,10 +53,10 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 	//TODO: если интерактор возвращает ошибку, возможно нужно всё остановить
 	err, wrn := c.recInteractor.WriteList(req)
 	if err != nil {
-		c.Stop()
+		defer c.Stop()
 		return err
 	}
-	return wrn
+	return wrn // при варнинге возвращаем ошибку, но приложение не останавливаем, т.е. это единичный случай и следующий может быть положительным.
 }
 
 func (c *Coffer) Read(key string) ([]byte, error) {
@@ -126,7 +126,12 @@ func (c *Coffer) DeleteList(keys []string) error {
 		Time: time.Now(),
 		Keys: keys,
 	}
-	return c.recInteractor.DeleteList(req)
+	err, wrn := c.recInteractor.DeleteList(req)
+	if err != nil {
+		defer c.Stop()
+		return err //TODO: возвращать структуру отчёта а не ошибку
+	}
+	return wrn
 }
 
 func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interface{}) error { // A method with little protection against changing arguments. Slower.
@@ -160,5 +165,10 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 		Keys:        keys,
 		Value:       arg,
 	}
-	return c.recInteractor.Transaction(req)
+	err, wrn := c.recInteractor.Transaction(req)
+	if err != nil {
+		defer c.Stop()
+		return err //TODO: возвращать структуру отчёта а не ошибку
+	}
+	return wrn
 }
