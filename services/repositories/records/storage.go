@@ -23,18 +23,20 @@ func newStorage() *storage {
 	}
 }
 
-func (r *storage) readList(keys []string) (map[string][]byte, error) {
+func (r *storage) readList(keys []string) (map[string][]byte, []string, error) {
 	var errOut error
+	notFound := make([]string, 0, len(keys))
 	list := make(map[string][]byte)
 	for _, key := range keys {
 		if value, ok := r.data[key]; ok {
 			list[key] = value
 			//out = append(out, &domain.Record{Key: key, Value: value})
 		} else {
+			notFound = append(notFound, key)
 			errOut = fmt.Errorf("%v %v", errOut, fmt.Errorf("Key `%s` not found", key))
 		}
 	}
-	return list, nil
+	return list, notFound, nil
 }
 
 // func (r *storage) get(keys []string) ([]*domain.Record, error) {

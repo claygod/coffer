@@ -36,22 +36,3 @@ const (
 	codeTransaction
 	codeDeleteList
 )
-
-const (
-	//TODO: коды в отдельный пакет
-	CodeOk int64 = iota // выполнено без замечаний
-
-	CodeWarning // выполнено но с замечаниями
-
-	CodeError              // не выполнено, но работать дальше можно
-	CodeErrHandlerNotFound // не найден хэндлер
-	CodeErrParseRequest    //  не получилось подготовить запрос для логгирования
-	CodeErrResources       // не хватает ресурсов
-	CodeErrReadRecords     //ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
-	CodeErrHandlerReturn   //найденный и загруженный хандлер вернул ошибку
-	CodeErrHandlerResponse // хандлер вернул неполные ответы
-
-	CodePanic // не выполнено, дальнейшая работа с БД невозможна
-	CodePanicStopped
-	CodePanicWAL
-)

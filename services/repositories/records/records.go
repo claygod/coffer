@@ -42,7 +42,7 @@ func (s *Records) WriteUnsafeRecord(key string, value []byte) {
 	s.store.writeOne(key, value)
 }
 
-func (s *Records) ReadList(list []string) (map[string][]byte, error) {
+func (s *Records) ReadList(list []string) (map[string][]byte, []string, error) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	return s.store.readList(list)

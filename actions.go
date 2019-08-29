@@ -6,8 +6,11 @@ package coffer
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/claygod/coffer/reports"
+	"github.com/claygod/coffer/reports/codes"
 	"github.com/claygod/coffer/usecases"
 )
 
@@ -60,9 +63,11 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 }
 
 func (c *Coffer) Read(key string) ([]byte, error) {
-	recs, err := c.ReadList([]string{key})
+	recs, notFound, err := c.ReadList([]string{key})
 	if err != nil {
 		return nil, err
+	} else if len(notFound) != 0 {
+		return nil, fmt.Errorf("Record not found: %s", strings.Join(notFound, ", "))
 	}
 	rec, ok := recs[key]
 	if !ok {
@@ -71,26 +76,26 @@ func (c *Coffer) Read(key string) ([]byte, error) {
 	return rec, nil
 }
 
-func (c *Coffer) ReadListSafe(keys []string) (map[string][]byte, error) { // A method with little protection against changing arguments. Slower.
+func (c *Coffer) ReadListSafe(keys []string) (map[string][]byte, []string, error) { // A method with little protection against changing arguments. Slower.
 	keysCopy, err := c.copySlice(keys)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return c.ReadList(keysCopy)
 }
 
-func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
+func (c *Coffer) ReadList(keys []string) (map[string][]byte, []string, error) {
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
-		return nil, fmt.Errorf("Coffer is stopped")
+		return nil, nil, fmt.Errorf("Coffer is stopped")
 	}
 	defer c.hasp.Done()
 	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию
-		return nil, fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		return nil, nil, fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
 	}
 	for _, key := range keys { // контроль максимально допустимой длины ключа
 		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength {
-			return nil, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			return nil, nil, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
 		}
 	}
 	c.porter.Catch(keys)
@@ -100,6 +105,43 @@ func (c *Coffer) ReadList(keys []string) (map[string][]byte, error) {
 		Keys: keys,
 	}
 	return c.recInteractor.ReadList(req)
+}
+
+func (c *Coffer) ReadList2(keys []string) *reports.ReportReadList {
+	rep := &reports.ReportReadList{}
+	//defer c.checkPanic()
+	if !c.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep //  nil, nil, fmt.Errorf("Coffer is stopped")
+	}
+	defer c.hasp.Done()
+	//TODO: контроль длин и т.д. должен быть и в других экшенах
+	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию
+		rep.Code = codes.ErrRecordLimitExceeded
+		rep.Error = fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		return rep //nil, nil, fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+	}
+	for _, key := range keys { // контроль максимально допустимой длины ключа
+		//TODO: сделать и контроль минимальной длины
+		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength {
+			rep.Code = codes.ErrExceedingMaxKeyLength
+			rep.Error = fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			return rep //nil, nil, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+		}
+	}
+	c.porter.Catch(keys)
+	defer c.porter.Throw(keys)
+	req := &usecases.ReqLoadList{
+		Time: time.Now(),
+		Keys: keys,
+	}
+	data, notFound, err := c.recInteractor.ReadList(req)
+	//TODO: rep.Code
+	rep.Data = data
+	rep.NotFound = notFound
+	rep.Error = err
+	return rep
 }
 
 func (c *Coffer) Delete(key string) error {

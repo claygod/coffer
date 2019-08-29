@@ -5,7 +5,8 @@ package usecases
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	//"fmt"
+	"fmt"
+	"strings"
 
 	"github.com/claygod/coffer/domain"
 )
@@ -29,10 +30,12 @@ func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	}
 	hdl := *hdlx
 	// читаем текущие значения
-	curRecsMap, err := repo.ReadList(reqTr.Keys)
+	curRecsMap, notFound, err := repo.ReadList(reqTr.Keys)
 	//curRecs, err := repo.GetRecords(reqTr.Keys)
 	if err != nil {
 		return err
+	} else if len(notFound) != 0 {
+		return fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
 	}
 	// записи преобразуем в массив
 	// curRecsMap := make(map[string][]byte)

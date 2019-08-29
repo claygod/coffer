@@ -168,9 +168,9 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) (error, error) {
 	return nil, nil
 }
 
-func (r *RecordsInteractor) ReadList(req *ReqLoadList) (map[string][]byte, error) {
+func (r *RecordsInteractor) ReadList(req *ReqLoadList) (map[string][]byte, []string, error) {
 	if !r.hasp.Add() {
-		return nil, fmt.Errorf("RecordsInteractor is stopped")
+		return nil, nil, fmt.Errorf("RecordsInteractor is stopped")
 	}
 	defer r.hasp.Done()
 	// блокируем нужные записи
@@ -275,9 +275,11 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) (error, error) { //
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// берём текущие значения в записях
-	curMap, err := r.repo.ReadList(req.Keys)
+	curMap, notFound, err := r.repo.ReadList(req.Keys)
 	if err != nil {
 		return nil, err
+	} else if len(notFound) != 0 {
+		return nil, fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
 	}
 	// выполняем транзакцию
 	writeList, err := handler(req.Value, curMap)
