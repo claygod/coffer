@@ -34,5 +34,6 @@ const (
 const (
 	codeWriteList byte = iota //codeWrite
 	codeTransaction
-	codeDeleteList
+	codeDeleteListStrict
+	codeDeleteListOptional
 )

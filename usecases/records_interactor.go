@@ -184,36 +184,56 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	defer r.porter.Throw(req.Keys)
 	// выполняем
 	data, notFound := r.repo.ReadList(req.Keys)
-	rep.Code = codes.ErrReadRecords
+	if len(notFound) != 0 {
+		rep.Code = codes.ErrReadRecords
+	}
+	//rep.Code = codes.ErrReadRecords
 	rep.Data = data
 	rep.NotFound = notFound
 	return rep
 }
 
-func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) (error, error) {
+func (r *RecordsInteractor) DeleteListStrict(req *ReqDeleteList) *reports.ReportDeleteList {
+	rep := &reports.ReportDeleteList{}
 	if !r.hasp.Add() {
-		return fmt.Errorf("RecordsInteractor is stopped"), nil
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
 	}
 	defer r.hasp.Done()
 	// подготавливаем байтовую версию операции для лога
 	opBytes, err := r.reqDeleteListToLog(req)
 	if err != nil {
-		return nil, err
+		rep.Code = codes.ErrParseRequest
+		rep.Error = err
+		return rep
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
 	if !r.resControl.GetPermission(int64(len(opBytes))) {
-		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
+		rep.Code = codes.ErrResources
+		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
+		return rep
 	}
 	// блокируем нужные записи
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// выполняем
-	wrn := r.repo.DelList(req.Keys)                  // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	notFound := r.repo.DelListStrict(req.Keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	rep.NotFound = notFound
+	if len(notFound) != 0 {
+		rep.Code = codes.ErrNotFound
+		rep.Error = fmt.Errorf("Keys not found: %s", strings.Join(notFound, ", "))
+		return rep
+	}
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
 		r.hasp.Stop()
-		return err, wrn
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
 	}
-	return nil, wrn //TODO: возвращать структуру с отчётом, что удалено а что нет
+	rep.Code = codes.Ok
+	rep.Removed = req.Keys
+	return rep
 }
 
 func (r *RecordsInteractor) reqWriteListToLog(req *ReqWriteList) ([]byte, error) {

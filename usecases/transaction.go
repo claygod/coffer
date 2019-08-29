@@ -72,7 +72,7 @@ func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	// }
 	// удаление записей (при необходимости)
 	if len(delRecsList) != 0 {
-		repo.DelList(delRecsList)
+		repo.DelListStrict(delRecsList)
 	}
 	return nil
 }

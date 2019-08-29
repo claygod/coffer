@@ -5,7 +5,7 @@ package records
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	"fmt"
+	//"fmt"
 
 	"github.com/claygod/coffer/domain"
 )
@@ -72,20 +72,36 @@ func (r *storage) setOne(rec *domain.Record) {
 	r.data[rec.Key] = rec.Value
 }
 
-func (r *storage) del(keys []string) error {
-	var errOut error
-	for _, key := range keys { // сначала проверяем, есть ли все эти ключи
-		if _, ok := r.data[key]; !ok {
-			errOut = fmt.Errorf("%v %v", errOut, fmt.Errorf("Key `%s` not found", key))
+func (r *storage) removeWhatIsPossible(keys []string) ([]string, []string) {
+	removedList := make([]string, 0, len(keys))
+	notFound := make([]string, 0, len(keys))
+	for _, key := range keys {
+		if _, ok := r.data[key]; ok {
+			removedList = append(removedList, key)
+			delete(r.data, key)
+		} else {
+			notFound = append(notFound, key)
 		}
 	}
-	if errOut != nil {
-		return errOut
+	return removedList, notFound
+}
+
+func (r *storage) delAllOrNothing(keys []string) []string {
+	//var errOut error
+	notFound := make([]string, 0, len(keys))
+	for _, key := range keys { // сначала проверяем, есть ли все эти ключи
+		if _, ok := r.data[key]; !ok {
+			notFound = append(notFound, key)
+			//errOut = fmt.Errorf("%v %v", errOut, fmt.Errorf("Key `%s` not found", key))
+		}
+	}
+	if len(notFound) != 0 {
+		return notFound
 	}
 	for _, key := range keys { // теперь удаляем
 		delete(r.data, key)
 	}
-	return errOut
+	return notFound
 }
 
 // func (r *storage) keys() []string { // Resource-intensive method

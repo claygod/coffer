@@ -144,22 +144,32 @@ func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	return c.recInteractor.ReadList(req)
 }
 
-func (c *Coffer) Delete(key string) error {
-	return c.DeleteList([]string{key})
-}
-
-func (c *Coffer) DeleteListSafe(keys []string) error { // A method with little protection against changing arguments. Slower.
-	keysCopy, err := c.copySlice(keys)
-	if err != nil {
-		return err
+func (c *Coffer) Delete(key string) *reports.ReportDelete {
+	repList := c.DeleteListStrict([]string{key})
+	rep := &reports.ReportDelete{
+		Code:  repList.Code,
+		Error: repList.Error,
 	}
-	return c.DeleteList(keysCopy)
+	return rep
 }
 
-func (c *Coffer) DeleteList(keys []string) error {
+// func (c *Coffer) DeleteListSafe(keys []string) error { // A method with little protection against changing arguments. Slower.
+// 	keysCopy, err := c.copySlice(keys)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return c.DeleteList(keysCopy)
+// }
+
+func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
+
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
-		return fmt.Errorf("Coffer is stopped")
+		rep := &reports.ReportDeleteList{
+			Code:  codes.PanicStopped,
+			Error: fmt.Errorf("Coffer is stopped"),
+		}
+		return rep
 	}
 	defer c.hasp.Done()
 	c.porter.Catch(keys)
@@ -168,12 +178,11 @@ func (c *Coffer) DeleteList(keys []string) error {
 		Time: time.Now(),
 		Keys: keys,
 	}
-	err, wrn := c.recInteractor.DeleteList(req)
-	if err != nil {
+	rep := c.recInteractor.DeleteListStrict(req)
+	if rep.Code >= codes.Panic {
 		defer c.Stop()
-		return err //TODO: возвращать структуру отчёта а не ошибку
 	}
-	return wrn
+	return rep
 }
 
 func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interface{}) error { // A method with little protection against changing arguments. Slower.

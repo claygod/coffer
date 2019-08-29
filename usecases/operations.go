@@ -10,6 +10,8 @@ import (
 	"io"
 	"os"
 
+	//"strings"
+
 	"github.com/claygod/coffer/domain"
 )
 
@@ -55,12 +57,14 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 			if err := o.trn.doOperationTransaction(reqTr, repo); err != nil {
 				return err
 			}
-		case codeDeleteList:
+		case codeDeleteListStrict:
 			reqDL, err := o.reqCoder.ReqDeleteListDecode(op.Body)
 			if err != nil {
 				return err
-			} else if err := repo.DelList(reqDL.Keys); err != nil {
-				return err
+			} else {
+				repo.DelListStrict(reqDL.Keys) //результат не важен, главное, что он такой же как и в предыдущий раз
+				// } if notFound := repo.DelListStrict(reqDL.Keys); len(notFound) != 0 {
+				// 	return fmt.Errorf("Keys not found: %s", strings.Join(notFound, ", "))
 			}
 		default:
 			return fmt.Errorf("Unknown operation `%d`", op.Code)

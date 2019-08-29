@@ -22,3 +22,15 @@ type ReportReadList struct {
 	NotFound []string
 	Error    error
 }
+
+type ReportDelete struct {
+	Code  codes.Code
+	Error error
+}
+
+type ReportDeleteList struct {
+	Code     codes.Code
+	Removed  []string
+	NotFound []string
+	Error    error
+}

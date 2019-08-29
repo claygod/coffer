@@ -17,8 +17,9 @@ const (
 	ErrExceedingMaxKeyLength  // слишком длинный ключ
 	ErrExceedingZeroKeyLength // слишком длинный ключ
 	ErrHandlerNotFound        // не найден хэндлер
-	ErrParseRequest           //  не получилось подготовить запрос для логгирования
+	ErrParseRequest           // не получилось подготовить запрос для логгирования
 	ErrResources              // не хватает ресурсов
+	ErrNotFound               // не найдены ключи
 	ErrReadRecords            //ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
 	ErrHandlerReturn          //найденный и загруженный хандлер вернул ошибку
 	ErrHandlerResponse        // хандлер вернул неполные ответы

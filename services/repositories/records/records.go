@@ -48,10 +48,16 @@ func (s *Records) ReadList(list []string) (map[string][]byte, []string) {
 	return s.store.readList(list)
 }
 
-func (s *Records) DelList(keys []string) error {
+func (s *Records) DelListStrict(keys []string) []string {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
-	return s.store.del(keys)
+	return s.store.delAllOrNothing(keys)
+}
+
+func (s *Records) DelListOptional(keys []string) ([]string, []string) {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.removeWhatIsPossible(keys)
 }
 
 // func (s *Records) GetRecords(keys []string) ([]*domain.Record, error) {
