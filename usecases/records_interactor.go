@@ -14,6 +14,8 @@ import (
 	//"time"
 
 	"github.com/claygod/coffer/domain"
+	"github.com/claygod/coffer/reports"
+	"github.com/claygod/coffer/reports/codes"
 	//"github.com/claygod/coffer/services/journal"
 )
 
@@ -168,16 +170,24 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) (error, error) {
 	return nil, nil
 }
 
-func (r *RecordsInteractor) ReadList(req *ReqLoadList) (map[string][]byte, []string, error) {
+func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
+	rep := &reports.ReportReadList{}
+	//defer c.checkPanic()
 	if !r.hasp.Add() {
-		return nil, nil, fmt.Errorf("RecordsInteractor is stopped")
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep //  nil, nil, fmt.Errorf("Coffer is stopped")
 	}
 	defer r.hasp.Done()
 	// блокируем нужные записи
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// выполняем
-	return r.repo.ReadList(req.Keys)
+	data, notFound := r.repo.ReadList(req.Keys)
+	rep.Code = codes.ErrReadRecords
+	rep.Data = data
+	rep.NotFound = notFound
+	return rep
 }
 
 func (r *RecordsInteractor) DeleteList(req *ReqDeleteList) (error, error) {
@@ -275,10 +285,8 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) (error, error) { //
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// берём текущие значения в записях
-	curMap, notFound, err := r.repo.ReadList(req.Keys)
-	if err != nil {
-		return nil, err
-	} else if len(notFound) != 0 {
+	curMap, notFound := r.repo.ReadList(req.Keys)
+	if len(notFound) != 0 {
 		return nil, fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
 	}
 	// выполняем транзакцию

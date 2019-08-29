@@ -30,11 +30,9 @@ func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	}
 	hdl := *hdlx
 	// читаем текущие значения
-	curRecsMap, notFound, err := repo.ReadList(reqTr.Keys)
+	curRecsMap, notFound := repo.ReadList(reqTr.Keys)
 	//curRecs, err := repo.GetRecords(reqTr.Keys)
-	if err != nil {
-		return err
-	} else if len(notFound) != 0 {
+	if len(notFound) != 0 {
 		return fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
 	}
 	// записи преобразуем в массив

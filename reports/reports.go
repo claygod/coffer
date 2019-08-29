@@ -11,6 +11,9 @@ import (
 )
 
 type ReportRead struct {
+	Code  codes.Code
+	Data  []byte
+	Error error
 }
 
 type ReportReadList struct {
