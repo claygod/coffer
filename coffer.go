@@ -66,6 +66,7 @@ func New(config *Config) (*Coffer, error) {
 		ldr,
 		chp,
 		opr,
+		trn,
 		reqCoder,
 		riRepo, //recordsRepo,
 		c.handlers,

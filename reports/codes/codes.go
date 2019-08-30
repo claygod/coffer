@@ -14,8 +14,9 @@ const (
 
 	Error                     // не выполнено, но работать дальше можно
 	ErrRecordLimitExceeded    // превышен лимит записей на одну операцию
+	ErrExceedingMaxValueSize  // слишком длинное значение
 	ErrExceedingMaxKeyLength  // слишком длинный ключ
-	ErrExceedingZeroKeyLength // слишком длинный ключ
+	ErrExceedingZeroKeyLength // слишком короткий ключ
 	ErrHandlerNotFound        // не найден хэндлер
 	ErrParseRequest           // не получилось подготовить запрос для логгирования
 	ErrResources              // не хватает ресурсов

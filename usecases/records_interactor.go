@@ -25,6 +25,7 @@ type RecordsInteractor struct {
 	loader     *Loader
 	chp        *checkpoint
 	opr        *Operations
+	trs        *Transaction
 	coder      *ReqCoder
 	repo       domain.RecordsRepository
 	handlers   domain.HandlersRepository
@@ -41,6 +42,7 @@ func NewRecordsInteractor(
 	loader *Loader,
 	chp *checkpoint,
 	opr *Operations,
+	trs *Transaction,
 	coder *ReqCoder,
 	repo domain.RecordsRepository,
 	handlers domain.HandlersRepository,
@@ -56,6 +58,7 @@ func NewRecordsInteractor(
 		loader:     loader,
 		chp:        chp,
 		opr:        opr,
+		trs:        trs,
 		coder:      coder,
 		repo:       repo,
 		handlers:   handlers,
@@ -143,19 +146,53 @@ func (r *RecordsInteractor) save(args ...string) error {
 	return nil
 }
 
-func (r *RecordsInteractor) WriteList(req *ReqWriteList) (error, error) {
+// func (r *RecordsInteractor) WriteList222(req *ReqWriteList) (error, error) {
+// 	if !r.hasp.Add() {
+// 		return nil, fmt.Errorf("RecordsInteractor is stopped")
+// 	}
+// 	defer r.hasp.Done()
+// 	// подготавливаем байтовую версию операции для лога
+// 	opBytes, err := r.reqWriteListToLog(req)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
+// 	if !r.resControl.GetPermission(int64(len(opBytes))) {
+// 		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
+// 	}
+// 	// блокируем нужные записи
+// 	keys := r.getKeysFromMap(req.List)
+// 	r.porter.Catch(keys)
+// 	defer r.porter.Throw(keys)
+// 	// выполняем
+// 	r.repo.WriteList(req.List)                       // проводим операцию  с inmemory хранилищем
+// 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+// 		r.hasp.Stop()
+// 		return err, nil
+// 	}
+// 	return nil, nil
+// }
+
+func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.ReportWriteList {
+	rep := &reports.ReportWriteList{}
 	if !r.hasp.Add() {
-		return nil, fmt.Errorf("RecordsInteractor is stopped")
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
 	}
 	defer r.hasp.Done()
 	// подготавливаем байтовую версию операции для лога
 	opBytes, err := r.reqWriteListToLog(req)
 	if err != nil {
-		return nil, err
+		rep.Code = codes.ErrParseRequest
+		rep.Error = err
+		return rep
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
 	if !r.resControl.GetPermission(int64(len(opBytes))) {
-		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
+		rep.Code = codes.ErrResources
+		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
+		return rep
 	}
 	// блокируем нужные записи
 	keys := r.getKeysFromMap(req.List)
@@ -164,10 +201,13 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) (error, error) {
 	// выполняем
 	r.repo.WriteList(req.List)                       // проводим операцию  с inmemory хранилищем
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
-		r.hasp.Stop()
-		return err, nil
+		defer r.hasp.Stop()
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
 	}
-	return nil, nil
+	rep.Code = codes.Ok
+	return rep
 }
 
 func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
@@ -193,7 +233,8 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	return rep
 }
 
-func (r *RecordsInteractor) DeleteListStrict(req *ReqDeleteList) *reports.ReportDeleteList {
+func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *reports.ReportDeleteList {
+	//strictMode := true // strict
 	rep := &reports.ReportDeleteList{}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
@@ -218,7 +259,37 @@ func (r *RecordsInteractor) DeleteListStrict(req *ReqDeleteList) *reports.Report
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
 	// выполняем
-	notFound := r.repo.DelListStrict(req.Keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	if strictMode {
+		rep = r.deleteListStrict(req.Keys, opBytes)
+	} else {
+		rep = r.deleteListOptional(req.Keys, opBytes)
+	}
+	if rep.Code >= codes.Panic {
+		defer r.hasp.Stop()
+	}
+
+	// notFound := r.repo.DelListStrict(req.Keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	// rep.NotFound = notFound
+	// if len(notFound) != 0 {
+	// 	rep.Code = codes.ErrNotFound
+	// 	rep.Error = fmt.Errorf("Keys not found: %s", strings.Join(notFound, ", "))
+	// 	return rep
+	// }
+	// if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+	// 	defer r.hasp.Stop()
+	// 	rep.Code = codes.PanicWAL
+	// 	rep.Error = err
+	// 	return rep
+	// }
+	// rep.Code = codes.Ok
+	// rep.Removed = req.Keys
+	return rep
+}
+
+func (r *RecordsInteractor) deleteListStrict(keys []string, opBytes []byte) *reports.ReportDeleteList {
+	rep := &reports.ReportDeleteList{}
+	// выполняем
+	notFound := r.repo.DelListStrict(keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
 	rep.NotFound = notFound
 	if len(notFound) != 0 {
 		rep.Code = codes.ErrNotFound
@@ -226,13 +297,27 @@ func (r *RecordsInteractor) DeleteListStrict(req *ReqDeleteList) *reports.Report
 		return rep
 	}
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
-		r.hasp.Stop()
 		rep.Code = codes.PanicWAL
 		rep.Error = err
 		return rep
 	}
 	rep.Code = codes.Ok
-	rep.Removed = req.Keys
+	rep.Removed = keys
+	return rep
+}
+
+func (r *RecordsInteractor) deleteListOptional(keys []string, opBytes []byte) *reports.ReportDeleteList {
+	rep := &reports.ReportDeleteList{}
+	// выполняем
+	removedList, notFound := r.repo.DelListOptional(keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
+	rep.Removed = removedList
+	rep.NotFound = notFound
+	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
+	}
+	rep.Code = codes.Ok
 	return rep
 }
 
@@ -281,50 +366,75 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	return r.opr.operatToLog(op)
 }
 
-func (r *RecordsInteractor) Transaction(req *ReqTransaction) (error, error) { // interface{}, map[string][]byte, *domain.Handler
+func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.ReportTransaction { // interface{}, map[string][]byte, *domain.Handler
+	rep := &reports.ReportTransaction{}
 	if !r.hasp.Add() {
-		return fmt.Errorf("RecordsInteractor is stopped"), nil
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
 	}
 	defer r.hasp.Done()
-	// ищем хэндлер
-	hdl, err := r.handlers.Get(req.HandlerName)
-	if err != nil {
-		return nil, err
-	}
-	handler := *hdl
+	// // ищем хэндлер
+	// hdl, err := r.handlers.Get(req.HandlerName)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// handler := *hdl
 	// подготавливаем байтовую версию операции для лога
 	opBytes, err := r.reqTransactionToLog(req)
 	if err != nil {
-		return nil, err
+		rep.Code = codes.ErrParseRequest
+		rep.Error = err
+		return rep
 	}
 	// проверяем, достаточно ли ресурсов (памяти, диска) для выполнения задачи
 	if !r.resControl.GetPermission(int64(len(opBytes))) {
-		return nil, fmt.Errorf("Insufficient resources (memory, disk)")
+		rep.Code = codes.ErrResources
+		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
+		return rep
 	}
 	// блокируем нужные записи
 	r.porter.Catch(req.Keys)
 	defer r.porter.Throw(req.Keys)
-	// берём текущие значения в записях
-	curMap, notFound := r.repo.ReadList(req.Keys)
-	if len(notFound) != 0 {
-		return nil, fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
-	}
+
 	// выполняем транзакцию
-	writeList, err := handler(req.Value, curMap)
-	if err != nil {
-		return nil, err
+	rep = r.trs.doOperationTransaction(req, r.repo)
+	// находим хандлер
+	// читаем текущие значения
+	// проводим операцию  с полученными из репо значениями
+	// проверяем, нет ли надобности удалить какие-то записи (готовим список)
+	// сохранение изменённых записей (полученных в результате выполнения транзакции)
+	// удаление записей (при необходимости)
+	if rep.Code >= codes.Panic {
+		defer r.hasp.Stop()
 	}
-	// проверяем, нет ли "лишних" ключей в ответе
-	if err := r.findExtraKeys(writeList, curMap); err != nil {
-		return nil, err
+	if rep.Code >= codes.Error {
+		return rep
 	}
+
+	// curMap, notFound := r.repo.ReadList(req.Keys)
+	// if len(notFound) != 0 {
+	// 	return nil, fmt.Errorf("Records not found: %s", strings.Join(notFound, ", "))
+	// }
+	// // выполняем транзакцию
+	// writeList, err := handler(req.Value, curMap)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// // проверяем, нет ли "лишних" ключей в ответе
+	// if err := r.findExtraKeys(writeList, curMap); err != nil {
+	// 	return nil, err
+	// }
 	// записываем результат
-	r.repo.WriteList(writeList)                      // проводим операцию  с inmemory хранилищем
+	// r.repo.WriteList(writeList)                      // проводим операцию  с inmemory хранилищем
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
-		r.hasp.Stop()
-		return err, nil
+		defer r.hasp.Stop()
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
 	}
-	return nil, nil
+	rep.Code = codes.Ok
+	return rep
 }
 
 func (r *RecordsInteractor) findExtraKeys(writeList map[string][]byte, curMap map[string][]byte) error {

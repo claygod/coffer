@@ -10,6 +10,16 @@ import (
 	"github.com/claygod/coffer/reports/codes"
 )
 
+type ReportTransaction struct {
+	Code  codes.Code
+	Error error
+}
+
+type ReportWriteList struct {
+	Code  codes.Code
+	Error error
+}
+
 type ReportRead struct {
 	Code  codes.Code
 	Data  []byte

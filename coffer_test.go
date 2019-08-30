@@ -18,6 +18,8 @@ import (
 	// "github.com/claygod/coffer/services/journal"
 	// "github.com/claygod/coffer/services/repositories/handlers"
 	// "github.com/claygod/coffer/services/repositories/records"
+	// "github.com/claygod/coffer/reports"
+	"github.com/claygod/coffer/reports/codes"
 	"github.com/claygod/coffer/services/journal"
 	"github.com/claygod/coffer/services/resources"
 
@@ -69,7 +71,7 @@ func TestNewCoffer(t *testing.T) {
 		return
 	}
 	for i := 70; i < 99; i++ {
-		if err := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); err != nil {
+		if rep := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
 			t.Error(err)
 		}
 		time.Sleep(900 * time.Millisecond)

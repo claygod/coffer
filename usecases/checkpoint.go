@@ -32,9 +32,9 @@ func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("save-1", chpName)
+	//fmt.Println("save-1", chpName)
 	err = c.saveToFile(repo, f)
-	fmt.Println("save-2", err)
+	//fmt.Println("save-2", err)
 	f.Close()
 	if err != nil {
 		os.Remove(chpName)
@@ -52,7 +52,7 @@ func (c *checkpoint) saveToFile(repo domain.RecordsRepository, f *os.File) error
 	go repo.Iterator(chRecord)                // l.store.iterator(chRecord)
 	for {
 		rec := <-chRecord
-		fmt.Println("rec: ", rec)
+		//fmt.Println("rec: ", rec)
 		if rec == nil {
 			break
 		}

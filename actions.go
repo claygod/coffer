@@ -14,33 +14,42 @@ import (
 	"github.com/claygod/coffer/usecases"
 )
 
-func (c *Coffer) Write(key string, value []byte) error {
+func (c *Coffer) Write(key string, value []byte) *reports.ReportWriteList {
 	return c.WriteList(map[string][]byte{key: value})
 }
 
-func (c *Coffer) WriteListSafe(input map[string][]byte) error { // A method with little protection against changing arguments. Slower.
-	inCopy, err := c.copyMap(input)
-	if err != nil {
-		return err
-	}
-	return c.WriteList(inCopy)
-}
+// func (c *Coffer) WriteListSafe(input map[string][]byte) error { // A method with little protection against changing arguments. Slower.
+// 	inCopy, err := c.copyMap(input)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return c.WriteList(inCopy)
+// }
 
-func (c *Coffer) WriteList(input map[string][]byte) error {
+func (c *Coffer) WriteList(input map[string][]byte) *reports.ReportWriteList {
+	rep := &reports.ReportWriteList{}
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
-		return fmt.Errorf("Coffer is stopped")
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
 	}
 	defer c.hasp.Done()
 	if ln := len(input); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию
-		return fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		rep.Code = codes.ErrRecordLimitExceeded
+		rep.Error = fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		return rep
 	}
 	for key, value := range input {
 		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength { // контроль максимально допустимой длины ключа
-			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			rep.Code = codes.ErrExceedingMaxKeyLength
+			rep.Error = fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			return rep
 		}
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
-			return fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+			rep.Code = codes.ErrExceedingMaxValueSize
+			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+			return rep
 		}
 	}
 	keysList := make([]string, 0, len(input))
@@ -54,12 +63,18 @@ func (c *Coffer) WriteList(input map[string][]byte) error {
 		List: input,
 	}
 	//TODO: если интерактор возвращает ошибку, возможно нужно всё остановить
-	err, wrn := c.recInteractor.WriteList(req)
-	if err != nil {
+	rep = c.recInteractor.WriteList(req)
+	if rep.Code >= codes.Panic {
 		defer c.Stop()
-		return err
 	}
-	return wrn // при варнинге возвращаем ошибку, но приложение не останавливаем, т.е. это единичный случай и следующий может быть положительным.
+	return rep
+	// if err != nil {
+	// 	defer c.Stop()
+	// 	rep.Code = codes.ErrExceedingMaxValueSize
+	// 	rep.Error = err
+	// 	return rep
+	// }
+	// return wrn // при варнинге возвращаем ошибку, но приложение не останавливаем, т.е. это единичный случай и следующий может быть положительным.
 }
 
 func (c *Coffer) Read(key string) *reports.ReportRead {
@@ -162,7 +177,14 @@ func (c *Coffer) Delete(key string) *reports.ReportDelete {
 // }
 
 func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
+	return c.deleteList(keys, true)
+}
 
+func (c *Coffer) DeleteListOptional(keys []string) *reports.ReportDeleteList {
+	return c.deleteList(keys, false)
+}
+
+func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDeleteList {
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
 		rep := &reports.ReportDeleteList{
@@ -178,33 +200,40 @@ func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
 		Time: time.Now(),
 		Keys: keys,
 	}
-	rep := c.recInteractor.DeleteListStrict(req)
+	rep := c.recInteractor.DeleteList(req, strictMode)
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
 	return rep
 }
 
-func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interface{}) error { // A method with little protection against changing arguments. Slower.
-	keysCopy, err := c.copySlice(keys)
-	if err != nil {
-		return err
-	}
-	return c.Transaction(handlerName, keysCopy, arg)
-}
+// func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interface{}) error { // A method with little protection against changing arguments. Slower.
+// 	keysCopy, err := c.copySlice(keys)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	return c.Transaction(handlerName, keysCopy, arg)
+// }
 
-func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) error {
+func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) *reports.ReportTransaction {
+	rep := &reports.ReportTransaction{}
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
-		return fmt.Errorf("Coffer is stopped")
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
 	}
 	defer c.hasp.Done()
 	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию
-		return fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		rep.Code = codes.ErrRecordLimitExceeded
+		rep.Error = fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
+		return rep
 	}
 	for _, key := range keys { // контроль максимально допустимой длины ключа
 		if ln := len(key); ln > c.config.UsecasesConfig.MaxKeyLength {
-			return fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			rep.Code = codes.ErrExceedingMaxKeyLength
+			rep.Error = fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
+			return rep
 		}
 	}
 	c.porter.Catch(keys)
@@ -216,10 +245,9 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 		Keys:        keys,
 		Value:       arg,
 	}
-	err, wrn := c.recInteractor.Transaction(req)
-	if err != nil {
+	rep = c.recInteractor.Transaction(req)
+	if rep.Code >= codes.Panic {
 		defer c.Stop()
-		return err //TODO: возвращать структуру отчёта а не ошибку
 	}
-	return wrn
+	return rep
 }

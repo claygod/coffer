@@ -9,10 +9,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-
-	//"strings"
+	"strings"
 
 	"github.com/claygod/coffer/domain"
+	"github.com/claygod/coffer/reports/codes"
 )
 
 type Operations struct {
@@ -39,6 +39,8 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
 		}
 		//fmt.Println("Operation: ", string(op.Body))
+		//TODO: пока не проверяем результаты операций, считаем, что раз он были ок в первый раз, должны быть ок и сейчас
+		// если не ок, то надо всё останавливать, т.к. все записанные операции раньше были успешными
 		switch op.Code {
 		case codeWriteList:
 			reqWL, err := o.reqCoder.ReqWriteListDecode(op.Body)
@@ -54,17 +56,23 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 			if err != nil {
 				return err
 			}
-			if err := o.trn.doOperationTransaction(reqTr, repo); err != nil {
-				return err
+			if rep := o.trn.doOperationTransaction(reqTr, repo); rep.Code != codes.Ok {
+				return rep.Error
 			}
 		case codeDeleteListStrict:
 			reqDL, err := o.reqCoder.ReqDeleteListDecode(op.Body)
 			if err != nil {
 				return err
+			} else if notFound := repo.DelListStrict(reqDL.Keys); len(notFound) != 0 {
+				//notFound := repo.DelListStrict(reqDL.Keys) //результат не важен, главное, что он такой же как и в предыдущий раз
+				return fmt.Errorf("Operations:DoOperations:DeleteList:Keys not found: %s", strings.Join(notFound, ", "))
+			}
+		case codeDeleteListOptional:
+			reqDL, err := o.reqCoder.ReqDeleteListDecode(op.Body)
+			if err != nil {
+				return err
 			} else {
-				repo.DelListStrict(reqDL.Keys) //результат не важен, главное, что он такой же как и в предыдущий раз
-				// } if notFound := repo.DelListStrict(reqDL.Keys); len(notFound) != 0 {
-				// 	return fmt.Errorf("Keys not found: %s", strings.Join(notFound, ", "))
+				repo.DelListOptional(reqDL.Keys)
 			}
 		default:
 			return fmt.Errorf("Unknown operation `%d`", op.Code)
