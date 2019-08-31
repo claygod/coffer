@@ -41,9 +41,9 @@ func NewRecordsInteractor(
 	logger Logger,
 	loader *Loader,
 	chp *checkpoint,
-	opr *Operations,
+	//opr *Operations,
 	trs *Transaction,
-	coder *ReqCoder,
+	reqCoder *ReqCoder,
 	repo domain.RecordsRepository,
 	handlers domain.HandlersRepository,
 	resControl Resourcer,
@@ -52,14 +52,16 @@ func NewRecordsInteractor(
 	filenamer FileNamer,
 	hasp Starter) (*RecordsInteractor, error) {
 
+	//oper := NewOperations(logger, config, reqCoder, resControl, trs)
+
 	r := &RecordsInteractor{
 		config:     config,
 		logger:     logger,
 		loader:     loader,
 		chp:        chp,
-		opr:        opr,
+		opr:        NewOperations(logger, config, reqCoder, resControl, trs), //opr,
 		trs:        trs,
-		coder:      coder,
+		coder:      reqCoder,
 		repo:       repo,
 		handlers:   handlers,
 		resControl: resControl,

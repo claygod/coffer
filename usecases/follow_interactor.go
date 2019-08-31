@@ -5,10 +5,11 @@ package usecases
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	"fmt"
+	//"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	//"sync"
@@ -18,11 +19,11 @@ import (
 
 type FollowInteractor struct {
 	//m               sync.Mutex
-	logger          Logger
-	loader          *Loader
-	config          *Config
-	chp             *checkpoint
-	opr             *Operations
+	logger Logger
+	loader *Loader
+	config *Config
+	chp    *checkpoint
+	//opr             *Operations
 	repo            domain.RecordsRepository
 	filenamer       FileNamer
 	changesCounter  int64
@@ -35,18 +36,18 @@ func NewFollowInteractor(
 	loader *Loader,
 	config *Config,
 	chp *checkpoint,
-	opr *Operations,
+	//opr *Operations,
 	repo domain.RecordsRepository,
 	filenamer FileNamer,
 	hasp Starter,
 
 ) (*FollowInteractor, error) {
 	fi := &FollowInteractor{
-		logger:          logger,
-		loader:          loader,
-		config:          config,
-		chp:             chp,
-		opr:             opr,
+		logger: logger,
+		loader: loader,
+		config: config,
+		chp:    chp,
+		//opr:             opr,
 		repo:            repo,
 		filenamer:       filenamer,
 		lastFileNameLog: "-1.log", //TODO: in config
@@ -115,37 +116,68 @@ func (f *FollowInteractor) follow() error {
 	if err != nil {
 		return err
 	}
-	//fmt.Println("F:запущен follow, list: ", list)
-	for _, lFileName := range list {
-		logFileName := f.config.DirPath + lFileName
-		ops, err, wrn := f.opr.loadFromFile(logFileName) //если нет каталога или ещё что-то подобное
-		if err != nil {
-			return err
-		}
-		if wrn != nil { // wrn означает, что в логе битый файл, а значит, надо остановить фолловера, т.к. дальше могут быть неконсистентные результаты
-			return wrn
-		}
-		if ops == nil { //значит файл пустой
-			continue
-		}
-		if err := f.opr.DoOperations(ops, f.repo); err != nil {
-			return err
-		}
-		fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint, f.lastFileNameLog)
-		f.addChangesCounter(ops)
-		if f.changesCounter > f.config.ChagesByCheckpoint && logFileName != f.lastFileNameLog {
-			fmt.Println("F:создал новый checkpoint: ", logFileName)
-			if err := f.newCheckpoint(logFileName); err != nil {
-				fmt.Println("F:что-то пошло не так: ", err)
-				return err
-			}
-			if f.config.RemoveUnlessLogs {
-				f.removingUselessLogs(logFileName)
-			}
-			f.changesCounter = 0
-		}
-		f.lastFileNameLog = logFileName
+	if len(list) == 0 {
+		return nil
 	}
+	//fmt.Println("F:запущен follow, list: ", list)
+
+	// for _, lFileName := range list {
+	// 	logFileName := f.config.DirPath + lFileName
+	// 	// ops, err, wrn := f.opr.loadFromFile(logFileName) //если нет каталога или ещё что-то подобное
+	// 	// if err != nil {
+	// 	// 	return err
+	// 	// }
+	// 	// if wrn != nil { // wrn означает, что в логе битый файл, а значит, надо остановить фолловера, т.к. дальше могут быть неконсистентные результаты
+	// 	// 	return wrn
+	// 	// }
+	// 	// if ops == nil { //значит файл пустой
+	// 	// 	continue
+	// 	// }
+	// 	// if err := f.opr.DoOperations(ops, f.repo); err != nil {
+	// 	// 	return err
+	// 	// }
+
+	// 	if err := f.loader.LoadLogs([]string{lFileName}, f.repo); err != nil {
+	// 		return err
+	// 	}
+
+	// 	//fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint, f.lastFileNameLog)
+	// 	// f.addChangesCounter(ops)
+	// 	f.changesCounter += 10
+	// 	if f.changesCounter > f.config.ChagesByCheckpoint && logFileName != f.lastFileNameLog {
+	// 		//fmt.Println("F:создал новый checkpoint: ", logFileName)
+	// 		if err := f.newCheckpoint(logFileName); err != nil {
+	// 			//fmt.Println("F:что-то пошло не так: ", err)
+	// 			return err
+	// 		}
+	// 		if f.config.RemoveUnlessLogs {
+	// 			f.removingUselessLogs(logFileName)
+	// 		}
+	// 		f.changesCounter = 0
+	// 	}
+	// 	f.lastFileNameLog = logFileName
+	// }
+	//--------------------
+	if err := f.loader.LoadLogs(list, f.repo); err != nil {
+		return err
+	}
+	atomic.AddInt64(&f.changesCounter, int64(len(list))) // через атомик, чтобы при необходимости брать этот параметр, не было конкурентных проблем
+	//f.changesCounter += len(list)
+	logFileName := f.config.DirPath + list[len(list)-1]
+	if atomic.LoadInt64((&f.changesCounter)) > f.config.LogsByCheckpoint && logFileName != f.lastFileNameLog {
+		//fmt.Println("F:создал новый checkpoint: ", logFileName)
+		if err := f.newCheckpoint(logFileName); err != nil {
+			//fmt.Println("F:что-то пошло не так: ", err)
+			return err
+		}
+		if f.config.RemoveUnlessLogs {
+			f.removingUselessLogs(logFileName)
+		}
+		atomic.StoreInt64(&f.changesCounter, 0)
+		//f.changesCounter = 0
+	}
+	f.lastFileNameLog = logFileName
+
 	return nil
 }
 
@@ -175,12 +207,12 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 	}
 }
 
-func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
-	for _, op := range ops {
-		f.changesCounter += int64(len(op.Body)) //считаем в байтах
-	}
-	return nil
-}
+// func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
+// 	for _, op := range ops {
+// 		f.changesCounter += int64(len(op.Body)) //считаем в байтах
+// 	}
+// 	return nil
+// }
 
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 	//тут будем брать последние из filenamer

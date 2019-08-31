@@ -54,8 +54,8 @@ func New(config *Config) (*Coffer, error) {
 	fileNamer := filenamer.NewFileNamer(c.config.UsecasesConfig.DirPath)
 	trn := usecases.NewTransaction(c.handlers)
 	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
-	opr := usecases.NewOperations(c.logger, c.config.UsecasesConfig, reqCoder, resControl, trn)
-	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, opr)
+	//opr := usecases.NewOperations(c.logger, c.config.UsecasesConfig, reqCoder, resControl, trn)
+	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, reqCoder, resControl, trn)
 	jrn, err := journal.New(c.config.JournalConfig, fileNamer, c.alarmFunc)
 	if err != nil {
 		return nil, err
@@ -65,7 +65,7 @@ func New(config *Config) (*Coffer, error) {
 		c.logger,
 		ldr,
 		chp,
-		opr,
+		//opr,
 		trn,
 		reqCoder,
 		riRepo, //recordsRepo,
@@ -86,8 +86,8 @@ func New(config *Config) (*Coffer, error) {
 		ldr,
 		c.config.UsecasesConfig, //config *Config,
 		chp,                     //*checkpoint,
-		opr,                     // *operations,
-		fiRepo,                  //recordsRepo,
+		//opr,                     // *operations,
+		fiRepo, //recordsRepo,
 		fileNamer,
 		startstop.New(),
 	)

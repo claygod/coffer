@@ -30,7 +30,7 @@ import (
 func TestNewOperations(t *testing.T) {
 	ucCnf := &Config{
 		FollowPause:             400 * time.Millisecond,
-		ChagesByCheckpoint:      2,
+		LogsByCheckpoint:      2,
 		DirPath:                 "../test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,

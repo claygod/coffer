@@ -17,12 +17,14 @@ type Loader struct {
 	opr    *Operations
 }
 
-func NewLoader(config *Config, lgr Logger, chp *checkpoint, opr *Operations) *Loader {
+func NewLoader(config *Config, lgr Logger, chp *checkpoint, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Loader {
+	//oper := NewOperations(lgr, config, reqCoder, resControl, trn)
+
 	return &Loader{
 		config: config,
 		logger: lgr,
 		chp:    chp,
-		opr:    opr,
+		opr:    NewOperations(lgr, config, reqCoder, resControl, trn),
 	}
 }
 
