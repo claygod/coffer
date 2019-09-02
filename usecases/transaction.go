@@ -65,8 +65,8 @@ func NewTransaction(handlers HandleStore) *Transaction {
 // 	return rep
 // }
 
-func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) *reports.ReportTransaction {
-	rep := &reports.ReportTransaction{}
+func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) *reports.Report {
+	rep := &reports.Report{}
 	// находим хандлер
 	hdlx, err := t.handlers.Get(reqTr.HandlerName)
 	if err != nil {

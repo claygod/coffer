@@ -175,8 +175,8 @@ func (r *RecordsInteractor) save(args ...string) error {
 // 	return nil, nil
 // }
 
-func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.ReportWriteList {
-	rep := &reports.ReportWriteList{}
+func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
+	rep := &reports.Report{}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
@@ -213,7 +213,7 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.ReportWriteLis
 }
 
 func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
-	rep := &reports.ReportReadList{}
+	rep := &reports.ReportReadList{Report: reports.Report{}}
 	//defer c.checkPanic()
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
@@ -237,7 +237,7 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 
 func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *reports.ReportDeleteList {
 	//strictMode := true // strict
-	rep := &reports.ReportDeleteList{}
+	rep := &reports.ReportDeleteList{Report: reports.Report{}}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
@@ -368,8 +368,8 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	return r.opr.operatToLog(op)
 }
 
-func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.ReportTransaction { // interface{}, map[string][]byte, *domain.Handler
-	rep := &reports.ReportTransaction{}
+func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.Report { // interface{}, map[string][]byte, *domain.Handler
+	rep := &reports.Report{}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
