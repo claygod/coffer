@@ -101,6 +101,7 @@ func New(config *Config) (*Coffer, error) {
 }
 
 func (c *Coffer) Start() bool { // return prev state
+	//TODO: при аварийной остановке нужно ли иметь возможность запускаться вновь?(StopForever, Concrete - в старт-стоп добавить) возможно, правильный выход - пересоздание и запуск
 	//defer c.checkPanic()
 	if !c.resControl.Start() {
 		return false
