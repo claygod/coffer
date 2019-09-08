@@ -6,6 +6,7 @@ package coffer
 
 import (
 	//"fmt"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -29,8 +30,10 @@ import (
 	// "github.com/claygod/tools/porter"
 )
 
+const dirPath string = "./test/"
+
 func TestNewCoffer(t *testing.T) {
-	//defer forTestClearDir("./test/")
+	defer forTestClearDir(dirPath)
 	jCnf := &journal.Config{
 		BatchSize:              2000,
 		LimitRecordsPerLogfile: 5,
@@ -38,7 +41,7 @@ func TestNewCoffer(t *testing.T) {
 	ucCnf := &usecases.Config{
 		FollowPause:             400 * time.Millisecond,
 		LogsByCheckpoint:        2,
-		DirPath:                 "./test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
 		MaxValueLength:          10000,
@@ -47,7 +50,7 @@ func TestNewCoffer(t *testing.T) {
 	rcCnf := &resources.Config{
 		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
 		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     "./test/",       // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
 	}
 
 	cnf := &Config{
@@ -67,16 +70,47 @@ func TestNewCoffer(t *testing.T) {
 	if cof.Start() {
 		defer cof.Stop()
 	} else {
-		t.Errorf("Failed to start")
+		t.Errorf("Failed to start (cof)")
 		return
 	}
-	for i := 70; i < 99; i++ {
+	for i := 10; i < 19; i++ {
 		if rep := cof.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
 			t.Error(err)
 		}
-		time.Sleep(900 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
+	}
+	if rep := cof.Count(); rep.Count != 9 {
+		t.Errorf("Records count, have %d, wand 9.", rep.Count)
+		return
 	}
 
+	b1, err := ioutil.ReadFile(dirPath + "4.log")
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
+	if err := ioutil.WriteFile(dirPath+"4.log", b1[:len(b1)-2], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+
+	cof2, err := New(cnf)
+	if err != nil {
+		t.Log(err)
+		return
+	}
+	if cof2.Start() {
+		defer cof2.Stop()
+	} else {
+		t.Errorf("Failed to start (cof2)")
+		return
+	}
+
+	if rep := cof2.Count(); rep.Count != 8 { // одна запись поломана и её нет, а почему-то скачена
+		t.Errorf("Records count, have %d, wand 8.", rep.Count)
+		return
+	}
 }
 
 func forTestClearDir(dir string) error {
