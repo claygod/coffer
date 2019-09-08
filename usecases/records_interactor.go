@@ -289,7 +289,7 @@ func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *rep
 }
 
 func (r *RecordsInteractor) deleteListStrict(keys []string, opBytes []byte) *reports.ReportDeleteList {
-	rep := &reports.ReportDeleteList{}
+	rep := &reports.ReportDeleteList{Report: reports.Report{}}
 	// выполняем
 	notFound := r.repo.DelListStrict(keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
 	rep.NotFound = notFound
@@ -309,7 +309,7 @@ func (r *RecordsInteractor) deleteListStrict(keys []string, opBytes []byte) *rep
 }
 
 func (r *RecordsInteractor) deleteListOptional(keys []string, opBytes []byte) *reports.ReportDeleteList {
-	rep := &reports.ReportDeleteList{}
+	rep := &reports.ReportDeleteList{Report: reports.Report{}}
 	// выполняем
 	removedList, notFound := r.repo.DelListOptional(keys) // при варнинге - не всё удалось удалить (каких-то ключей нет в базе)
 	rep.Removed = removedList
@@ -435,6 +435,20 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.Report { /
 		rep.Error = err
 		return rep
 	}
+	rep.Code = codes.Ok
+	return rep
+}
+
+func (r *RecordsInteractor) RecordsCount() *reports.ReportRecordsCount {
+	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
+	if !r.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
+	}
+	defer r.hasp.Done()
+	// выполняем
+	rep.Count = r.repo.CountRecords() // проводим операцию  с inmemory хранилищем
 	rep.Code = codes.Ok
 	return rep
 }

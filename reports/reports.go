@@ -27,17 +27,13 @@ type Report struct {
 
 type ReportRead struct {
 	Report
-	//Code  codes.Code
 	Data []byte
-	//Error error
 }
 
 type ReportReadList struct {
 	Report
-	//Code     codes.Code
 	Data     map[string][]byte
 	NotFound []string
-	//Error    error
 }
 
 // type ReportDelete struct {
@@ -47,8 +43,11 @@ type ReportReadList struct {
 
 type ReportDeleteList struct {
 	Report
-	//Code     codes.Code
 	Removed  []string
 	NotFound []string
-	//Error    error
+}
+
+type ReportRecordsCount struct {
+	Report
+	Count int
 }

@@ -208,3 +208,20 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 	}
 	return rep
 }
+
+func (c *Coffer) Count() *reports.ReportRecordsCount {
+	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
+	//defer c.checkPanic()
+	if !c.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
+	}
+	defer c.hasp.Done()
+
+	rep = c.recInteractor.RecordsCount()
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
