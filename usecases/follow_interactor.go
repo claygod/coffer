@@ -158,8 +158,12 @@ func (f *FollowInteractor) follow() error {
 	// 	f.lastFileNameLog = logFileName
 	// }
 	//--------------------
-	if err := f.loader.LoadLogs(list, f.repo); err != nil {
+	err, wrn := f.loader.LoadLogs(list, f.repo)
+	if err != nil {
 		return err
+	}
+	if wrn != nil { // на битых файлах мы тоже стопаем
+		return wrn
 	}
 	atomic.AddInt64(&f.changesCounter, int64(len(list))) // через атомик, чтобы при необходимости брать этот параметр, не было конкурентных проблем
 	//f.changesCounter += len(list)

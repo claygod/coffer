@@ -50,7 +50,7 @@ func NewRecordsInteractor(
 	porter Porter,
 	journal Journaler,
 	filenamer FileNamer,
-	hasp Starter) (*RecordsInteractor, error) {
+	hasp Starter) (*RecordsInteractor, error, error) {
 
 	//oper := NewOperations(logger, config, reqCoder, resControl, trs)
 
@@ -73,7 +73,7 @@ func NewRecordsInteractor(
 
 	chpList, err := r.filenamer.GetHalf("-1"+extCheck+extPoint, true)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 	fChName, err := r.loader.LoadLatestValidCheckpoint(chpList, r.repo) // загрузить последнюю валидную версию checkpoint
 	if err != nil {
@@ -85,21 +85,22 @@ func NewRecordsInteractor(
 	logsList, err := r.filenamer.GetHalf(strings.Replace(fChName, extCheck+extPoint, extLog, -1), true) // GetAfterLatest(strings.Replace(fChName, extCheck+extPoint, extLog, -1))
 	if err != nil {
 		//fmt.Println(22220001, fChName, err)
-		return nil, err
+		return nil, err, nil
 	}
 	// выполнить все имеющиеся последующие логи
 	if len(logsList) > 0 {
 		// eсли последний по номеру не `checkpoint`, значит была аварийная остановка,
 		// и нужно загрузить всё, что можно, сохранить, и только потом продолжить
-		if err := r.loader.LoadLogs(logsList, r.repo); err != nil {
-			return nil, err
+		err, wrn := r.loader.LoadLogs(logsList, r.repo)
+		if err != nil {
+			return nil, err, wrn
 		}
 		if err := r.save(); err != nil {
-			return nil, err
+			return nil, err, wrn
 		}
 	}
 
-	return r, nil
+	return r, nil, nil
 }
 
 func (r *RecordsInteractor) Start() bool {

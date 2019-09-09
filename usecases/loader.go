@@ -5,7 +5,8 @@ package usecases
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	//"fmt"
+	"fmt"
+	"os"
 
 	"github.com/claygod/coffer/domain"
 )
@@ -53,27 +54,64 @@ func (l *Loader) loadCheckpoint(chpName string, repo domain.RecordsRepository) e
 	return nil
 }
 
-func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) error {
+func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error, error) {
 	counter := 0
+	var wr error
 	for _, fName := range fList {
+		brk := false
 		counter++
 		ops, err, wrn := l.opr.loadFromFile(l.config.DirPath + fName) //TODO: тут добавляем директорию к пути
 		if err != nil {
-			return err
+			return err, wrn
 		}
 		if wrn != nil {
-			if len(fList) == counter && l.config.AllowStartupErrLoadLogs { //TODO: битый лог должен быть последним, если нет, то что-то не так
-				l.logger.Info(wrn).
-					Context("Object", "RecordsInteractor").
-					Context("Method", "loadLogs").
-					Send()
-				return nil
+			wr = wrn
+			fmt.Println(len(fList), counter, fList)
+			switch counter { // два варианта, т.к. иногда будет лог с нулевым содержимым последним
+			case len(fList):
+				if !l.config.AllowStartupErrLoadLogs {
+					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
+				} else {
+					brk = true // return nil, wrn
+				}
+			case len(fList) - 1:
+				stat, err := os.Stat(l.config.DirPath + fList[len(fList)-1])
+				if err != nil {
+					return err, wrn
+				}
+				if stat.Size() != 0 {
+					return fmt.Errorf("The spoiled log (%s) is not the last, after it there is one more log file.",
+						l.config.DirPath+fName), wrn
+				}
+				if !l.config.AllowStartupErrLoadLogs {
+					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
+				} else {
+					brk = true //return nil, wrn
+				}
+			default:
+				return fmt.Errorf("The spoiled log (%s) .", l.config.DirPath+fName), wrn
 			}
-			return wrn
 		}
+		// if len(fList) != counter || !l.config.AllowStartupErrLoadLogs {
+		// 	return fmt.Errorf("The spoiled log (%s) is not the last, after it there is one more log file. OR l.config.AllowStartupErrLoadLogs == false",
+		// 		l.config.DirPath+fName), wrn
+
+		// if wrn != nil {
+		// 	if len(fList) == counter && l.config.AllowStartupErrLoadLogs { //TODO: битый лог должен быть последним, если нет, то что-то не так
+		// 		l.logger.Info(wrn).
+		// 			Context("Object", "RecordsInteractor").
+		// 			Context("Method", "loadLogs").
+		// 			Send()
+		// 		return nil, wrn
+		// 	}
+		// 	return wrn
+		// }
 		if err := l.opr.DoOperations(ops, repo); err != nil {
-			return err
+			return err, wrn
+		}
+		if brk {
+			break
 		}
 	}
-	return nil
+	return nil, wr
 }

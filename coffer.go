@@ -32,11 +32,11 @@ type Coffer struct {
 	hasp          usecases.Starter
 }
 
-func New(config *Config) (*Coffer, error) {
+func New(config *Config) (*Coffer, error, error) {
 	//TODO: проверять получаемый конфиг
 	resControl, err := resources.New(config.ResourcesConfig)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 
 	c := &Coffer{
@@ -58,9 +58,9 @@ func New(config *Config) (*Coffer, error) {
 	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, reqCoder, resControl, trn)
 	jrn, err := journal.New(c.config.JournalConfig, fileNamer, c.alarmFunc)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
-	ri, err := usecases.NewRecordsInteractor( // RecordsInteractor
+	ri, err, wrn := usecases.NewRecordsInteractor( // RecordsInteractor
 		c.config.UsecasesConfig,
 		c.logger,
 		ldr,
@@ -77,7 +77,7 @@ func New(config *Config) (*Coffer, error) {
 		startstop.New(),
 	)
 	if err != nil {
-		return nil, err
+		return nil, err, wrn
 	}
 	c.recInteractor = ri
 
@@ -92,12 +92,12 @@ func New(config *Config) (*Coffer, error) {
 		startstop.New(),
 	)
 	if err != nil {
-		return nil, err
+		return nil, err, nil
 	}
 	c.folInteractor = fi
 
 	fmt.Println(fileNamer)
-	return c, nil
+	return c, nil, nil
 }
 
 func (c *Coffer) Start() bool { // return prev state
