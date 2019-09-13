@@ -96,7 +96,7 @@ func New(config *Config) (*Coffer, error, error) {
 	}
 	c.folInteractor = fi
 
-	fmt.Println(fileNamer)
+	//fmt.Println(fileNamer)
 	return c, nil, nil
 }
 

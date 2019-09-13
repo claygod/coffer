@@ -35,6 +35,7 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 		return rep
 	}
 	defer c.hasp.Done()
+	//fmt.Println("++1++", c.config.UsecasesConfig.MaxKeyLength, c.config.UsecasesConfig.MaxValueLength)
 	for _, value := range input {
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
 			rep.Code = codes.ErrExceedingMaxValueSize
@@ -42,8 +43,10 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 			return rep
 		}
 	}
+	//fmt.Println("++2++")
 	keys := c.extractKeysFromMap(input)
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
+		//fmt.Println("+++++", err)
 		rep.Code = code
 		rep.Error = err
 		return rep

@@ -197,7 +197,7 @@ func (f *FileNamer) findLatestNum(extList []string) (int64, error) {
 		}
 
 		//latestName, err := f.findLatestFile(ext)
-		fmt.Println("LATEST: ", num)
+		//fmt.Println("LATEST: ", num)
 
 		// if err != nil {
 		// 	return 0, err

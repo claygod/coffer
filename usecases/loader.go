@@ -66,7 +66,7 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 		}
 		if wrn != nil {
 			wr = wrn
-			fmt.Println(len(fList), counter, fList)
+			//fmt.Println(len(fList), counter, fList)
 			switch counter { // два варианта, т.к. иногда будет лог с нулевым содержимым последним
 			case len(fList):
 				if !l.config.AllowStartupErrLoadLogs {
