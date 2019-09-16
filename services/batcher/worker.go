@@ -35,9 +35,15 @@ func (b *Batcher) worker() {
 		//				b.alarm(err)
 		//			}
 		case <-b.chStop:
-			atomic.StoreInt64(&b.stopFlag, stateStop)
-			return
+			if len(b.chInput) == 0 {
+				atomic.StoreInt64(&b.stopFlag, stateStop)
+				return
+			} else {
+				continue
+			}
+
 		case inData := <-b.chInput:
+			//fmt.Println("++--inData++1++", len(inData))
 			if _, err := buf.Write(inData); err != nil {
 				b.alarm(err)
 
@@ -52,6 +58,7 @@ func (b *Batcher) worker() {
 		for i := 0; i < b.batchSize; i++ { // -1
 			select {
 			case inData := <-b.chInput:
+				//fmt.Println("++--inData++2++", len(inData))
 				if _, err := buf.Write(inData); err != nil {
 					b.alarm(err)
 				} else {
@@ -64,8 +71,8 @@ func (b *Batcher) worker() {
 		// batch to out
 		bOut := buf.Bytes()
 		if len(bOut) > 0 {
-			//fmt.Println("************* Текущий батч - ", u)
-			if _, err := b.work.Write(buf.Bytes()); err != nil {
+			//fmt.Println("************* Текущий батч - ", u, len(bOut))
+			if _, err := b.work.Write(bOut); err != nil {
 				atomic.StoreInt64(&b.stopFlag, stateStop)
 				b.alarm(err)
 				return
@@ -80,8 +87,12 @@ func (b *Batcher) worker() {
 		// exit-check
 		select {
 		case <-b.chStop:
-			atomic.StoreInt64(&b.stopFlag, stateStop)
-			return
+			if len(b.chInput) == 0 {
+				atomic.StoreInt64(&b.stopFlag, stateStop)
+				return
+			} else {
+				continue
+			}
 		default:
 		}
 		// cursor (indicator)  switch

@@ -43,7 +43,7 @@ func NewBatcher(workFunc io.Writer, alarmFunc func(error), chInput chan []byte, 
 		indicator: newIndicator(),
 		work:      workFunc,
 		alarm:     alarmFunc,
-		chInput:  chIn := make(chan []byte, batchSize),// chInput,
+		chInput:   make(chan []byte, batchSize),              // chInput,
 		chStop:    make(chan struct{}, batchRatio*batchSize), //TODO: тут сдлина может НЕ иметь значение
 		batchSize: batchSize,
 	}
@@ -63,7 +63,7 @@ func (b *Batcher) Start() {
 Stop - finish the job
 */
 func (b *Batcher) Stop() {
-	//close(b.chStop)
+	close(b.chStop)
 	//TODO: может пригодится? b.chStop <- struct{}{}
 	for {
 		if atomic.LoadInt64(&b.stopFlag) == stateStop {

@@ -106,11 +106,14 @@ loadOperationsFromFile - скачиваем операции из файла, в
 func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
 	// st, _ := fl.Stat()
 	// flSize := st.Size()
+	stat, _ := fl.Stat()
+	fmt.Println("stst: ", stat.Size(), fl.Name())
 	counReadedBytes := 0
 	ops := make([]*domain.Operation, 0, 16)
 	rSize := make([]byte, 8)
 	var errOut error
 	for {
+		fmt.Println("---loadOperationsFromFile")
 		_, err := fl.Read(rSize)
 		if err != nil {
 			//fmt.Println("OP:LD:err1: ", err)
@@ -155,7 +158,7 @@ func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, e
 
 func (o *Operations) operatToLog(op *domain.Operation) ([]byte, error) {
 	var buf bytes.Buffer
-	if _, err := buf.Write(uint64ToBytes(uint64(len(op.Body) + 2))); err != nil { //TODO +1
+	if _, err := buf.Write(uint64ToBytes(uint64(len(op.Body) + 1))); err != nil { //TODO +1
 		return nil, err
 	}
 	if err := buf.WriteByte(op.Code); err != nil {

@@ -237,12 +237,25 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	fmt.Println("len(3.log): ", len(b3))
 	b4, err := ioutil.ReadFile(dirPath + "4.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
+
+	fmt.Println(string(b3))
+	fmt.Println(string(b4))
+	//cof1.Stop()
+	time.Sleep(1000 * time.Millisecond)
+	// b3, err := ioutil.ReadFile(dirPath + "3.log") // сохраняем в память
+	// if err != nil {
+	// 	t.Error(err)
+	// 	return
+	// }
+	//fmt.Println("len(3.log): ", string(b3))
+	//fmt.Println("len(3.log): ", b3[0], " __ ", b3[len(b3)-5], b3[len(b3)-4], b3[len(b3)-3], b3[len(b3)-2], b3[len(b3)-1])
+	//fmt.Println("len(3.log): ", b3[0], len(b3))
+
 	_, err = ioutil.ReadFile(dirPath + "5.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
@@ -251,23 +264,46 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	time.Sleep(1000 * time.Millisecond)
 	os.Remove(dirPath + "2.checkpoint")
 	os.Remove(dirPath + "5.checkpoint")
-	time.Sleep(1000 * time.Millisecond)
+	time.Sleep(2000 * time.Millisecond)
 
-	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
-	t.Log("Stage2--")
-	fmt.Println("---------------------------")
-	if err := ioutil.WriteFile(dirPath+"4.log", b4[:len(b4)-2], os.ModePerm); err != nil {
+	// пробуем загрузиться с логов
+	t.Log("Stage111")
+	cof111, err := createAndStartNewCoffer(t)
+	if err != nil {
 		t.Error(err)
 		return
 	}
+	if rep := cof111.Count(); rep.Count != 9 {
+		t.Errorf("Records (cof111) count, have %d, wand 9.", rep.Count)
+		return
+	} else {
+		t.Log("Load true logs OK")
+	}
+	cof111.Stop()
 	time.Sleep(1000 * time.Millisecond)
+	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
+	t.Log("Stage2--")
+	os.Remove(dirPath + "7.checkpoint")
+	os.Remove(dirPath + "6.checkpoint")
+	os.Remove(dirPath + "5.log")
+	fmt.Println("---------------------------")
+	if err := ioutil.WriteFile(dirPath+"3.log", b3, os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := ioutil.WriteFile(dirPath+"4.log", b4[:len(b4)-1], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	fmt.Println("---------------------------")
+	time.Sleep(2000 * time.Millisecond)
 	cof2, err := createAndStartNewCoffer(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	if rep := cof2.Count(); rep.Count != 8 { // одна запись поломана и её нет, а почему-то скачена
-		t.Errorf("Records (cof2) count, have %d, wand 8.", rep.Count)
+		t.Errorf("Records (cof2) count, have %d, want 8.", rep.Count)
 		return
 	}
 	//time.Sleep(1000 * time.Millisecond)

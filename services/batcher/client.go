@@ -5,9 +5,10 @@ package batcher
 // Copyright © 2018 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	"fmt"
+	//"fmt"
 	"log"
 	"os"
+	"runtime"
 )
 
 /*
@@ -23,7 +24,7 @@ type Client struct {
 Open - client creation and batcher.
 */
 func Open(filePath string, batchSize int) (*Client, error) {
-	fmt.Println("Создание нового клиента ", filePath)
+	//fmt.Println("Создание нового клиента ", filePath)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return nil, err
@@ -48,15 +49,21 @@ func (c *Client) Write(in []byte) {
 	c.b.chInput <- in
 	//fmt.Println("step 2")
 
-	fmt.Println("step 3")
+	//fmt.Println("step 3")
 	ch := c.b.GetChan()
-	fmt.Println("step 4")
+	//fmt.Println("step 4")
 	<-ch
-	fmt.Println("step 5")
+	//fmt.Println("step 5")
 }
 
 func (c *Client) Close() {
 	c.b.Stop()
+	for {
+		if len(c.b.chInput) == 0 {
+			return
+		}
+		runtime.Gosched()
+	}
 }
 
 /*
@@ -87,7 +94,7 @@ Write - write data to a file with synchronization
 */
 func (w *writer) Write(in []byte) (int, error) {
 	i, err := w.f.Write(in)
-	i, err = w.f.Write([]byte{99}) //TODO: зачем тут ещё один символ??
+	//i, err = w.f.Write([]byte{99}) //TODO: зачем тут ещё один символ??
 	if err == nil {
 		err = w.f.Sync()
 	}
