@@ -99,25 +99,10 @@ func (j *Journal) Write(toSave []byte) error {
 		atomic.StoreInt64(&j.state, statePanic)
 		return err
 	} else {
-		//fmt.Println("+++", len(toSave)) //, string(toSave)
-		// fmt.Println(clt)
 		clt.Write(toSave)
 	}
 	return nil
 }
-
-// func (j *Journal) Close() {
-// 	j.m.Lock()
-// 	defer j.m.Unlock()
-// 	atomic.CompareAndSwapInt64(&j.state, stateStarted, stateStopped) //если не сработает, значит мы уже стопнуты или в панике
-// 	j.client.Close()
-// 	for {
-// 		if atomic.LoadInt64(&j.countBatchClients) == 0 {
-// 			return
-// 		}
-// 		time.Sleep(1 * time.Second)
-// 	}
-// }
 
 func (j *Journal) getClient() (*batcher.Client, error) {
 	j.m.Lock()
@@ -125,7 +110,6 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	//fmt.Println("++j *Journal) getClient+++", j.counter, j.config.LimitRecordsPerLogfile)
 	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
-
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
 		//fmt.Println("Journal-1", nName, j.fileNamer)
 		if err != nil {
