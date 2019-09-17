@@ -30,7 +30,9 @@ type Logger interface {
 
 type Journaler interface {
 	Write([]byte) error
-	Close()
+	Start() error
+	Stop()
+	//Close()
 	Restart()
 }
 

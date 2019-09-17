@@ -45,7 +45,7 @@ Write -
 */
 func (c *Client) Write(in []byte) {
 
-	//fmt.Println("step 1")
+	//fmt.Println("step 1", string(in))
 	c.b.chInput <- in
 	//fmt.Println("step 2")
 

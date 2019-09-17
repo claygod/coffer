@@ -98,12 +98,16 @@ func NewRecordsInteractor(
 		if err := r.save(); err != nil {
 			return nil, err, wrn
 		}
+		r.journal.Restart()
 	}
 
 	return r, nil, nil
 }
 
 func (r *RecordsInteractor) Start() bool {
+	if err := r.journal.Start(); err != nil {
+		return false
+	}
 	return r.hasp.Start()
 	// if !r.hasp.Start() {
 	// 	return false
@@ -116,6 +120,7 @@ func (r *RecordsInteractor) Stop() bool {
 		return false
 	}
 	defer r.hasp.Unblock()
+	r.journal.Stop()
 	if err := r.save(); err != nil {
 		r.logger.Error(err).
 			Context("Object", "RecordsInteractor").
@@ -145,7 +150,7 @@ func (r *RecordsInteractor) save(args ...string) error {
 	if err := r.chp.save(r.repo, novName); err != nil {
 		return err
 	}
-	r.journal.Restart()
+	//r.journal.Restart()
 	return nil
 }
 

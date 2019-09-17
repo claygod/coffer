@@ -214,13 +214,14 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 
 func TestCofferLoadFromLogs(t *testing.T) {
 	defer forTestClearDir(dirPath)
+
+	// наполняем базу и сохраняем в память её логи
 	t.Log("Stage1")
 	cof1, err := createAndStartNewCoffer(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	// cof1, err, wrn := createNewCoffer()
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
 			t.Error(err)
@@ -232,42 +233,21 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	b3, err := ioutil.ReadFile(dirPath + "3.log") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b4, err := ioutil.ReadFile(dirPath + "4.log") // сохраняем в память
+	b2, err := ioutil.ReadFile(dirPath + "2.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-
-	fmt.Println(string(b3))
-	fmt.Println(string(b4))
-	//cof1.Stop()
-	time.Sleep(1000 * time.Millisecond)
-	// b3, err := ioutil.ReadFile(dirPath + "3.log") // сохраняем в память
-	// if err != nil {
-	// 	t.Error(err)
-	// 	return
-	// }
-	//fmt.Println("len(3.log): ", string(b3))
-	//fmt.Println("len(3.log): ", b3[0], " __ ", b3[len(b3)-5], b3[len(b3)-4], b3[len(b3)-3], b3[len(b3)-2], b3[len(b3)-1])
-	//fmt.Println("len(3.log): ", b3[0], len(b3))
-
-	_, err = ioutil.ReadFile(dirPath + "5.checkpoint") // сохраняем в память
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	time.Sleep(1000 * time.Millisecond)
-	os.Remove(dirPath + "2.checkpoint")
-	os.Remove(dirPath + "5.checkpoint")
-	time.Sleep(2000 * time.Millisecond)
+	//fmt.Println("=> ", string(b1))
+	//fmt.Println("=> ", string(b2))
 
 	// пробуем загрузиться с логов
-	t.Log("Stage111")
+	t.Log("Stage2")
 	cof111, err := createAndStartNewCoffer(t)
 	if err != nil {
 		t.Error(err)
@@ -280,23 +260,18 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		t.Log("Load true logs OK")
 	}
 	cof111.Stop()
-	time.Sleep(1000 * time.Millisecond)
+	forTestClearDir(dirPath)
+
 	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
-	t.Log("Stage2--")
-	os.Remove(dirPath + "7.checkpoint")
-	os.Remove(dirPath + "6.checkpoint")
-	os.Remove(dirPath + "5.log")
-	fmt.Println("---------------------------")
-	if err := ioutil.WriteFile(dirPath+"3.log", b3, os.ModePerm); err != nil {
+	t.Log("Stage3")
+	if err := ioutil.WriteFile(dirPath+"3.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := ioutil.WriteFile(dirPath+"4.log", b4[:len(b4)-1], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"4.log", b2[:len(b2)-1], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	fmt.Println("---------------------------")
-	time.Sleep(2000 * time.Millisecond)
 	cof2, err := createAndStartNewCoffer(t)
 	if err != nil {
 		t.Error(err)
@@ -305,22 +280,32 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	if rep := cof2.Count(); rep.Count != 8 { // одна запись поломана и её нет, а почему-то скачена
 		t.Errorf("Records (cof2) count, have %d, want 8.", rep.Count)
 		return
+	} else {
+		t.Log("Load false logs OK")
 	}
-	//time.Sleep(1000 * time.Millisecond)
-	os.Remove(dirPath + "5.log")
-	os.Remove(dirPath + "6.checkpoint")
+	cof2.Stop()
+	forTestClearDir(dirPath)
 
-	// // переименовываем один файл, в результате получив нормальный после битого
-	// // но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
-	t.Log("Stage3")
-	os.Rename(dirPath+"3.log", dirPath+"5.log")
+	// переименовываем один файл, в результате получив нормальный после битого
+	// но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
+	t.Log("Stage4")
+	if err := ioutil.WriteFile(dirPath+"9.log", b1, os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	if err := ioutil.WriteFile(dirPath+"8.log", b2[:len(b2)-1], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
 	_, err, wrn := createNewCoffer()
 	if err == nil {
 		t.Error("Want error (The spoiled log...)")
 		return
 	} else {
 		t.Log(wrn)
+		t.Log("Load false/true logs OK")
 	}
+	//time.Sleep(15000 * time.Millisecond)
 }
 
 // func TestCofferLoadFromCheckpoint(t *testing.T) {

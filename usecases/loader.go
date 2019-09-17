@@ -62,7 +62,7 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 		brk := false
 		counter++
 		ops, err, wrn := l.opr.loadFromFile(l.config.DirPath + fName) //TODO: тут добавляем директорию к пути
-		fmt.Println(ops, err, wrn)
+		// fmt.Println(ops, err, wrn)
 		if err != nil {
 			return err, wrn
 		}

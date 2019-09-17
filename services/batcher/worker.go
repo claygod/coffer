@@ -25,6 +25,7 @@ func (b *Batcher) worker() {
 	//fmt.Println("----------22--- ")
 	var buf bytes.Buffer
 	for {
+		buf.Reset()
 		//fmt.Println("-1 собрались получить с входного канала")
 		var u int
 		// begin
@@ -43,7 +44,7 @@ func (b *Batcher) worker() {
 			}
 
 		case inData := <-b.chInput:
-			//fmt.Println("++--inData++1++", len(inData))
+			//fmt.Println("++--inData++1++", len(inData), string(inData))
 			if _, err := buf.Write(inData); err != nil {
 				b.alarm(err)
 
@@ -58,7 +59,7 @@ func (b *Batcher) worker() {
 		for i := 0; i < b.batchSize; i++ { // -1
 			select {
 			case inData := <-b.chInput:
-				//fmt.Println("++--inData++2++", len(inData))
+				//fmt.Println("++--inData++2++", len(inData), string(inData), "++++++++++++++++++++++++++++++++++++")
 				if _, err := buf.Write(inData); err != nil {
 					b.alarm(err)
 				} else {
@@ -81,7 +82,7 @@ func (b *Batcher) worker() {
 			//buf.Reset()
 		} else {
 			//fmt.Println("************** Почему-то  len(bOut) == 0 ")
-			time.Sleep(100000 * time.Microsecond)
+			time.Sleep(100 * time.Microsecond)
 			runtime.Gosched()
 		}
 		// exit-check
