@@ -21,7 +21,7 @@ worker - basic cycle.
 	- switches the channel
 	- zeroes the buffer under the new batch
 */
-func (b *Batcher) worker() {
+func (b *batcher) worker() {
 	//fmt.Println("----------22--- ")
 	var buf bytes.Buffer
 	for {
@@ -104,7 +104,7 @@ func (b *Batcher) worker() {
 	}
 }
 
-func (b *Batcher) fillBuf(buf bytes.Buffer, counter *int64) error {
+func (b *batcher) fillBuf(buf bytes.Buffer, counter *int64) error {
 	// begin
 	select {
 	// case <-b.chStop:
@@ -139,7 +139,7 @@ func (b *Batcher) fillBuf(buf bytes.Buffer, counter *int64) error {
 	return nil
 }
 
-func (b *Batcher) writeBuf(buf bytes.Buffer, counter *int64) error {
+func (b *batcher) writeBuf(buf bytes.Buffer, counter *int64) error {
 	bOut := buf.Bytes()
 	if len(bOut) > 0 {
 		//fmt.Println("************* Текущий батч - ", u)

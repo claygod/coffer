@@ -15,7 +15,7 @@ import (
 Client - for ease of use of the batcher in the typis case.
 */
 type Client struct {
-	b *Batcher
+	b *batcher
 	f *os.File
 	//chIn chan []byte
 }
@@ -23,15 +23,15 @@ type Client struct {
 /*
 Open - client creation and batcher.
 */
-func Open(filePath string, batchSize int) (*Client, error) {
+func Open(filePath string, batchSize int, alarmFunc func(error)) (*Client, error) {
 	//fmt.Println("Создание нового клиента ", filePath)
 	f, err := os.Create(filePath)
 	if err != nil {
 		return nil, err
 	}
 	chIn := make(chan []byte, batchSize)
-	nb := NewBatcher(newWriter(f), alarm, chIn, batchSize)
-	nb.Start()
+	nb := newBatcher(newWriter(f), alarmFunc, chIn, batchSize)
+	nb.start()
 
 	return &Client{
 		b: nb,
@@ -50,14 +50,14 @@ func (c *Client) Write(in []byte) {
 	//fmt.Println("step 2")
 
 	//fmt.Println("step 3")
-	ch := c.b.GetChan()
+	ch := c.b.getChan()
 	//fmt.Println("step 4")
 	<-ch
 	//fmt.Println("step 5")
 }
 
 func (c *Client) Close() {
-	c.b.Stop()
+	c.b.stop()
 	for {
 		if len(c.b.chInput) == 0 {
 			return

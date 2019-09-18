@@ -60,7 +60,7 @@ func (j *Journal) Start() error {
 	if err != nil {
 		return err
 	}
-	clt, err := batcher.Open(nName, j.config.BatchSize)
+	clt, err := batcher.Open(nName, j.config.BatchSize, j.alarmFunc)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 		if err != nil {
 			return nil, err
 		}
-		clt, err := batcher.Open(nName, j.config.BatchSize)
+		clt, err := batcher.Open(nName, j.config.BatchSize, j.alarmFunc)
 		if err != nil {
 			return nil, err
 		}

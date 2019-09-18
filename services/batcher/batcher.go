@@ -20,7 +20,7 @@ const (
 /*
 Batcher - performs write jobs in batches.
 */
-type Batcher struct {
+type batcher struct {
 	indicator *indicator
 	work      io.Writer
 	alarm     func(error)
@@ -31,28 +31,28 @@ type Batcher struct {
 }
 
 /*
-NewBatcher - create new batcher.
+newBatcher - create new batcher.
 Arguments:
 	- workFunc	- function that records the formed batch
 	- alarmFunc	- error handling function
 	- chInput	- input channel
 	- batchSize	- batch size
 */
-func NewBatcher(workFunc io.Writer, alarmFunc func(error), chInput chan []byte, batchSize int) *Batcher { //TODO: кажется при инициализации батчера не нужно ему давать канал
-	return &Batcher{
+func newBatcher(workFunc io.Writer, alarmFunc func(error), chInput chan []byte, batchSize int) *batcher { //TODO: кажется при инициализации батчера не нужно ему давать канал
+	return &batcher{
 		indicator: newIndicator(),
 		work:      workFunc,
 		alarm:     alarmFunc,
 		chInput:   make(chan []byte, batchSize),              // chInput,
-		chStop:    make(chan struct{}, batchRatio*batchSize), //TODO: тут сдлина может НЕ иметь значение
+		chStop:    make(chan struct{}, batchRatio*batchSize), //TODO: тут длина может НЕ иметь значение
 		batchSize: batchSize,
 	}
 }
 
 /*
-Start - run a worker
+start - run a worker
 */
-func (b *Batcher) Start() {
+func (b *batcher) start() {
 	if atomic.CompareAndSwapInt64(&b.stopFlag, stateStop, stateStart) {
 		go b.indicator.autoSwitcher()
 		go b.worker()
@@ -60,9 +60,9 @@ func (b *Batcher) Start() {
 }
 
 /*
-Stop - finish the job
+stop - finish the job
 */
-func (b *Batcher) Stop() {
+func (b *batcher) stop() {
 	close(b.chStop)
 	//TODO: может пригодится? b.chStop <- struct{}{}
 	for {
@@ -74,8 +74,8 @@ func (b *Batcher) Stop() {
 }
 
 /*
-GetChan - get current channel.
+getChan - get current channel.
 */
-func (b *Batcher) GetChan() chan struct{} {
+func (b *batcher) getChan() chan struct{} {
 	return b.indicator.getChan()
 }

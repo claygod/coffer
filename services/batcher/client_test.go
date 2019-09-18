@@ -13,7 +13,7 @@ import (
 
 func TestClient(t *testing.T) {
 	fileName := "./test2.txt"
-	bc, err := Open(fileName, 5)
+	bc, err := Open(fileName, 5, alarm)
 	if err != nil {
 		t.Error(err)
 	}

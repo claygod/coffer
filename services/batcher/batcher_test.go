@@ -74,7 +74,7 @@ func TestBatcher(t *testing.T) {
 func BenchmarkClientParallel(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
 	fmt.Println("====================Parallel======================")
-	clt, err := Open("./tmp.txt", 1000)
+	clt, err := Open("./tmp.txt", 1000, alarm)
 	if err != nil {
 		b.Error("Error `stat` file")
 	}
