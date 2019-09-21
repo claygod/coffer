@@ -63,7 +63,12 @@ func (b *batcher) start() {
 stop - finish the job
 */
 func (b *batcher) stop() {
-	close(b.chStop)
+	// if _, ok := <-b.chStop; ok {
+	// 	close(b.chStop)
+	// }
+	if b.chStop != nil {
+		close(b.chStop)
+	}
 	//TODO: может пригодится? b.chStop <- struct{}{}
 	for {
 		if atomic.LoadInt64(&b.stopFlag) == stateStop {

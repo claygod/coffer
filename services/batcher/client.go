@@ -57,6 +57,9 @@ func (c *Client) Write(in []byte) {
 }
 
 func (c *Client) Close() {
+	if c.b == nil {
+		return
+	}
 	c.b.stop()
 	for {
 		if len(c.b.chInput) == 0 {

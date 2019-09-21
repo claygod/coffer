@@ -127,6 +127,10 @@ func (c *Coffer) Start() bool { // return prev state
 }
 
 func (c *Coffer) Stop() bool {
+	if c.hasp.IsReady() {
+		return true // уже остановлено
+	}
+
 	//defer c.checkPanic()
 	if !c.hasp.Block() {
 		return false

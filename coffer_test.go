@@ -36,6 +36,42 @@ func TestCofferCleanDir(t *testing.T) {
 	forTestClearDir(dirPath)
 }
 
+func TestCofferStartStop(t *testing.T) {
+	forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferLength(t, 4, 7)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+	}
+	if !cof1.Start() {
+		t.Error("Could not start the application (2)")
+	}
+	if !cof1.Stop() {
+		t.Error("Could not stop the application (1)")
+	}
+	if !cof1.Stop() {
+		t.Error("Could not stop the application (2)")
+	}
+}
+
+func TestCofferStopHard(t *testing.T) {
+	forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferLength(t, 4, 7)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+	}
+	if err := cof1.StopHard(); err != nil {
+		t.Error(err)
+	}
+}
+
 func TestCofferWriteRead(t *testing.T) {
 	defer forTestClearDir(dirPath)
 	cof1, err := createAndStartNewCofferLength(t, 4, 7)
