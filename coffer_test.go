@@ -365,47 +365,45 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	}
 }
 
-// func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
-// 	forTestClearDir(dirPath)
-// 	defer forTestClearDir(dirPath)
-// 	cof1, err := createAndStartNewCoffer(t)
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	for i := 10; i < 19; i++ {
-// 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
-// 			t.Error(err)
-// 		}
-// 		//time.Sleep(10 * time.Millisecond)
-// 	}
-// 	cof1.Stop()
-// 	//time.Sleep(1 * time.Second)
-// 	b1, err := ioutil.ReadFile(dirPath + "5.checkpoint") // сохраняем в память
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	// проверяем загрузку с нормального, небитого файла
-// 	t.Log("Stage1")
-// 	if err := ioutil.WriteFile(dirPath+"5.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	cof2, err := createAndStartNewCoffer(t)
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
+func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCoffer(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	for i := 10; i < 19; i++ {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
+			t.Error(err)
+		}
+		//time.Sleep(10 * time.Millisecond)
+	}
+	cof1.Stop()
+	//time.Sleep(1 * time.Second)
+	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	// проверяем загрузку с нормального, небитого файла
+	t.Log("Stage1")
+	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	cof2, err := createAndStartNewCoffer(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
-// 	//TODO: TODO
-
-// 	// if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
-// 	// 	t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
-// 	// 	return
-// 	// }
-// 	cof2.Stop()
-// }
+	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
+		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
+		return
+	}
+	cof2.Stop()
+}
 
 func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 	cof1, err, wrn := createNewCoffer()
