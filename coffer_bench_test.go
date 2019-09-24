@@ -19,7 +19,53 @@ import (
 
 var keyConcurent int64
 
+func BenchmarkCofferReadParallel32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	fmt.Println("000Запущена копия бенчмарка")
+	b.StopTimer()
+	//b.SetParallelism(1)
+	forTestClearDir(dirPath)
+	//time.Sleep(1 * time.Second)
+	//fmt.Println("====================Parallel======================")
+	cof1, err := createAndStartNewCofferFast(b, 500, 100002, 100, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	defer forTestClearDir(dirPath)
+	for x := 0; x < 100000; x += 100 {
+		list := make(map[string][]byte, 100)
+		for z := x; z < x+100; z++ {
+			key := strconv.Itoa(z)
+			list[key] = []byte("a" + key + "b")
+		}
+		rep := cof1.WriteList(list)
+		if rep.Code >= codes.Warning {
+			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+		}
+	}
+	fmt.Println("DB filled", cof1.Count())
+	time.Sleep(2 * time.Second)
+	u := 0
+
+	b.StartTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			y := int(uint16(u))
+			key := strconv.Itoa(y)
+			rep := cof1.Read(key)
+			if rep.Code >= codes.Warning {
+				b.Error(fmt.Sprintf("Code: %d , key: %s", rep.Code, key))
+			}
+			u++
+			//fmt.Println("++++++++", u)
+		}
+	})
+}
+
 func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	b.SetParallelism(1)
+	fmt.Println("111Запущена копия бенчмарка")
 	b.StopTimer()
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
@@ -46,6 +92,7 @@ func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof
 }
 
 func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	fmt.Println("222Запущена копия бенчмарка")
 	b.StopTimer()
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
