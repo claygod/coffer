@@ -441,6 +441,10 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 	cof2.Stop()
 }
 
+// =======================================================================
+// =========================== HELPERS ===================================
+// =======================================================================
+
 func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 	cof1, err, wrn := createNewCoffer()
 	if err != nil {
@@ -457,6 +461,19 @@ func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 }
 
 func createAndStartNewCofferLength(t *testing.T, maxKeyLength int, maxValueLength int) (*Coffer, error) {
+	cof1, err, wrn := createNewCofferLength4(maxKeyLength, maxValueLength)
+	if err != nil {
+		return nil, err
+	} else if wrn != nil {
+		t.Log(wrn)
+	}
+	if !cof1.Start() {
+		return nil, fmt.Errorf("Failed to start (cof)")
+	}
+	return cof1, nil
+}
+
+func createAndStartNewCofferLengthB(t *testing.B, maxKeyLength int, maxValueLength int) (*Coffer, error) {
 	cof1, err, wrn := createNewCofferLength4(maxKeyLength, maxValueLength)
 	if err != nil {
 		return nil, err
