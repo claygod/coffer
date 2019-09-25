@@ -10,27 +10,27 @@ import (
 	"github.com/claygod/coffer/reports/codes"
 )
 
-func (c *Coffer) copySlice(inList []string) ([]string, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
-	outList := make([]string, len(inList))
-	n := copy(outList, inList)
-	if n != len(inList) {
-		return nil, fmt.Errorf("Slice (strings) copy failed.")
-	}
-	return outList, nil
-}
+// func (c *Coffer) copySlice(inList []string) ([]string, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
+// 	outList := make([]string, len(inList))
+// 	n := copy(outList, inList)
+// 	if n != len(inList) {
+// 		return nil, fmt.Errorf("Slice (strings) copy failed.")
+// 	}
+// 	return outList, nil
+// }
 
-func (c *Coffer) copyMap(inMap map[string][]byte) (map[string][]byte, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
-	outMap := make(map[string][]byte, len(inMap))
-	for k, v := range inMap {
-		list := make([]byte, len(v))
-		n := copy(list, v)
-		if n != len(v) {
-			return nil, fmt.Errorf("Slice (bytes) copy failed.")
-		}
-		outMap[k] = list
-	}
-	return outMap, nil
-}
+// func (c *Coffer) copyMap(inMap map[string][]byte) (map[string][]byte, error) { // на случай, если мы хотим скопировать входные данные запроса, боясь их изменения
+// 	outMap := make(map[string][]byte, len(inMap))
+// 	for k, v := range inMap {
+// 		list := make([]byte, len(v))
+// 		n := copy(list, v)
+// 		if n != len(v) {
+// 			return nil, fmt.Errorf("Slice (bytes) copy failed.")
+// 		}
+// 		outMap[k] = list
+// 	}
+// 	return outMap, nil
+// }
 
 // func (c *Coffer) checkPanic() {
 // 	if err := recover(); err != nil {
@@ -41,9 +41,9 @@ func (c *Coffer) copyMap(inMap map[string][]byte) (map[string][]byte, error) { /
 // 	}
 // }
 
-func (c *Coffer) alarmFunc(err error) { // для журнала
-	c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
-}
+// func (c *Coffer) alarmFunc(err error) { // для журнала
+// 	c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
+// }
 
 func (c *Coffer) checkLenCountKeys(keys []string) (codes.Code, error) { // проверка параметров ключей операции
 	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию

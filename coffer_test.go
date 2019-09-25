@@ -13,7 +13,7 @@ import (
 	"testing"
 	"time"
 
-	// "github.com/claygod/coffer/domain"
+	"github.com/claygod/coffer/domain"
 	// "github.com/claygod/coffer/services"
 	// "github.com/claygod/coffer/services/filenamer"
 	// "github.com/claygod/coffer/services/journal"
@@ -36,12 +36,56 @@ func TestCofferCleanDir(t *testing.T) {
 	forTestClearDir(dirPath)
 }
 
+func TestCofferTransaction(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCoffer()
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	hdlExch := domain.Handler(handlerExchange)
+	cof1.SetHandler("exchange", &hdlExch)
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+		return
+	} else {
+		defer cof1.Stop()
+	}
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code >= codes.Warning {
+		t.Error(err)
+		return
+	}
+	// количество записей не должно измениться
+	if rep := cof1.Count(); rep.Count != 2 {
+		t.Errorf("Records (cof1) count, have %d, want 2.", rep.Count)
+		return
+	}
+	// количество записей не должно измениться
+	rep := cof1.ReadList([]string{"aaa", "bbb"})
+	if rep.Code >= codes.Warning {
+		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
+		return
+	} else if string(rep.Data["aaa"]) != "222" || string(rep.Data["bbb"]) != "111" {
+		t.Errorf("Want aaa==222 bbb==111 , have aaa=%s bbb==%s ", string(rep.Data["aaa"]), string(rep.Data["bbb"]))
+	}
+	fmt.Println(rep)
+}
+
 func TestCofferStartStop(t *testing.T) {
 	forTestClearDir(dirPath)
 	cof1, err := createAndStartNewCofferLength(t, 4, 7)
 	if err != nil {
 		t.Error(err)
 		return
+	}
+	if err := cof1.Save(); err != nil {
+		t.Error(err)
 	}
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
@@ -54,6 +98,9 @@ func TestCofferStartStop(t *testing.T) {
 	}
 	if !cof1.Stop() {
 		t.Error("Could not stop the application (2)")
+	}
+	if err := cof1.Save(); err != nil {
+		t.Error(err)
 	}
 }
 
@@ -573,4 +620,22 @@ func forTestClearDir(dir string) error {
 		//		}
 	}
 	return nil
+}
+
+func handlerExchange(arg interface{}, recs map[string][]byte) (map[string][]byte, error) {
+	if arg != nil {
+		return nil, fmt.Errorf("Args not null.")
+	} else if len(recs) != 2 {
+		return nil, fmt.Errorf("Want 2 records, have %d", len(recs))
+	}
+	recsKeys := make([]string, 0, 2)
+	recsValues := make([][]byte, 0, 2)
+	for k, v := range recs {
+		recsKeys = append(recsKeys, k)
+		recsValues = append(recsValues, v)
+	}
+	out := make(map[string][]byte, 2)
+	out[recsKeys[0]] = recsValues[1]
+	out[recsKeys[1]] = recsValues[0]
+	return out, nil
 }

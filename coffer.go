@@ -47,6 +47,10 @@ func New(config *Config) (*Coffer, error, error) {
 		handlers:   handlers.New(),
 		hasp:       startstop.New(),
 	}
+
+	alarmFunc := func(err error) { // для журнала
+		c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
+	}
 	//recordsRepo := records.New()
 	riRepo := records.New()
 	fiRepo := records.New()
@@ -56,7 +60,7 @@ func New(config *Config) (*Coffer, error, error) {
 	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
 	//opr := usecases.NewOperations(c.logger, c.config.UsecasesConfig, reqCoder, resControl, trn)
 	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, reqCoder, resControl, trn)
-	jrn, err := journal.New(c.config.JournalConfig, fileNamer, c.alarmFunc)
+	jrn, err := journal.New(c.config.JournalConfig, fileNamer, alarmFunc)
 	if err != nil {
 		return nil, err, nil
 	}
