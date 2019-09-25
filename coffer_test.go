@@ -74,7 +74,108 @@ func TestCofferTransaction(t *testing.T) {
 	} else if string(rep.Data["aaa"]) != "222" || string(rep.Data["bbb"]) != "111" {
 		t.Errorf("Want aaa==222 bbb==111 , have aaa=%s bbb==%s ", string(rep.Data["aaa"]), string(rep.Data["bbb"]))
 	}
-	fmt.Println(rep)
+}
+
+func TestCofferTransactionRecordsNotFound(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCoffer()
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	hdlExch := domain.Handler(handlerExchange)
+	cof1.SetHandler("exchange", &hdlExch)
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+		return
+	} else {
+		defer cof1.Stop()
+	}
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+	if rep := cof1.Transaction("exchange", []string{"xxx", "yyy"}, nil); rep.Code != codes.ErrReadRecords {
+		t.Errorf("Want codes.ErrReadRecords , have %v", rep.Code)
+		t.Error(rep.Error)
+		return
+	}
+}
+
+func TestCofferTransactionRecordsBigLenKeys(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCofferLength4(2, 10)
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	hdlExch := domain.Handler(handlerExchange)
+	cof1.SetHandler("exchange", &hdlExch)
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+		return
+	} else {
+		defer cof1.Stop()
+	}
+	if rep := cof1.Transaction("exchange", []string{"xxxxx"}, nil); rep.Code != codes.ErrExceedingMaxKeyLength {
+		t.Errorf("Want codes.ErrExceedingMaxKeyLength , have %v", rep.Code)
+		return
+	}
+}
+
+func TestCofferTransactionRecordsBigOperationsCount(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCofferLength4(2, 10)
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	hdlExch := domain.Handler(handlerExchange)
+	cof1.SetHandler("exchange", &hdlExch)
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+		return
+	} else {
+		defer cof1.Stop()
+	}
+	if rep := cof1.Transaction("exchange", []string{"x", "x", "x", "x", "x", "x", "x",
+		"x", "x", "x", "x", "x", "x", "x"}, nil); rep.Code != codes.ErrRecordLimitExceeded {
+		t.Errorf("Want codes.ErrRecordLimitExceeded , have %v", rep.Code)
+		return
+	}
+}
+
+func TestCofferTransactionNotFound(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCoffer()
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	if !cof1.Start() {
+		t.Error("Could not start the application (1)")
+		return
+	} else {
+		defer cof1.Stop()
+	}
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code != codes.ErrHandlerNotFound {
+		t.Error("Handler is not available, but for some reason is executed.")
+		return
+	}
 }
 
 func TestCofferStartStop(t *testing.T) {
