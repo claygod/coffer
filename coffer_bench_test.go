@@ -164,5 +164,6 @@ func createNewCofferFast(batchSize int, limitRecordsPerLogfile int64, maxKeyLeng
 		//MaxKeyLength:        100,
 		//MaxValueLength:      10000,
 	}
-	return New(cnf)
+
+	return New(cnf, nil)
 }

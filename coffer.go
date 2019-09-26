@@ -32,11 +32,14 @@ type Coffer struct {
 	hasp          usecases.Starter
 }
 
-func New(config *Config) (*Coffer, error, error) {
+func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error) {
 	//TODO: проверять получаемый конфиг
 	resControl, err := resources.New(config.ResourcesConfig)
 	if err != nil {
 		return nil, err, nil
+	}
+	if hdls == nil {
+		hdls = handlers.New()
 	}
 
 	c := &Coffer{
@@ -44,7 +47,7 @@ func New(config *Config) (*Coffer, error, error) {
 		logger:     logger.New(services.NewLog(logPrefix)),
 		porter:     porter.New(),
 		resControl: resControl,
-		handlers:   handlers.New(),
+		handlers:   hdls, //handlers.New(),
 		hasp:       startstop.New(),
 	}
 
@@ -114,13 +117,13 @@ func (c *Coffer) Start() bool { // return prev state
 		c.resControl.Stop()
 		return false
 	}
-	fmt.Println("recInteractor.Start")
+	//fmt.Println("recInteractor.Start")
 	if !c.folInteractor.Start() {
 		c.resControl.Stop()
 		c.recInteractor.Stop()
 		return false
 	}
-	fmt.Println("folInteractor.Start")
+	//fmt.Println("folInteractor.Start")
 	if !c.hasp.Start() {
 		c.resControl.Stop()
 		c.recInteractor.Stop()
@@ -170,16 +173,16 @@ func (c *Coffer) StopHard() error {
 	return errOut
 }
 
-/*
-SetHandler - add handler. This can be done both before launch and during database operation.
-*/
-func (c *Coffer) SetHandler(handlerName string, handlerMethod *domain.Handler) error {
-	//defer c.checkPanic()
-	if !c.hasp.IsReady() {
-		return fmt.Errorf("Handles cannot be added while the application is running.")
-	}
-	return c.handlers.Set(handlerName, handlerMethod)
-}
+// /*
+// SetHandler - add handler. This can be done both before launch and during database operation.
+// */
+// func (c *Coffer) SetHandler(handlerName string, handlerMethod *domain.Handler) error {
+// 	//defer c.checkPanic()
+// 	if !c.hasp.IsReady() {
+// 		return fmt.Errorf("Handles cannot be added while the application is running.")
+// 	}
+// 	return c.handlers.Set(handlerName, handlerMethod)
+// }
 
 func (c *Coffer) Save() error {
 	if !c.Stop() {

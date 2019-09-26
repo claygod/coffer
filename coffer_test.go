@@ -17,11 +17,11 @@ import (
 	// "github.com/claygod/coffer/services"
 	// "github.com/claygod/coffer/services/filenamer"
 	// "github.com/claygod/coffer/services/journal"
-	// "github.com/claygod/coffer/services/repositories/handlers"
 	// "github.com/claygod/coffer/services/repositories/records"
 	// "github.com/claygod/coffer/reports"
 	"github.com/claygod/coffer/reports/codes"
 	"github.com/claygod/coffer/services/journal"
+	"github.com/claygod/coffer/services/repositories/handlers"
 	"github.com/claygod/coffer/services/resources"
 
 	// "github.com/claygod/coffer/services/startstop"
@@ -39,16 +39,13 @@ func TestCofferCleanDir(t *testing.T) {
 func TestCofferTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCoffer()
+	cof1, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if wrn != nil {
-		t.Error(wrn)
-		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	cof1.SetHandler("exchange", &hdlExch)
+	// hdlExch := domain.Handler(handlerExchange)
+	// cof1.SetHandler("exchange", &hdlExch)
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
@@ -79,16 +76,13 @@ func TestCofferTransaction(t *testing.T) {
 func TestCofferTransactionRecordsNotFound(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCoffer()
+	cof1, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if wrn != nil {
-		t.Error(wrn)
-		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	cof1.SetHandler("exchange", &hdlExch)
+	// hdlExch := domain.Handler(handlerExchange)
+	// cof1.SetHandler("exchange", &hdlExch)
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
@@ -107,7 +101,7 @@ func TestCofferTransactionRecordsNotFound(t *testing.T) {
 func TestCofferTransactionRecordsBigLenKeys(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCofferLength4(2, 10)
+	cof1, err, wrn := createNewCofferLength4T(2, 10)
 	if err != nil {
 		t.Error(err)
 		return
@@ -115,8 +109,8 @@ func TestCofferTransactionRecordsBigLenKeys(t *testing.T) {
 		t.Error(wrn)
 		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	cof1.SetHandler("exchange", &hdlExch)
+	// hdlExch := domain.Handler(handlerExchange)
+	// cof1.SetHandler("exchange", &hdlExch)
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
@@ -132,7 +126,7 @@ func TestCofferTransactionRecordsBigLenKeys(t *testing.T) {
 func TestCofferTransactionRecordsBigOperationsCount(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCofferLength4(2, 10)
+	cof1, err, wrn := createNewCofferLength4T(2, 10)
 	if err != nil {
 		t.Error(err)
 		return
@@ -140,8 +134,8 @@ func TestCofferTransactionRecordsBigOperationsCount(t *testing.T) {
 		t.Error(wrn)
 		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	cof1.SetHandler("exchange", &hdlExch)
+	// hdlExch := domain.Handler(handlerExchange)
+	// cof1.SetHandler("exchange", &hdlExch)
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
@@ -158,7 +152,7 @@ func TestCofferTransactionRecordsBigOperationsCount(t *testing.T) {
 func TestCofferTransactionNotFound(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCoffer()
+	cof1, err, wrn := createNewCofferT()
 	if err != nil {
 		t.Error(err)
 		return
@@ -172,7 +166,7 @@ func TestCofferTransactionNotFound(t *testing.T) {
 	} else {
 		defer cof1.Stop()
 	}
-	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code != codes.ErrHandlerNotFound {
+	if rep := cof1.Transaction("exchangeXXX", []string{"aaa", "bbb"}, nil); rep.Code != codes.ErrHandlerNotFound {
 		t.Error("Handler is not available, but for some reason is executed.")
 		return
 	}
@@ -497,17 +491,14 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 
 	// наполняем базу и сохраняем в память её логи
 	t.Log("Stage1")
-	cof1, err, wrn := createNewCoffer()
+	cof1, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if wrn != nil {
-		t.Error(wrn)
-		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	cof1.SetHandler("exchange", &hdlExch)
-	cof1.Start()
+	// hdlExch := domain.Handler(handlerExchange)
+	// cof1.SetHandler("exchange", &hdlExch)
+	//cof1.Start()
 
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.Code > codes.Warning || rep.Error != nil {
@@ -540,7 +531,7 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 
 	// пробуем загрузиться с логов
 	t.Log("Stage2")
-	cof111, err := createAndStartNewCoffer(t)
+	cof111, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -568,7 +559,7 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	cof2, err := createAndStartNewCoffer(t)
+	cof2, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
@@ -597,7 +588,7 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	_, err, wrn = createNewCoffer()
+	_, err, wrn := createNewCofferT()
 	if err == nil {
 		t.Error("Want error (The spoiled log...)")
 		return
@@ -622,7 +613,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 		//time.Sleep(10 * time.Millisecond)
 	}
 	cof1.Stop()
-	time.Sleep(5 * time.Millisecond)
+	//time.Sleep(5 * time.Millisecond)
 	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
@@ -785,20 +776,17 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
-	cof1, err, wrn := createNewCoffer()
+	cof1, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
-	} else if wrn != nil {
-		t.Error(wrn)
-		return
 	}
-	hdlExch := domain.Handler(handlerExchange)
-	if err := cof1.SetHandler("exchange", &hdlExch); err != nil {
-		t.Error(wrn)
-		return
-	}
-	cof1.Start()
+	// hdlExch := domain.Handler(handlerExchange)
+	// if err := cof1.SetHandler("exchange", &hdlExch); err != nil {
+	// 	t.Error(wrn)
+	// 	return
+	// }
+	//cof1.Start()
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.Code > codes.Warning || rep.Error != nil {
 			t.Error(err)
@@ -810,37 +798,34 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	//time.Sleep(1 * time.Second)
-	_, err = ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	//time.Sleep(5 * time.Second)
+	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	// // проверяем загрузку с нормального, небитого файла
-	// t.Log("Stage1")
-	// if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
-	// 	t.Error(err)
-	// 	return
-	// }
-	// cof2, err, wrn := createNewCoffer()
-	// if err != nil {
-	// 	t.Error(err)
-	// 	return
-	// } else if wrn != nil {
-	// 	t.Error(wrn)
-	// 	return
-	// }
-	// //hdlExch := domain.Handler(handlerExchange)
+	// проверяем загрузку с нормального, небитого файла
+	t.Log("Stage1")
+	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	cof2, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	//hdlExch := domain.Handler(handlerExchange)
 	// if err := cof2.SetHandler("exchange", &hdlExch); err != nil {
 	// 	t.Error(wrn)
 	// 	return
 	// }
 
-	// if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
-	// 	t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
-	// 	return
-	// }
-	// cof2.Stop()
+	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
+		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
+		return
+	}
+	cof2.Stop()
 }
 
 // =======================================================================
@@ -849,6 +834,21 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 
 func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 	cof1, err, wrn := createNewCoffer()
+	if err != nil {
+		//fmt.Println("++1++", err)
+		return nil, err
+	} else if wrn != nil {
+		t.Log(wrn)
+	}
+	if !cof1.Start() {
+		//fmt.Println("++2++")
+		return nil, fmt.Errorf("Failed to start (cof)")
+	}
+	return cof1, nil
+}
+
+func createAndStartNewCofferT(t *testing.T) (*Coffer, error) {
+	cof1, err, wrn := createNewCofferT()
 	if err != nil {
 		//fmt.Println("++1++", err)
 		return nil, err
@@ -916,7 +916,42 @@ func createNewCoffer() (*Coffer, error, error) {
 		//MaxKeyLength:        100,
 		//MaxValueLength:      10000,
 	}
-	return New(cnf)
+	return New(cnf, nil)
+}
+
+func createNewCofferT() (*Coffer, error, error) {
+	jCnf := &journal.Config{
+		BatchSize:              2000,
+		LimitRecordsPerLogfile: 5,
+	}
+	ucCnf := &usecases.Config{
+		FollowPause:             400 * time.Millisecond,
+		LogsByCheckpoint:        2,
+		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+		AllowStartupErrLoadLogs: true,
+		MaxKeyLength:            100,
+		MaxValueLength:          10000,
+		RemoveUnlessLogs:        true, // чистим логи после использования
+	}
+	rcCnf := &resources.Config{
+		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+		LimitDisk:   1000 * megabyte, // minimum free disk space
+		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	}
+
+	cnf := &Config{
+		JournalConfig:       jCnf,
+		UsecasesConfig:      ucCnf,
+		ResourcesConfig:     rcCnf,
+		MaxRecsPerOperation: 10,
+		//MaxKeyLength:        100,
+		//MaxValueLength:      10000,
+	}
+
+	hdlExch := domain.Handler(handlerExchange)
+	hdls := handlers.New()
+	hdls.Set("exchange", &hdlExch)
+	return New(cnf, hdls)
 }
 
 func createNewCofferLength4(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
@@ -947,7 +982,41 @@ func createNewCofferLength4(maxKeyLength int, maxValueLength int) (*Coffer, erro
 		//MaxKeyLength:        100,
 		//MaxValueLength:      10000,
 	}
-	return New(cnf)
+	return New(cnf, nil)
+}
+
+func createNewCofferLength4T(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
+	jCnf := &journal.Config{
+		BatchSize:              2000,
+		LimitRecordsPerLogfile: 5,
+	}
+	ucCnf := &usecases.Config{
+		FollowPause:             400 * time.Millisecond,
+		LogsByCheckpoint:        2,
+		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+		AllowStartupErrLoadLogs: true,
+		MaxKeyLength:            maxKeyLength,
+		MaxValueLength:          maxValueLength,
+		RemoveUnlessLogs:        true, // чистим логи после использования
+	}
+	rcCnf := &resources.Config{
+		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+		LimitDisk:   1000 * megabyte, // minimum free disk space
+		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	}
+
+	cnf := &Config{
+		JournalConfig:       jCnf,
+		UsecasesConfig:      ucCnf,
+		ResourcesConfig:     rcCnf,
+		MaxRecsPerOperation: 10,
+		//MaxKeyLength:        100,
+		//MaxValueLength:      10000,
+	}
+	hdlExch := domain.Handler(handlerExchange)
+	hdls := handlers.New()
+	hdls.Set("exchange", &hdlExch)
+	return New(cnf, hdls)
 }
 
 func forTestClearDir(dir string) error {
