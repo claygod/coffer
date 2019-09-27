@@ -22,6 +22,6 @@ type RecordsRepository interface {
 }
 
 type HandlersRepository interface {
-	Set(string, *Handler) error
+	Set(string, *Handler)
 	Get(string) (*Handler, error)
 }

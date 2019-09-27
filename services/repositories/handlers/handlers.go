@@ -35,13 +35,13 @@ func (h *Handlers) Get(handlerName string) (*domain.Handler, error) {
 	return hdl, nil
 }
 
-func (h *Handlers) Set(handlerName string, handlerMethod *domain.Handler) error {
+func (h *Handlers) Set(handlerName string, handlerMethod *domain.Handler) {
 	h.mtx.Lock()
 	defer h.mtx.Unlock()
-	_, ok := h.handlers[handlerName]
-	if ok {
-		return fmt.Errorf("Header with the name `%s` is installed.", handlerName)
-	}
+	// _, ok := h.handlers[handlerName]
+	// if ok {
+	// 	return fmt.Errorf("Header with the name `%s` is installed.", handlerName)
+	// }
 	h.handlers[handlerName] = handlerMethod
-	return nil
+	//return nil
 }

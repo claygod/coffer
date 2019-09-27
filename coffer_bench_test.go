@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/claygod/coffer/reports/codes"
-	"github.com/claygod/coffer/services/journal"
-	"github.com/claygod/coffer/services/resources"
-	"github.com/claygod/coffer/usecases"
+	//"github.com/claygod/coffer/services/journal"
+	//"github.com/claygod/coffer/services/resources"
+	//"github.com/claygod/coffer/usecases"
 )
 
 var keyConcurent int64
@@ -70,7 +70,7 @@ func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
 	//fmt.Println("====================Parallel======================")
-	cof1, err := createAndStartNewCofferFast(b, 500, 1000, 100, 1000) //createAndStartNewCofferLengthB(b, 10, 100)
+	cof1, err := createAndStartNewCofferFast(b, 1000, 1000, 100, 1000) //createAndStartNewCofferLengthB(b, 10, 100)
 	if err != nil {
 		b.Error(err)
 		return
@@ -97,7 +97,7 @@ func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof 
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
 	//fmt.Println("====================Parallel======================")
-	cof1, err := createAndStartNewCofferFast(b, 500, 1000, 100, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
+	cof1, err := createAndStartNewCofferFast(b, 1000, 1000, 100, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
 	if err != nil {
 		b.Error(err)
 		return
@@ -123,7 +123,7 @@ func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof 
 // =========================== HELPERS ===================================
 // =======================================================================
 
-func createAndStartNewCofferFast(t *testing.B, batchSize int, limitRecordsPerLogfile int64, maxKeyLength int, maxValueLength int) (*Coffer, error) {
+func createAndStartNewCofferFast(t *testing.B, batchSize int, limitRecordsPerLogfile int, maxKeyLength int, maxValueLength int) (*Coffer, error) {
 	cof1, err, wrn := createNewCofferFast(batchSize, limitRecordsPerLogfile, maxKeyLength, maxValueLength)
 	if err != nil {
 		return nil, err
@@ -136,34 +136,43 @@ func createAndStartNewCofferFast(t *testing.B, batchSize int, limitRecordsPerLog
 	return cof1, nil
 }
 
-func createNewCofferFast(batchSize int, limitRecordsPerLogfile int64, maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
-	jCnf := &journal.Config{
-		BatchSize:              batchSize,
-		LimitRecordsPerLogfile: limitRecordsPerLogfile,
-	}
-	ucCnf := &usecases.Config{
-		FollowPause:             100 * time.Second, //чтобы точно не включался
-		LogsByCheckpoint:        1000,              //чтобы точно не включался
-		DirPath:                 dirPath,           // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-		AllowStartupErrLoadLogs: true,
-		MaxKeyLength:            maxKeyLength,
-		MaxValueLength:          maxValueLength,
-		RemoveUnlessLogs:        true, // чистим логи после использования
-	}
-	rcCnf := &resources.Config{
-		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	}
+func createNewCofferFast(batchSize int, limitRecordsPerLogfile int, maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
+	// jCnf := &journal.Config{
+	// 	BatchSize:              batchSize,
+	// 	LimitRecordsPerLogfile: limitRecordsPerLogfile,
+	// }
+	// ucCnf := &usecases.Config{
+	// 	FollowPause:             100 * time.Second, //чтобы точно не включался
+	// 	LogsByCheckpoint:        1000,              //чтобы точно не включался
+	// 	DirPath:                 dirPath,           // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+	// 	AllowStartupErrLoadLogs: true,
+	// 	MaxKeyLength:            maxKeyLength,
+	// 	MaxValueLength:          maxValueLength,
+	// 	RemoveUnlessLogs:        true, // чистим логи после использования
+	// }
+	// rcCnf := &resources.Config{
+	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
+	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	// }
 
-	cnf := &Config{
-		JournalConfig:       jCnf,
-		UsecasesConfig:      ucCnf,
-		ResourcesConfig:     rcCnf,
-		MaxRecsPerOperation: 1000,
-		//MaxKeyLength:        100,
-		//MaxValueLength:      10000,
-	}
+	// cnf := &Config{
+	// 	JournalConfig:       jCnf,
+	// 	UsecasesConfig:      ucCnf,
+	// 	ResourcesConfig:     rcCnf,
+	// 	MaxRecsPerOperation: 1000,
+	// 	//MaxKeyLength:        100,
+	// 	//MaxValueLength:      10000,
+	// }
+	return Db(dirPath).BatchSize(batchSize).
+		LimitRecordsPerLogfile(limitRecordsPerLogfile).
+		FollowPause(100 * time.Second).
+		LogsByCheckpoint(1000).
+		MaxKeyLength(maxKeyLength).
+		MaxValueLength(maxValueLength).
+		MaxRecsPerOperation(1000).
+		//Handler("exchange", &hdlExch).
+		Create()
 
-	return New(cnf, nil)
+	//return New(cnf, nil)
 }

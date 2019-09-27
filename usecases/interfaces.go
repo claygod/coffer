@@ -49,7 +49,7 @@ type Starter interface {
 
 type HandleStore interface {
 	Get(string) (*domain.Handler, error)
-	Set(string, *domain.Handler) error
+	Set(string, *domain.Handler)
 }
 
 type FileNamer interface {

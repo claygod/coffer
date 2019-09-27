@@ -20,12 +20,11 @@ import (
 	// "github.com/claygod/coffer/services/repositories/records"
 	// "github.com/claygod/coffer/reports"
 	"github.com/claygod/coffer/reports/codes"
-	"github.com/claygod/coffer/services/journal"
-	"github.com/claygod/coffer/services/repositories/handlers"
-	"github.com/claygod/coffer/services/resources"
-
+	//"github.com/claygod/coffer/services/journal"
+	//"github.com/claygod/coffer/services/repositories/handlers"
+	//"github.com/claygod/coffer/services/resources"
 	// "github.com/claygod/coffer/services/startstop"
-	"github.com/claygod/coffer/usecases"
+	//"github.com/claygod/coffer/usecases"
 	// "github.com/claygod/tools/logger"
 	// "github.com/claygod/tools/porter"
 )
@@ -889,134 +888,164 @@ func createAndStartNewCofferLengthB(t *testing.B, maxKeyLength int, maxValueLeng
 }
 
 func createNewCoffer() (*Coffer, error, error) {
-	jCnf := &journal.Config{
-		BatchSize:              2000,
-		LimitRecordsPerLogfile: 5,
-	}
-	ucCnf := &usecases.Config{
-		FollowPause:             400 * time.Millisecond,
-		LogsByCheckpoint:        2,
-		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-		AllowStartupErrLoadLogs: true,
-		MaxKeyLength:            100,
-		MaxValueLength:          10000,
-		RemoveUnlessLogs:        true, // чистим логи после использования
-	}
-	rcCnf := &resources.Config{
-		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	}
+	// jCnf := &journal.Config{
+	// 	BatchSize:              2000,
+	// 	LimitRecordsPerLogfile: 5,
+	// }
+	// ucCnf := &usecases.Config{
+	// 	FollowPause:             400 * time.Millisecond,
+	// 	LogsByCheckpoint:        2,
+	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+	// 	AllowStartupErrLoadLogs: true,
+	// 	MaxKeyLength:            100,
+	// 	MaxValueLength:          10000,
+	// 	RemoveUnlessLogs:        true, // чистим логи после использования
+	// }
+	// rcCnf := &resources.Config{
+	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
+	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	// }
 
-	cnf := &Config{
-		JournalConfig:       jCnf,
-		UsecasesConfig:      ucCnf,
-		ResourcesConfig:     rcCnf,
-		MaxRecsPerOperation: 10,
-		//MaxKeyLength:        100,
-		//MaxValueLength:      10000,
-	}
-	return New(cnf, nil)
+	// cnf := &Config{
+	// 	JournalConfig:       jCnf,
+	// 	UsecasesConfig:      ucCnf,
+	// 	ResourcesConfig:     rcCnf,
+	// 	MaxRecsPerOperation: 10,
+	// }
+	//--------------------
+	return Db(dirPath).BatchSize(2000).
+		LimitRecordsPerLogfile(5).
+		FollowPause(400 * time.Millisecond).
+		LogsByCheckpoint(2).
+		MaxRecsPerOperation(10).
+		Create()
+	//return New(cnf, nil)
 }
 
 func createNewCofferT() (*Coffer, error, error) {
-	jCnf := &journal.Config{
-		BatchSize:              2000,
-		LimitRecordsPerLogfile: 5,
-	}
-	ucCnf := &usecases.Config{
-		FollowPause:             400 * time.Millisecond,
-		LogsByCheckpoint:        2,
-		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-		AllowStartupErrLoadLogs: true,
-		MaxKeyLength:            100,
-		MaxValueLength:          10000,
-		RemoveUnlessLogs:        true, // чистим логи после использования
-	}
-	rcCnf := &resources.Config{
-		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	}
+	// jCnf := &journal.Config{
+	// 	BatchSize:              2000,
+	// 	LimitRecordsPerLogfile: 5,
+	// }
+	// ucCnf := &usecases.Config{
+	// 	FollowPause:             400 * time.Millisecond,
+	// 	LogsByCheckpoint:        2,
+	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+	// 	AllowStartupErrLoadLogs: true,
+	// 	MaxKeyLength:            100,
+	// 	MaxValueLength:          10000,
+	// 	RemoveUnlessLogs:        true, // чистим логи после использования
+	// }
+	// rcCnf := &resources.Config{
+	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
+	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	// }
 
-	cnf := &Config{
-		JournalConfig:       jCnf,
-		UsecasesConfig:      ucCnf,
-		ResourcesConfig:     rcCnf,
-		MaxRecsPerOperation: 10,
-		//MaxKeyLength:        100,
-		//MaxValueLength:      10000,
-	}
+	// cnf := &Config{
+	// 	JournalConfig:       jCnf,
+	// 	UsecasesConfig:      ucCnf,
+	// 	ResourcesConfig:     rcCnf,
+	// 	MaxRecsPerOperation: 10,
+	// 	//MaxKeyLength:        100,
+	// 	//MaxValueLength:      10000,
+	// }
 
 	hdlExch := domain.Handler(handlerExchange)
-	hdls := handlers.New()
-	hdls.Set("exchange", &hdlExch)
-	return New(cnf, hdls)
+	// hdls := handlers.New()
+	// hdls.Set("exchange", &hdlExch)
+	return Db(dirPath).BatchSize(2000).
+		LimitRecordsPerLogfile(5).
+		FollowPause(400*time.Millisecond).
+		LogsByCheckpoint(2).
+		MaxRecsPerOperation(10).
+		Handler("exchange", &hdlExch).
+		Create()
+	//return New(cnf, hdls)
 }
 
 func createNewCofferLength4(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
-	jCnf := &journal.Config{
-		BatchSize:              2000,
-		LimitRecordsPerLogfile: 5,
-	}
-	ucCnf := &usecases.Config{
-		FollowPause:             400 * time.Millisecond,
-		LogsByCheckpoint:        2,
-		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-		AllowStartupErrLoadLogs: true,
-		MaxKeyLength:            maxKeyLength,
-		MaxValueLength:          maxValueLength,
-		RemoveUnlessLogs:        true, // чистим логи после использования
-	}
-	rcCnf := &resources.Config{
-		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	}
+	// jCnf := &journal.Config{
+	// 	BatchSize:              2000,
+	// 	LimitRecordsPerLogfile: 5,
+	// }
+	// ucCnf := &usecases.Config{
+	// 	FollowPause:             400 * time.Millisecond,
+	// 	LogsByCheckpoint:        2,
+	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+	// 	AllowStartupErrLoadLogs: true,
+	// 	MaxKeyLength:            maxKeyLength,
+	// 	MaxValueLength:          maxValueLength,
+	// 	RemoveUnlessLogs:        true, // чистим логи после использования
+	// }
+	// rcCnf := &resources.Config{
+	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
+	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	// }
 
-	cnf := &Config{
-		JournalConfig:       jCnf,
-		UsecasesConfig:      ucCnf,
-		ResourcesConfig:     rcCnf,
-		MaxRecsPerOperation: 10,
-		//MaxKeyLength:        100,
-		//MaxValueLength:      10000,
-	}
-	return New(cnf, nil)
+	// cnf := &Config{
+	// 	JournalConfig:       jCnf,
+	// 	UsecasesConfig:      ucCnf,
+	// 	ResourcesConfig:     rcCnf,
+	// 	MaxRecsPerOperation: 10,
+	// 	//MaxKeyLength:        100,
+	// 	//MaxValueLength:      10000,
+	// }
+	return Db(dirPath).BatchSize(2000).
+		LimitRecordsPerLogfile(5).
+		FollowPause(400 * time.Millisecond).
+		LogsByCheckpoint(2).
+		MaxKeyLength(maxKeyLength).
+		MaxValueLength(maxValueLength).
+		MaxRecsPerOperation(10).
+		//Handler("exchange", &hdlExch).
+		Create()
+	//return New(cnf, nil)
 }
 
 func createNewCofferLength4T(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
-	jCnf := &journal.Config{
-		BatchSize:              2000,
-		LimitRecordsPerLogfile: 5,
-	}
-	ucCnf := &usecases.Config{
-		FollowPause:             400 * time.Millisecond,
-		LogsByCheckpoint:        2,
-		DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-		AllowStartupErrLoadLogs: true,
-		MaxKeyLength:            maxKeyLength,
-		MaxValueLength:          maxValueLength,
-		RemoveUnlessLogs:        true, // чистим логи после использования
-	}
-	rcCnf := &resources.Config{
-		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	}
+	// jCnf := &journal.Config{
+	// 	BatchSize:              2000,
+	// 	LimitRecordsPerLogfile: 5,
+	// }
+	// ucCnf := &usecases.Config{
+	// 	FollowPause:             400 * time.Millisecond,
+	// 	LogsByCheckpoint:        2,
+	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+	// 	AllowStartupErrLoadLogs: true,
+	// 	MaxKeyLength:            maxKeyLength,
+	// 	MaxValueLength:          maxValueLength,
+	// 	RemoveUnlessLogs:        true, // чистим логи после использования
+	// }
+	// rcCnf := &resources.Config{
+	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
+	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
+	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+	// }
 
-	cnf := &Config{
-		JournalConfig:       jCnf,
-		UsecasesConfig:      ucCnf,
-		ResourcesConfig:     rcCnf,
-		MaxRecsPerOperation: 10,
-		//MaxKeyLength:        100,
-		//MaxValueLength:      10000,
-	}
+	// cnf := &Config{
+	// 	JournalConfig:       jCnf,
+	// 	UsecasesConfig:      ucCnf,
+	// 	ResourcesConfig:     rcCnf,
+	// 	MaxRecsPerOperation: 10,
+	// 	//MaxKeyLength:        100,
+	// 	//MaxValueLength:      10000,
+	// }
 	hdlExch := domain.Handler(handlerExchange)
-	hdls := handlers.New()
-	hdls.Set("exchange", &hdlExch)
-	return New(cnf, hdls)
+	// hdls := handlers.New()
+	// hdls.Set("exchange", &hdlExch)
+	return Db(dirPath).BatchSize(2000).
+		LimitRecordsPerLogfile(5).
+		FollowPause(400*time.Millisecond).
+		LogsByCheckpoint(2).
+		MaxKeyLength(maxKeyLength).
+		MaxValueLength(maxValueLength).
+		MaxRecsPerOperation(10).
+		Handler("exchange", &hdlExch).
+		Create()
+	//return New(cnf, hdls)
 }
 
 func forTestClearDir(dir string) error {
