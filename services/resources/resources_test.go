@@ -39,7 +39,7 @@ func TestGetPermissionWithoutDiskLimit100(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 100,
 		LimitDisk:   100,
-		DirPath:    "",
+		DirPath:     "",
 	}
 	if runtime.GOOS == "windows" {
 		cnf.DirPath = "c:\\"
@@ -63,7 +63,7 @@ func TestGetPermissionWithoutDiskLimit10000000000(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 100,
 		LimitDisk:   1000000000000,
-		DirPath:    "",
+		DirPath:     "",
 	}
 	_, err := New(cnf)
 	if err == nil {
@@ -75,7 +75,7 @@ func TestGetPermissionWithoutMemoryLimit10000000000(t *testing.T) {
 	cnf := &Config{
 		LimitMemory: 1000000000000,
 		LimitDisk:   100,
-		DirPath:    "",
+		DirPath:     "",
 	}
 	_, err := New(cnf)
 	if err == nil {

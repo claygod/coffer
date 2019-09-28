@@ -35,6 +35,26 @@ func TestCofferCleanDir(t *testing.T) {
 	forTestClearDir(dirPath)
 }
 
+func TestNewDirNotFound(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+
+	if _, err, _ := Db("./not_found_dir/").BatchSize(2000).
+		// LimitRecordsPerLogfile(5).
+		// FollowPause(400 * time.Millisecond).
+		// LogsByCheckpoint(2).
+		// AllowStartupErrLoadLogs(defaultAllowStartupErrLoadLogs). //--
+		// MaxKeyLength(defaultMaxKeyLength).                       //--
+		// MaxValueLength(defaultMaxValueLength).                   //-
+		// RemoveUnlessLogs(defaultRemoveUnlessLogs).               //--
+		// LimitMemory(int(defaultLimitMemory)).                    //--
+		// LimitDisk(int(defaultLimitDisk)).                        //--
+		MaxRecsPerOperation(10).Create(); err == nil {
+		t.Error("Want error, have nil.")
+	}
+
+}
+
 func TestCofferTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
@@ -69,6 +89,11 @@ func TestCofferTransaction(t *testing.T) {
 		return
 	} else if string(rep.Data["aaa"]) != "222" || string(rep.Data["bbb"]) != "111" {
 		t.Errorf("Want aaa==222 bbb==111 , have aaa=%s bbb==%s ", string(rep.Data["aaa"]), string(rep.Data["bbb"]))
+	}
+	cof1.Stop()
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code != codes.PanicStopped {
+		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
+		//return
 	}
 }
 
@@ -196,6 +221,10 @@ func TestCofferStartStop(t *testing.T) {
 	if err := cof1.Save(); err != nil {
 		t.Error(err)
 	}
+
+	if rep := cof1.Count(); rep.Code != codes.PanicStopped {
+		//t.Errorf("Report: %v", rep)
+	}
 }
 
 func TestCofferStopHard(t *testing.T) {
@@ -305,6 +334,19 @@ func TestCofferWriteListReadList(t *testing.T) {
 		t.Errorf("Not found: want `aasa90` have %s", rep.NotFound[0])
 	}
 	cof1.Stop()
+
+	if rep := cof1.ReadList([]string{"aasa10", "aasa90"}); rep.Code != codes.PanicStopped {
+		t.Errorf("Want cote `stopped` have code  `%d` .", rep.Code)
+	}
+	cof1.Stop()
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code != codes.PanicStopped {
+		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
+		//return
+	}
+
+	if rep := cof1.WriteList(req); rep.Code != codes.PanicStopped || rep.Error == nil {
+		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
+	}
 }
 
 func TestCofferKeyLength(t *testing.T) {
@@ -655,72 +697,81 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	}
 }
 
-// func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
-// 	defer forTestClearDir(dirPath)
-// 	cof1, err, wrn := createNewCoffer()
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	} else if wrn != nil {
-// 		t.Error(wrn)
-// 		return
-// 	}
-// 	hdlExch := domain.Handler(handlerExchange)
-// 	cof1.SetHandler("exchange", &hdlExch)
-// 	cof1.Start()
-// 	for i := 10; i < 19; i++ {
-// 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.Code > codes.Warning || rep.Error != nil {
-// 			t.Error(err)
-// 		}
-// 		//time.Sleep(10 * time.Millisecond)
-// 	}
-// 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.Code >= codes.Warning {
-// 		t.Error(rep)
-// 		return
-// 	}
-// 	cof1.Stop()
-// 	time.Sleep(5 * time.Millisecond)
-// 	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	forTestClearDir(dirPath)
-// 	// проверяем загрузку с нормального, небитого файла
-// 	t.Log("Stage1")
-// 	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1, os.ModePerm); err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	cof2, err := createAndStartNewCoffer(t)
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
+func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
+	defer forTestClearDir(dirPath)
+	cof1, err, wrn := createNewCofferT()
+	if err != nil {
+		t.Error(err)
+		return
+	} else if wrn != nil {
+		t.Error(wrn)
+		return
+	}
+	//hdlExch := domain.Handler(handlerExchange)
+	//cof1.SetHandler("exchange", &hdlExch)
+	cof1.Start()
+	for i := 10; i < 19; i++ {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.Code > codes.Warning || rep.Error != nil {
+			t.Error(err)
+		}
+		//time.Sleep(10 * time.Millisecond)
+	}
+	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.Code >= codes.Warning {
+		t.Error(rep)
+		return
+	}
+	cof1.Stop()
+	time.Sleep(5 * time.Millisecond)
+	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	forTestClearDir(dirPath)
+	// проверяем загрузку с нормального, небитого файла
+	t.Log("Stage1")
+	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1, os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	cof2, err := createAndStartNewCoffer(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
 
-// 	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены
-// 		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
-// 		return
-// 	}
-// 	cof2.Stop()
-// 	forTestClearDir(dirPath)
-// 	// проверяем загрузку с битого файла
-// 	t.Log("Stage2")
-// 	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
-// 	cof3, err := createAndStartNewCoffer(t)
-// 	if err != nil {
-// 		t.Error(err)
-// 		return
-// 	}
+	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены
+		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
+		return
+	}
+	rep := cof2.Read("aasa10")
+	if rep.Code != codes.Ok || rep.Error != nil {
+		t.Errorf("Read error. Code: %d, data: %v, err: %v .", rep.Code, rep.Data, rep.Error)
+		return
+	}
+	if string(rep.Data) != "bbsb11" {
+		t.Errorf("Record want `bbsb11` have `%s`", string(rep.Data))
+		return
+	}
+	cof2.Stop()
+	forTestClearDir(dirPath)
+	// проверяем загрузку с битого файла
+	t.Log("Stage2")
+	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+		t.Error(err)
+		return
+	}
+	cof3, err := createAndStartNewCoffer(t)
+	if err != nil { // при загрузке с битого файла он игнорируется
+		t.Error(err)
+		return
+	}
 
-// 	if rep := cof3.Count(); rep.Count != 0 { // все записи битого чекпоинта должны быть проигнорированы
-// 		t.Errorf("Records (cof3) count, have %d, wand 0.", rep.Count)
-// 		return
-// 	}
-// }
+	if rep := cof3.Count(); rep.Count != 0 { // все записи битого чекпоинта должны быть проигнорированы
+		t.Errorf("Records (cof3) count, have %d, wand 0.", rep.Count)
+		return
+	}
+}
 
 func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 	forTestClearDir(dirPath)
@@ -918,8 +969,15 @@ func createNewCoffer() (*Coffer, error, error) {
 		LimitRecordsPerLogfile(5).
 		FollowPause(400 * time.Millisecond).
 		LogsByCheckpoint(2).
+		AllowStartupErrLoadLogs(defaultAllowStartupErrLoadLogs). //--
+		MaxKeyLength(defaultMaxKeyLength).                       //--
+		MaxValueLength(defaultMaxValueLength).                   //-
+		RemoveUnlessLogs(defaultRemoveUnlessLogs).               //--
+		LimitMemory(int(defaultLimitMemory)).                    //--
+		LimitDisk(int(defaultLimitDisk)).                        //--
 		MaxRecsPerOperation(10).
 		Create()
+
 	//return New(cnf, nil)
 }
 
@@ -1038,12 +1096,12 @@ func createNewCofferLength4T(maxKeyLength int, maxValueLength int) (*Coffer, err
 	// hdls.Set("exchange", &hdlExch)
 	return Db(dirPath).BatchSize(2000).
 		LimitRecordsPerLogfile(5).
-		FollowPause(400*time.Millisecond).
+		FollowPause(400 * time.Millisecond).
 		LogsByCheckpoint(2).
 		MaxKeyLength(maxKeyLength).
 		MaxValueLength(maxValueLength).
 		MaxRecsPerOperation(10).
-		Handler("exchange", &hdlExch).
+		Handlers(map[string]*domain.Handler{"exchange": &hdlExch}). //Handler("exchange", &hdlExch).
 		Create()
 	//return New(cnf, hdls)
 }

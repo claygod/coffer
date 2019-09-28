@@ -92,7 +92,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 		c.logger,
 		ldr,
 		c.config.UsecasesConfig, //config *Config,
-		chp,                     //*checkpoint,
+		chp, //*checkpoint,
 		//opr,                     // *operations,
 		fiRepo, //recordsRepo,
 		fileNamer,
@@ -110,26 +110,34 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 func (c *Coffer) Start() bool { // return prev state
 	//TODO: при аварийной остановке нужно ли иметь возможность запускаться вновь?(StopForever, Concrete - в старт-стоп добавить) возможно, правильный выход - пересоздание и запуск
 	//defer c.checkPanic()
-	if !c.resControl.Start() {
-		return false
-	}
-	if !c.recInteractor.Start() {
-		c.resControl.Stop()
-		return false
-	}
-	//fmt.Println("recInteractor.Start")
-	if !c.folInteractor.Start() {
-		c.resControl.Stop()
-		c.recInteractor.Stop()
-		return false
-	}
+
+	c.resControl.Start()
+	c.recInteractor.Start()
+	c.folInteractor.Start()
+	c.hasp.Start()
+
+	//TODO: not remove this code!!
+	// if !c.resControl.Start() {
+	// 	return false
+	// }
+	// if !c.recInteractor.Start() {
+	// 	c.resControl.Stop()
+	// 	return false
+	// }
+	// //fmt.Println("recInteractor.Start")
+	// if !c.folInteractor.Start() {
+	// 	c.resControl.Stop()
+	// 	c.recInteractor.Stop()
+	// 	return false
+	// }
+	// if !c.hasp.Start() {
+	// 	c.resControl.Stop()
+	// 	c.recInteractor.Stop()
+	// 	c.folInteractor.Stop()
+	// 	return false
+	// }
+
 	//fmt.Println("folInteractor.Start")
-	if !c.hasp.Start() {
-		c.resControl.Stop()
-		c.recInteractor.Stop()
-		c.folInteractor.Stop()
-		return false
-	}
 	return true
 }
 
@@ -143,33 +151,44 @@ func (c *Coffer) Stop() bool {
 		return false
 	}
 	defer c.hasp.Unblock()
-	if !c.resControl.Stop() {
-		return false
-	}
-	if !c.folInteractor.Stop() {
-		c.resControl.Start()
-		return false
-	}
-	if !c.recInteractor.Stop() {
-		c.resControl.Start()
-		c.folInteractor.Start()
-		return false
-	}
+	c.resControl.Stop()
+	c.folInteractor.Stop()
+	c.recInteractor.Stop()
+
+	//TODO: not remove this code!!
+	// if !c.resControl.Stop() {
+	// 	return false
+	// }
+	// if !c.folInteractor.Stop() {
+	// 	c.resControl.Start()
+	// 	return false
+	// }
+	// if !c.recInteractor.Stop() {
+	// 	c.resControl.Start()
+	// 	c.folInteractor.Start()
+	// 	return false
+	// }
 	return true
 }
 
 func (c *Coffer) StopHard() error {
 	//defer c.checkPanic()
 	var errOut error
-	if !c.hasp.Block() {
-		errOut = fmt.Errorf("Hasp is not stopped.")
-	}
-	if !c.folInteractor.Stop() {
-		errOut = fmt.Errorf("%v Follow Interactor is not stopped.", errOut)
-	}
-	if !c.recInteractor.Stop() {
-		errOut = fmt.Errorf("%v Records Interactor is not stopped.", errOut)
-	}
+
+	c.hasp.Block()
+	c.folInteractor.Stop()
+	c.recInteractor.Stop()
+
+	//TODO: not remove this code!!
+	// if !c.hasp.Block() {
+	// 	errOut = fmt.Errorf("Hasp is not stopped.")
+	// }
+	// if !c.folInteractor.Stop() {
+	// 	errOut = fmt.Errorf("%v Follow Interactor is not stopped.", errOut)
+	// }
+	// if !c.recInteractor.Stop() {
+	// 	errOut = fmt.Errorf("%v Records Interactor is not stopped.", errOut)
+	// }
 	return errOut
 }
 

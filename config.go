@@ -51,7 +51,7 @@ const (
 	defaultMaxValueLength          int           = 10000
 	defaultRemoveUnlessLogs        bool          = true
 
-	defaultLimitMemory int64 = 1000 * megabyte
+	defaultLimitMemory int64 = 100 * megabyte
 	defaultLimitDisk   int64 = 1000 * megabyte
 
 	defaultMaxRecsPerOperation int = 1000

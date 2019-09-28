@@ -10,7 +10,7 @@ import (
 
 type Config struct {
 	FollowPause             time.Duration
-	LogsByCheckpoint      int64
+	LogsByCheckpoint        int64
 	DirPath                 string
 	AllowStartupErrLoadLogs bool
 	RemoveUnlessLogs        bool // удаление логов после того, как они  попали в чекпоинт
