@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/reports/codes"
 	//"github.com/claygod/coffer/services/journal"
 	//"github.com/claygod/coffer/services/resources"
@@ -18,6 +19,18 @@ import (
 )
 
 var keyConcurent int64
+
+func BenchmarkClean(b *testing.B) {
+	forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferFast(b, 1000, 1000, 100, 1000) //createAndStartNewCofferLengthB(b, 10, 100)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	defer forTestClearDir(dirPath)
+	defer cof1.Stop()
+	defer forTestClearDir(dirPath)
+}
 
 // func BenchmarkCofferReadParallel32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 // 	fmt.Println("000Запущена копия бенчмарка")
@@ -65,7 +78,7 @@ var keyConcurent int64
 
 func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.SetParallelism(1)
-	fmt.Println("111Запущена копия бенчмарка")
+	//fmt.Println("111_Запущена копия бенчмарка")
 	b.StopTimer()
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
@@ -92,7 +105,7 @@ func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof
 }
 
 func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
-	fmt.Println("222Запущена копия бенчмарка")
+	//fmt.Println("222_Запущена копия бенчмарка")
 	b.StopTimer()
 	forTestClearDir(dirPath)
 	//time.Sleep(1 * time.Second)
@@ -115,6 +128,152 @@ func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof 
 				b.Error(fmt.Sprintf("Code: %d , key: %s", rep.Code, key))
 			}
 			u++
+		}
+	})
+}
+
+func BenchmarkCofferTransactionSequence32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	//fmt.Println("333_Запущена копия бенчмарка")
+	b.StopTimer()
+	forTestClearDir(dirPath)
+	cof10, err := createAndStartNewCofferFast(b, 10, 1000, 100, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	defer forTestClearDir(dirPath)
+	defer cof10.Stop()
+	defer forTestClearDir(dirPath)
+
+	for x := 0; x < 500; x += 1 {
+		key := strconv.Itoa(x)
+		rep := cof10.Write(key, []byte(key))
+		if rep.Code >= codes.Warning {
+			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+		}
+	}
+	//fmt.Println("DB filled", cof10.Count())
+	atomic.AddInt64(&keyConcurent, 100)
+	cof10.ReadList([]string{"101", "102"})
+	//fmt.Println(rep)
+	//b.SetParallelism(32)
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		rep := cof10.Transaction("exchange", []string{"101", "102"}, nil)
+		if rep.Code >= codes.Warning || rep.Error != nil {
+			b.Error("EEEEEEEEERRRRRRRRRRRRRRRRR")
+			//b.Error(fmt.Sprintf("Code: %d , key1: %s, key2: %s . Err %v", rep.Code, keys[0], keys[1], rep.Error))
+		}
+		//fmt.Println(rep)
+	}
+}
+
+func BenchmarkCofferTransactionPar32NotConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	//fmt.Println("444_Запущена копия бенчмарка")
+	b.StopTimer()
+	forTestClearDir(dirPath)
+	cof11, err := createAndStartNewCofferFast(b, 1000, 10000, 500, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	defer forTestClearDir(dirPath)
+	defer cof11.Stop()
+	defer forTestClearDir(dirPath)
+
+	for x := 0; x < 70000; x += 100 {
+		list := make(map[string][]byte, 100)
+		for z := x; z < x+100; z++ {
+			key := strconv.Itoa(z)
+			list[key] = []byte("a" + key + "b")
+		}
+		rep := cof11.WriteList(list)
+		if rep.Code >= codes.Warning {
+			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+		}
+	}
+
+	// for x := 0; x < 70000; x += 1 {
+	// 	key := strconv.Itoa(x)
+	// 	rep := cof10.Write(key, []byte(key))
+	// 	if rep.Code >= codes.Warning {
+	// 		b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+	// 	}
+	// }
+	//fmt.Println("DB filled", cof11.Count())
+	atomic.AddInt64(&keyConcurent, 100)
+	cof11.ReadList([]string{"101", "102"})
+	//fmt.Println(rep)
+	b.SetParallelism(32)
+	b.StartTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 1)))
+			u2 := int64(uint16(atomic.AddInt64(&keyConcurent, 1)))
+			atomic.AddInt64(&keyConcurent, 100)
+			//tStart := time.Now().UnixNano()
+
+			rep := cof11.Transaction("exchange", []string{strconv.FormatInt(u1, 10), strconv.FormatInt(u2, 10)}, nil)
+			if rep.Code >= codes.Warning {
+				b.Error(fmt.Sprintf("Code: %d , key1: %d, key2: %d", rep.Code, u1, u2))
+			}
+			//fmt.Println(rep)
+			//fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart, u1, u2)
+		}
+	})
+}
+
+func BenchmarkCofferTransactionPar32HalfConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+	//fmt.Println("555_Запущена копия бенчмарка")
+	b.StopTimer()
+	forTestClearDir(dirPath)
+	cof12, err := createAndStartNewCofferFast(b, 1000, 10000, 500, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
+	if err != nil {
+		b.Error(err)
+		return
+	}
+	defer forTestClearDir(dirPath)
+	defer cof12.Stop()
+	defer forTestClearDir(dirPath)
+
+	for x := 0; x < 70000; x += 100 {
+		list := make(map[string][]byte, 100)
+		for z := x; z < x+100; z++ {
+			key := strconv.Itoa(z)
+			list[key] = []byte("a" + key + "b")
+		}
+		rep := cof12.WriteList(list)
+		if rep.Code >= codes.Warning {
+			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+		}
+	}
+
+	// for x := 0; x < 70000; x += 1 {
+	// 	key := strconv.Itoa(x)
+	// 	rep := cof10.Write(key, []byte(key))
+	// 	if rep.Code >= codes.Warning {
+	// 		b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
+	// 	}
+	// }
+	//fmt.Println("DB filled", cof12.Count())
+	atomic.AddInt64(&keyConcurent, 100)
+	cof12.ReadList([]string{"101", "102"})
+	//fmt.Println(rep)
+	b.SetParallelism(32)
+	b.StartTimer()
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 0)))
+			u2 := int64(uint16(atomic.AddInt64(&keyConcurent, 1)))
+			atomic.AddInt64(&keyConcurent, 100)
+			//tStart := time.Now().UnixNano()
+
+			rep := cof12.Transaction("exchange", []string{strconv.FormatInt(u1, 10), strconv.FormatInt(u2, 10)}, nil)
+			if rep.Code >= codes.Warning {
+				b.Error(fmt.Sprintf("Code: %d , key1: %d, key2: %d", rep.Code, u1, u2))
+			}
+			//fmt.Println(rep)
+			//fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart, u1, u2)
 		}
 	})
 }
@@ -164,14 +323,15 @@ func createNewCofferFast(batchSize int, limitRecordsPerLogfile int, maxKeyLength
 	// 	//MaxKeyLength:        100,
 	// 	//MaxValueLength:      10000,
 	// }
+	hdlExch := domain.Handler(handlerExchange)
 	return Db(dirPath).BatchSize(batchSize).
 		LimitRecordsPerLogfile(limitRecordsPerLogfile).
-		FollowPause(100 * time.Second).
+		FollowPause(100*time.Second).
 		LogsByCheckpoint(1000).
 		MaxKeyLength(maxKeyLength).
 		MaxValueLength(maxValueLength).
-		MaxRecsPerOperation(1000).
-		//Handler("exchange", &hdlExch).
+		MaxRecsPerOperation(1000000).
+		Handler("exchange", &hdlExch).
 		Create()
 
 	//return New(cnf, nil)

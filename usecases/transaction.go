@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"strings"
 
+	//"time"
+
 	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/reports"
 	"github.com/claygod/coffer/reports/codes"
@@ -66,6 +68,9 @@ func NewTransaction(handlers HandleStore) *Transaction {
 // }
 
 func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) *reports.Report {
+	// tStart := time.Now().UnixNano()
+	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
+
 	rep := &reports.Report{}
 	// находим хандлер
 	hdlx, err := t.handlers.Get(reqTr.HandlerName)
@@ -108,22 +113,22 @@ func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	// 	}
 	// 	novRecsList = append(novRecsList, rec)
 	// }
-	// проверяем, нет ли надобности удалить какие-то записи
-	delRecsList := make([]string, 0, len(reqTr.Keys))
-	for _, key := range reqTr.Keys {
-		if _, ok := novRecsMap[key]; !ok {
-			delRecsList = append(delRecsList, key)
-		}
-	}
+	// // проверяем, нет ли надобности удалить какие-то записи
+	// delRecsList := make([]string, 0, len(reqTr.Keys))
+	// for _, key := range reqTr.Keys {
+	// 	if _, ok := novRecsMap[key]; !ok {
+	// 		delRecsList = append(delRecsList, key)
+	// 	}
+	// }
 	//сохранение изменённых записей (полученных в результате выполнения транзакции)
 	repo.WriteList(novRecsMap)
 	// if err := repo.SetRecords(novRecsList); err != nil {
 	// 	return err
 	// }
-	// удаление записей (при необходимости)
-	if len(delRecsList) != 0 {
-		repo.DelListStrict(delRecsList) //тут не проверяем результат так как ключи гарантированно есть (проверено)
-	}
+	// // удаление записей (при необходимости)
+	// if len(delRecsList) != 0 {
+	// 	repo.DelListStrict(delRecsList) //тут не проверяем результат так как ключи гарантированно есть (проверено)
+	// }
 	rep.Code = codes.Ok
 	return rep
 }

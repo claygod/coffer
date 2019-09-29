@@ -376,6 +376,9 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 }
 
 func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.Report { // interface{}, map[string][]byte, *domain.Handler
+	//tStart := time.Now().UnixNano()
+	//defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
+
 	rep := &reports.Report{}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped

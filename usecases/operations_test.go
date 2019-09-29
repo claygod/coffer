@@ -69,6 +69,6 @@ func (m *mockHandler) Get(handlerName string) (*domain.Handler, error) {
 	})
 	return &hdl, nil //TODO
 }
-func (m *mockHandler) Set(handlerName string, handler *domain.Handler) error {
-	return nil //TODO
+func (m *mockHandler) Set(handlerName string, handler *domain.Handler) {
+	return //TODO
 }

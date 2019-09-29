@@ -181,6 +181,9 @@ func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDelet
 // }
 
 func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) *reports.Report {
+	// tStart := time.Now().UnixNano()
+	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
+
 	rep := &reports.Report{}
 	//defer c.checkPanic()
 	if !c.hasp.Add() {
