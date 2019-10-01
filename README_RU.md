@@ -99,10 +99,10 @@
 
 ## Benchmark
 
-BenchmarkCofferWriteParallel32LowConcurent-4			100000		 14587 ns/op
-BenchmarkCofferTransactionSequence-4					  2000		997035 ns/op
-BenchmarkCofferTransactionPar32NotConcurent-4		100000		 12494 ns/op
-BenchmarkCofferTransactionPar32HalfConcurent-4		100000		 14542 ns/op
-BenchmarkCofferComplex32-8							200000		  7588 ns/op
+- BenchmarkCofferWriteParallel32LowConcurent-4			100000		 14587 ns/op
+- BenchmarkCofferTransactionSequence-4					  2000		997035 ns/op
+- BenchmarkCofferTransactionPar32NotConcurent-4		100000		 12494 ns/op
+- BenchmarkCofferTransactionPar32HalfConcurent-4		100000		 14542 ns/op
+- BenchmarkCofferComplex32-8							200000		  7588 ns/op
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
