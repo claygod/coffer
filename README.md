@@ -6,4 +6,15 @@ Simple ACID* key-value database.
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
+Properties:
+- Great throughput
+- Admissible latency
+- High reliability
+
+ACID:
+- Good durabilty
+- Obligatory isolation
+- Atomic operations
+- Consistent transactions
+
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>

@@ -6,6 +6,31 @@
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
+## Конфигурирование
+
+Фактически, достаточно указать путь к директории базы данных, и все параметры конфигурации установятся на дефолтные:
+
+	cof, err, wrn := Db(dirPath).Create()
+
+Однако каждый из параметров можно сконфигурировать:
+	Db(dirPath).
+	BatchSize(batchSize).
+	LimitRecordsPerLogfile(limitRecordsPerLogfile).
+	FollowPause(100*time.Second).
+	LogsByCheckpoint(1000).
+	AllowStartupErrLoadLogs(true).
+	MaxKeyLength(maxKeyLength).
+	MaxValueLength(maxValueLength).
+	MaxRecsPerOperation(1000000).
+	RemoveUnlessLogs(true).
+	LimitMemory(100 * 1000000).
+	LimitDisk(1000 * 1000000).
+	MaxRecsPerOperation(1000).
+	Handler("handler1", &handler1).
+	Handler("handler2", &handler2).
+	Handlers(map[string]*handler).
+	Create()
+
 ### Старт
 
 При старте последним по номеру должен быть чекпойнт. Если это не так, то значит, остановка была некорректной.
@@ -41,23 +66,34 @@
 - [x] возврат не ошибок, а отчётов о проделанной работе
 - [x] добавить DeleteOptional,  в том числе и в Operations
 - [x] тест Count
-- [ ] тест Write
-- [ ] тест Read
+- [x] тест Write
+- [x] тест Read
 - [ ] тест Delete
+- [x] тест Transaction
 - [x] тест на загрузку с битым логом (последним, остальные в порядке)
 - [x] тест на загрузку с битым чекпоинтом
 - [x] тест на загрузку с битым логом и идущим за ним ещё одним логом
-- [ ] тест на использование транзакции
+- [x] тест на использование транзакции
 - [ ] для удобства тестирования сделать WriteUnsafe
 - [x] бенчмарк записи конкурентной и не конкурентной
 - [ ] бенчмарк чтения конкурентного и не конкурентного
 - [ ] бенчмарк записии и чтения в конкурентном режиме
+- [x] бенчмарк конкурентных транзакций в параллельном режиме
 - [ ] при загрузке - при поломанных файлах возвращаться может wrn, а не err
-- [ ] разобраться с журналом и батчером, почему при быстрой записи records попадают в следующий лог
+- [x] разобраться с журналом и батчером, почему при быстрой записи records попадают в следующий лог
 - [ ] перехват паник во всех пакетах
 - [ ] при транзакциях можно некоторые записи из участвующих удалять (!надобность под вопросом!)
 - [ ] тестирование вспомогательных хэлперов
 - [x] при создании БД сразу добавлять список хэндлеров, т.к. и загрузка из логов тоже происходит сразу
 - [x] добавить удобный конфигуратор при создании бд
+- [ ] комментарии перевести на английский язык
+- [ ] очистить код от старых артефактов
+
+## Benchmark
+
+BenchmarkCofferWriteParallel32LowConcurent-4			100000		 14587 ns/op
+BenchmarkCofferTransactionSequence-4					  2000		997035 ns/op
+BenchmarkCofferTransactionPar32NotConcurent-4			100000		 12494 ns/op
+BenchmarkCofferTransactionPar32HalfConcurent-4		100000		 14542 ns/op
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
