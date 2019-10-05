@@ -92,7 +92,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 		c.logger,
 		ldr,
 		c.config.UsecasesConfig, //config *Config,
-		chp, //*checkpoint,
+		chp,                     //*checkpoint,
 		//opr,                     // *operations,
 		fiRepo, //recordsRepo,
 		fileNamer,

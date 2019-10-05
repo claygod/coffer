@@ -38,6 +38,10 @@ func (s *Records) WriteList(list map[string][]byte) {
 	s.store.writeList(list)
 }
 
+func (s *Records) WriteListUnsafe(list map[string][]byte) {
+	s.store.writeList(list)
+}
+
 func (s *Records) WriteUnsafeRecord(key string, value []byte) {
 	s.store.writeOne(key, value)
 }

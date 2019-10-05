@@ -219,6 +219,27 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 	return rep
 }
 
+func (r *RecordsInteractor) WriteListUnsafe(req *ReqWriteList) *reports.Report {
+	rep := &reports.Report{}
+	// подготавливаем байтовую версию операции для лога
+	opBytes, err := r.reqWriteListToLog(req)
+	if err != nil {
+		rep.Code = codes.ErrParseRequest
+		rep.Error = err
+		return rep
+	}
+	// выполняем
+	r.repo.WriteList(req.List)                       // проводим операцию  с inmemory хранилищем
+	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
+		defer r.hasp.Stop()
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
+	}
+	rep.Code = codes.Ok
+	return rep
+}
+
 func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	//defer c.checkPanic()

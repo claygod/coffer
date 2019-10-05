@@ -43,10 +43,8 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 			return rep
 		}
 	}
-	//fmt.Println("++2++")
 	keys := c.extractKeysFromMap(input)
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
-		//fmt.Println("+++++", err)
 		rep.Code = code
 		rep.Error = err
 		return rep
@@ -59,6 +57,33 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 		List: input,
 	}
 	rep = c.recInteractor.WriteList(req)
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
+	rep := &reports.Report{}
+	//defer c.checkPanic()
+	for _, value := range input {
+		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
+			rep.Code = codes.ErrExceedingMaxValueSize
+			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+			return rep
+		}
+	}
+	keys := c.extractKeysFromMap(input)
+	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
+		rep.Code = code
+		rep.Error = err
+		return rep
+	}
+	req := &usecases.ReqWriteList{
+		Time: time.Now(),
+		List: input,
+	}
+	rep = c.recInteractor.WriteListUnsafe(req)
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}

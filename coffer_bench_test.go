@@ -6,7 +6,6 @@ package coffer
 
 import (
 	"fmt"
-	"math/rand"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -275,62 +274,6 @@ func BenchmarkCofferTransactionPar32HalfConcurent(b *testing.B) { // go tool ppr
 			}
 			//fmt.Println(rep)
 			//fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart, u1, u2)
-		}
-	})
-}
-
-func BenchmarkCofferComplex32(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
-	//fmt.Println("555_Запущена копия бенчмарка")
-	b.StopTimer()
-	forTestClearDir(dirPath)
-	cof14, err := createAndStartNewCofferFast(b, 1000, 10000, 500, 1000) //  createAndStartNewCofferLengthB(b, 10, 100)
-	if err != nil {
-		b.Error(err)
-		return
-	}
-	defer forTestClearDir(dirPath)
-	defer cof14.Stop()
-	defer forTestClearDir(dirPath)
-
-	for x := 0; x < 70000; x += 100 {
-		list := make(map[string][]byte, 100)
-		for z := x; z < x+100; z++ {
-			key := strconv.Itoa(z)
-			list[key] = []byte("a" + key + "b")
-		}
-		rep := cof14.WriteList(list)
-		if rep.Code >= codes.Warning {
-			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
-		}
-	}
-
-	atomic.AddInt64(&keyConcurent, 100)
-	cof14.ReadList([]string{"101", "102"})
-	//fmt.Println(rep)
-	b.SetParallelism(32)
-	b.StartTimer()
-	b.RunParallel(func(pb *testing.PB) {
-		for pb.Next() {
-			switch rand.Intn(3) {
-			case 0:
-				//write
-				u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 0)))
-				cof14.Write(strconv.FormatInt(u1, 10), []byte("aaa"+strconv.FormatInt(u1, 10)+"bbb"))
-			case 1:
-				//del
-				u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 0)))
-				cof14.Delete(strconv.FormatInt(u1, 10))
-			case 2:
-				//transaction
-				u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 0)))
-				u2 := int64(uint16(atomic.AddInt64(&keyConcurent, 1)))
-				atomic.AddInt64(&keyConcurent, 100)
-				cof14.Transaction("exchange", []string{strconv.FormatInt(u1, 10), strconv.FormatInt(u2, 10)}, nil)
-			default:
-				//read
-				u1 := int64(uint16(atomic.AddInt64(&keyConcurent, 0)))
-				cof14.Read(strconv.FormatInt(u1, 10))
-			}
 		}
 	})
 }

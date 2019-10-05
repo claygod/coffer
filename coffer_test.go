@@ -55,6 +55,89 @@ func TestNewDirNotFound(t *testing.T) {
 
 }
 
+func TestDeleteList(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+	cof1.Write("fff", []byte("333"))
+	cof1.Write("ggg", []byte("333"))
+	// -- deleteList
+	if rep := cof1.deleteList([]string{"aaa"}, true); rep.Code != codes.Ok {
+		t.Errorf("Operation `deleteList`(1) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	if rep := cof1.deleteList([]string{"ccc"}, true); rep.Code != codes.ErrNotFound {
+		t.Errorf("Operation `deleteList`(2) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	if rep := cof1.deleteList([]string{"bbb", "ccc"}, false); rep.Code != codes.Ok || rep.Error != nil ||
+		len(rep.Removed) != 1 || rep.Removed[0] != "bbb" ||
+		len(rep.NotFound) != 1 || rep.NotFound[0] != "ccc" {
+		t.Errorf("Operation `deleteList`(3) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	cof1.hasp.Stop()
+	if rep := cof1.deleteList([]string{"xxx"}, true); rep.Code != codes.PanicStopped {
+		t.Errorf("Operation `deleteList`(4) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	cof1.hasp.Start()
+
+	// -- DeleteList
+	if rep := cof1.DeleteListStrict([]string{"fff"}); rep.Code != codes.Ok {
+		t.Errorf("Operation `deleteList`(1) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	if rep := cof1.DeleteListStrict([]string{"ccc"}); rep.Code != codes.ErrNotFound {
+		t.Errorf("Operation `deleteList`(2) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	if rep := cof1.DeleteListOptional([]string{"ggg", "ccc"}); rep.Code != codes.Ok || rep.Error != nil ||
+		len(rep.Removed) != 1 || rep.Removed[0] != "ggg" ||
+		len(rep.NotFound) != 1 || rep.NotFound[0] != "ccc" {
+		t.Errorf("Operation `deleteList`(3) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	cof1.hasp.Stop()
+	if rep := cof1.DeleteListStrict([]string{"xxx"}); rep.Code != codes.PanicStopped {
+		t.Errorf("Operation `deleteList`(4) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
+		return
+	}
+	cof1.hasp.Start()
+}
+
+func TestCount(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+
+	if rep := cof1.Count(); rep.Code != codes.Ok || rep.Error != nil || rep.Count != 2 {
+		t.Errorf("Operation `Count`(1) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
+		return
+	}
+
+	cof1.hasp.Stop()
+	if rep := cof1.Count(); rep.Code != codes.PanicStopped || rep.Error == nil || rep.Count != 0 {
+		t.Errorf("Operation `Count`(2) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
+		return
+	}
+	cof1.hasp.Start()
+}
+
 func TestCofferTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
@@ -63,14 +146,8 @@ func TestCofferTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// hdlExch := domain.Handler(handlerExchange)
-	// cof1.SetHandler("exchange", &hdlExch)
-	if !cof1.Start() {
-		t.Error("Could not start the application (1)")
-		return
-	} else {
-		defer cof1.Stop()
-	}
+	defer cof1.Stop()
+
 	cof1.Write("aaa", []byte("111"))
 	cof1.Write("bbb", []byte("222"))
 	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code >= codes.Warning {
@@ -299,6 +376,22 @@ func TestCofferWriteListReadList(t *testing.T) {
 		t.Errorf("Records (cof1) count, have %d, wand 9.", rep.Count)
 		return
 	}
+	longKey := "loooonnggggg"
+	for i := 0; i < 1000; i++ {
+		longKey += "!"
+	}
+	longValue := "loooonnggggg"
+	for i := 0; i < 1000; i++ {
+		longValue += longKey
+	}
+	if rep := cof1.WriteList(map[string][]byte{longKey: []byte("zzz")}); rep.Code != codes.ErrExceedingMaxKeyLength || rep.Error == nil {
+		t.Error(rep)
+		return
+	}
+	if rep := cof1.WriteList(map[string][]byte{"shortKey": []byte(longValue)}); rep.Code != codes.ErrExceedingMaxValueSize || rep.Error == nil {
+		t.Error(rep)
+		return
+	}
 	// -- считываем реальный список
 	t.Log("Stage2")
 	rep := cof1.ReadList([]string{"aasa10", "aasa11"})
@@ -346,6 +439,93 @@ func TestCofferWriteListReadList(t *testing.T) {
 
 	if rep := cof1.WriteList(req); rep.Code != codes.PanicStopped || rep.Error == nil {
 		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
+	}
+}
+
+func TestCofferWriteListUnsafeReadList(t *testing.T) {
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCoffer(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	req := make(map[string][]byte)
+	for i := 10; i < 19; i++ {
+		req["aasa"+strconv.Itoa(i)] = []byte("bbsb" + strconv.Itoa(i))
+	}
+	// -- записываем список
+	t.Log("Stage1")
+	if rep := cof1.WriteListUnsafe(req); rep.Code >= codes.Warning || rep.Error != nil {
+		t.Error(err)
+		return
+	}
+	if rep := cof1.Count(); rep.Count != 9 {
+		t.Errorf("Records (cof1) count, have %d, wand 9.", rep.Count)
+		return
+	}
+	longKey := "loooonnggggg"
+	for i := 0; i < 1000; i++ {
+		longKey += "!"
+	}
+	longValue := "loooonnggggg"
+	for i := 0; i < 1000; i++ {
+		longValue += longKey
+	}
+	if rep := cof1.WriteListUnsafe(map[string][]byte{longKey: []byte("zzz")}); rep.Code != codes.ErrExceedingMaxKeyLength || rep.Error == nil {
+		t.Error(rep)
+		return
+	}
+	if rep := cof1.WriteListUnsafe(map[string][]byte{"shortKey": []byte(longValue)}); rep.Code != codes.ErrExceedingMaxValueSize || rep.Error == nil {
+		t.Error(rep)
+		return
+	}
+	// -- считываем реальный список
+	t.Log("Stage2")
+	rep := cof1.ReadList([]string{"aasa10", "aasa11"})
+	if rep.Code != codes.Ok || rep.Error != nil || len(rep.Data) != 2 || len(rep.NotFound) != 0 {
+		t.Error(err)
+		t.Error(rep)
+		return
+	}
+	v, ok := rep.Data["aasa10"]
+	if !ok {
+		t.Error("Key `aasa10` not found")
+		return
+	} else if string(v) != "bbsb10" {
+		t.Errorf("Key `aasa10`: value want `bbsb10` have %s", string(v))
+		return
+	}
+	// -- пытаемся считать и несуществующие записи тоже
+	t.Log("Stage3")
+	rep = cof1.ReadList([]string{"aasa10", "aasa90"})
+	if rep.Code != codes.ErrReadRecords || rep.Error != nil || len(rep.Data) != 1 || len(rep.NotFound) != 1 {
+		t.Error(err)
+		t.Error(rep)
+		return
+	}
+	v, ok = rep.Data["aasa10"]
+	if !ok {
+		t.Error("Key `aasa10` not found")
+		return
+	} else if string(v) != "bbsb10" {
+		t.Errorf("Key `aasa10`: value want `bbsb10` have %s", string(v))
+		return
+	} else if rep.NotFound[0] != "aasa90" {
+		t.Errorf("Not found: want `aasa90` have %s", rep.NotFound[0])
+	}
+	cof1.Stop()
+
+	if rep := cof1.ReadList([]string{"aasa10", "aasa90"}); rep.Code != codes.PanicStopped {
+		t.Errorf("Want code `stopped` have code  `%d` .", rep.Code)
+	}
+	cof1.Stop()
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.Code != codes.PanicStopped {
+		t.Errorf("Want code `PanicStopped` have `%d` ", rep.Code)
+		//return
+	}
+
+	if rep := cof1.WriteListUnsafe(req); rep.Code != codes.PanicWAL || rep.Error == nil {
+		t.Errorf("Want code `PanicWAL` have `%d` ", rep.Code)
 	}
 }
 
