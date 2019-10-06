@@ -122,11 +122,7 @@ func (r *RecordsInteractor) Stop() bool {
 	defer r.hasp.Unblock()
 	r.journal.Stop()
 	if err := r.save(); err != nil {
-		// r.logger.Error(err).
-		// 	Context("Object", "RecordsInteractor").
-		// 	Context("Method", "Stop").
-		// 	Send()
-		r.logger.Error(err)
+		r.logger.Error(err, "Object:RecordsInteractor", "Method:Stop")
 		return false
 	} else if r.config.RemoveUnlessLogs {
 		//TODO: тут можно удалять всё старьё кроме последнего чекпоинта
@@ -202,11 +198,6 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
 		return rep
 	}
-	//TODO: блокировка по идее происходит НЕ в usecases уровне
-	// блокируем нужные записи
-	// keys := r.getKeysFromMap(req.List)
-	// r.porter.Catch(keys)
-	// defer r.porter.Throw(keys)
 	// выполняем
 	r.repo.WriteList(req.List)                       // проводим операцию  с inmemory хранилищем
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
@@ -249,9 +240,6 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 		return rep //  nil, nil, fmt.Errorf("Coffer is stopped")
 	}
 	defer r.hasp.Done()
-	// // блокируем нужные записи
-	// r.porter.Catch(req.Keys)
-	// defer r.porter.Throw(req.Keys)
 	// выполняем
 	data, notFound := r.repo.ReadList(req.Keys)
 	if len(notFound) != 0 {
@@ -285,9 +273,6 @@ func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *rep
 		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
 		return rep
 	}
-	// // блокируем нужные записи
-	// r.porter.Catch(req.Keys)
-	// defer r.porter.Throw(req.Keys)
 	// выполняем
 	if strictMode {
 		rep = r.deleteListStrict(req.Keys, opBytes)

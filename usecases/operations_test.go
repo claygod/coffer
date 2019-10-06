@@ -6,26 +6,12 @@ package usecases
 
 import (
 	//"fmt"
-	// "os"
-	// "strconv"
-	// "strings"
 	"testing"
 	"time"
 
 	"github.com/claygod/coffer/domain"
-	//"github.com/claygod/coffer/services"
-
-	// "github.com/claygod/coffer/services/filenamer"
-	// "github.com/claygod/coffer/services/journal"
-	// "github.com/claygod/coffer/services/repositories/handlers"
-	// "github.com/claygod/coffer/services/repositories/records"
-	//"github.com/claygod/coffer/services/journal"
 	"github.com/claygod/coffer/services/resources"
-	// "github.com/claygod/coffer/services/startstop"
-	//"github.com/claygod/coffer/usecases"
-	//"github.com/claygod/tools/logger"
 	"github.com/sirupsen/logrus"
-	// "github.com/claygod/tools/porter"
 )
 
 func TestNewOperations(t *testing.T) {

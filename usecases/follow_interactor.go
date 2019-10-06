@@ -12,8 +12,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	//"sync"
-
 	"github.com/claygod/coffer/domain"
 )
 
@@ -97,13 +95,7 @@ func (f *FollowInteractor) worker() {
 			f.hasp.Done()
 			f.Stop()
 			f.hasp.Block()
-			// f.logger.Error(err).
-			// 	Context("Object", "FollowInteractor").
-			// 	Context("Method", "worker").
-			// 	Context("Message", "Follow interactor is STOPPED!").
-			// 	Send()
-			f.logger.Error(err)
-			// f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
+			f.logger.Error(err, "Object:FollowInteractor", "Method:worker", "Follow interactor is STOPPED!")
 			return
 		}
 		f.hasp.Done()
@@ -120,44 +112,6 @@ func (f *FollowInteractor) follow() error {
 		return nil
 	}
 	//fmt.Println("F:запущен follow, list: ", list)
-
-	// for _, lFileName := range list {
-	// 	logFileName := f.config.DirPath + lFileName
-	// 	// ops, err, wrn := f.opr.loadFromFile(logFileName) //если нет каталога или ещё что-то подобное
-	// 	// if err != nil {
-	// 	// 	return err
-	// 	// }
-	// 	// if wrn != nil { // wrn означает, что в логе битый файл, а значит, надо остановить фолловера, т.к. дальше могут быть неконсистентные результаты
-	// 	// 	return wrn
-	// 	// }
-	// 	// if ops == nil { //значит файл пустой
-	// 	// 	continue
-	// 	// }
-	// 	// if err := f.opr.DoOperations(ops, f.repo); err != nil {
-	// 	// 	return err
-	// 	// }
-
-	// 	if err := f.loader.LoadLogs([]string{lFileName}, f.repo); err != nil {
-	// 		return err
-	// 	}
-
-	// 	//fmt.Println("F:ops: ", len(ops), f.changesCounter, f.config.ChagesByCheckpoint, f.lastFileNameLog)
-	// 	// f.addChangesCounter(ops)
-	// 	f.changesCounter += 10
-	// 	if f.changesCounter > f.config.ChagesByCheckpoint && logFileName != f.lastFileNameLog {
-	// 		//fmt.Println("F:создал новый checkpoint: ", logFileName)
-	// 		if err := f.newCheckpoint(logFileName); err != nil {
-	// 			//fmt.Println("F:что-то пошло не так: ", err)
-	// 			return err
-	// 		}
-	// 		if f.config.RemoveUnlessLogs {
-	// 			f.removingUselessLogs(logFileName)
-	// 		}
-	// 		f.changesCounter = 0
-	// 	}
-	// 	f.lastFileNameLog = logFileName
-	// }
-	//--------------------
 	err, wrn := f.loader.LoadLogs(list, f.repo)
 	if err != nil {
 		return err
@@ -221,8 +175,6 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 	//тут будем брать последние из filenamer
 	fNamesList, err := f.filenamer.GetHalf(f.lastFileNameLog, true)
-
-	//fNamesList, err := f.filenamer.GetAfterLatest(f.lastFileNameLog)
 	if err != nil {
 		//fmt.Println("F:err7:", err)
 		return nil, err
@@ -233,22 +185,6 @@ func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 		return make([]string, 0), nil
 	}
 	return fNamesList[0 : ln-2], nil
-
-	// switch {
-	// case ln == 0:
-	// 	return fNamesList, nil
-	// case ln == 1: // последний лог мы никогда не берём чтобы не ткнуться в ещё наполняемый лог
-	// 	return make([]string, 0), nil
-	// default:
-	// 	// for num, fName := range fNamesList[:ln-1] { // если ничего не найдём, значит ещё не брали логи в работу
-	// 	// 	if f.lastFileNameLog == fName {
-	// 	// 		fNamesList = fNamesList[num : len(fNamesList)-num]
-	// 	// 		break
-	// 	// 	}
-	// 	// }
-	// }
-	// //sort.Strings(fNamesList)
-	// return fNamesList[], nil
 }
 
 func (f *FollowInteractor) getFilesByExtList(ext string) ([]string, error) {
