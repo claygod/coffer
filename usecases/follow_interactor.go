@@ -97,12 +97,12 @@ func (f *FollowInteractor) worker() {
 			f.hasp.Done()
 			f.Stop()
 			f.hasp.Block()
-			f.logger.Error(err).
-				Context("Object", "FollowInteractor").
-				Context("Method", "worker").
-				Context("Message", "Follow interactor is STOPPED!").
-				Send()
-			// f.logger.Error(err)
+			// f.logger.Error(err).
+			// 	Context("Object", "FollowInteractor").
+			// 	Context("Method", "worker").
+			// 	Context("Message", "Follow interactor is STOPPED!").
+			// 	Send()
+			f.logger.Error(err)
 			// f.logger.Error(fmt.Errorf("Follow interactor is STOPPED!"))
 			return
 		}

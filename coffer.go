@@ -9,16 +9,19 @@ import (
 	//"time"
 
 	"github.com/claygod/coffer/domain"
-	"github.com/claygod/coffer/services"
+	//"github.com/claygod/coffer/services"
 	"github.com/claygod/coffer/services/filenamer"
 	"github.com/claygod/coffer/services/journal"
+
+	//"github.com/claygod/coffer/services/logger"
+	"github.com/claygod/coffer/services/porter"
 	"github.com/claygod/coffer/services/repositories/handlers"
 	"github.com/claygod/coffer/services/repositories/records"
 	"github.com/claygod/coffer/services/resources"
 	"github.com/claygod/coffer/services/startstop"
 	"github.com/claygod/coffer/usecases"
-	"github.com/claygod/tools/logger"
-	"github.com/claygod/tools/porter"
+
+	"github.com/sirupsen/logrus"
 )
 
 type Coffer struct {
@@ -44,7 +47,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 
 	c := &Coffer{
 		config:     config,
-		logger:     logger.New(services.NewLog(logPrefix)),
+		logger:     logrus.New(), //  logger.New(services.NewLog(logPrefix)),
 		porter:     porter.New(),
 		resControl: resControl,
 		handlers:   hdls, //handlers.New(),
@@ -52,7 +55,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	}
 
 	alarmFunc := func(err error) { // для журнала
-		c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
+		c.logger.Error(err, "Object:Journal", "Method:Write")
 	}
 	//recordsRepo := records.New()
 	riRepo := records.New()

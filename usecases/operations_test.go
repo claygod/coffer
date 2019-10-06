@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/claygod/coffer/domain"
-	"github.com/claygod/coffer/services"
+	//"github.com/claygod/coffer/services"
 
 	// "github.com/claygod/coffer/services/filenamer"
 	// "github.com/claygod/coffer/services/journal"
@@ -23,7 +23,8 @@ import (
 	"github.com/claygod/coffer/services/resources"
 	// "github.com/claygod/coffer/services/startstop"
 	//"github.com/claygod/coffer/usecases"
-	"github.com/claygod/tools/logger"
+	//"github.com/claygod/tools/logger"
+	"github.com/sirupsen/logrus"
 	// "github.com/claygod/tools/porter"
 )
 
@@ -48,7 +49,7 @@ func TestNewOperations(t *testing.T) {
 	}
 	hdl := newMockHandler()
 	trn := NewTransaction(hdl)
-	logger := logger.New(services.NewLog("Coffer "))
+	logger := logrus.New() //  logger.New(services.NewLog("Coffer "))
 	reqCoder := NewReqCoder()
 
 	//NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations

@@ -122,11 +122,11 @@ func (r *RecordsInteractor) Stop() bool {
 	defer r.hasp.Unblock()
 	r.journal.Stop()
 	if err := r.save(); err != nil {
-		r.logger.Error(err).
-			Context("Object", "RecordsInteractor").
-			Context("Method", "Stop").
-			Send()
-		//r.logger.Error(err)
+		// r.logger.Error(err).
+		// 	Context("Object", "RecordsInteractor").
+		// 	Context("Method", "Stop").
+		// 	Send()
+		r.logger.Error(err)
 		return false
 	} else if r.config.RemoveUnlessLogs {
 		//TODO: тут можно удалять всё старьё кроме последнего чекпоинта

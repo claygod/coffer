@@ -6,7 +6,7 @@ package usecases
 
 import (
 	"github.com/claygod/coffer/domain"
-	"github.com/claygod/tools/logger"
+	//"github.com/claygod/coffer/services/logger"
 )
 
 type Resourcer interface {
@@ -20,11 +20,11 @@ type Porter interface {
 
 type Logger interface {
 	//Fatal(...interface{})
-	Error(interface{}) *logger.Logger
-	Warning(interface{}) *logger.Logger
-	Info(interface{}) *logger.Logger
-	Context(string, interface{}) *logger.Logger
-	Send() (int, error)
+	Error(...interface{})   //*logger.Logger
+	Warning(...interface{}) // *logger.Logger
+	Info(...interface{})    //*logger.Logger
+	//Context(string, interface{})// *logger.Logger
+	//Send() (int, error)
 	//Debug(...interface{})
 }
 
