@@ -95,7 +95,7 @@ func (f *FollowInteractor) worker() {
 			f.hasp.Done()
 			f.Stop()
 			f.hasp.Block()
-			f.logger.Error(err, "Object:FollowInteractor", "Method:worker", "Follow interactor is STOPPED!")
+			f.logger.Error(err, "Method=worker", "Follow interactor is STOPPED!")
 			return
 		}
 		f.hasp.Done()

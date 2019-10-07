@@ -81,6 +81,7 @@ func (c *checkpoint) load(repo domain.RecordsRepository, fileName string) error 
 
 func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) error {
 	rSize := make([]byte, 8)
+	recs := make(map[string][]byte)
 	for {
 		_, err := f.Read(rSize)
 		if err != nil {
@@ -122,8 +123,10 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 		// 	Key:   string(key),
 		// 	Value: value,
 		// }
-		repo.WriteUnsafeRecord(string(key), value) //          SetUnsafeRecord(rec)
+		//repo.WriteUnsafeRecord(string(key), value) //          SetUnsafeRecord(rec)
+		recs[string(key)] = value
 	}
+	repo.WriteListUnsafe(recs)
 	return nil
 }
 

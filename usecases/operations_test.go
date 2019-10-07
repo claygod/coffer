@@ -11,7 +11,7 @@ import (
 
 	"github.com/claygod/coffer/domain"
 	"github.com/claygod/coffer/services/resources"
-	"github.com/sirupsen/logrus"
+	//"github.com/sirupsen/logrus"
 )
 
 func TestNewOperations(t *testing.T) {
@@ -35,11 +35,11 @@ func TestNewOperations(t *testing.T) {
 	}
 	hdl := newMockHandler()
 	trn := NewTransaction(hdl)
-	logger := logrus.New() //  logger.New(services.NewLog("Coffer "))
+	//logger := logrus.New() //  logger.New(services.NewLog("Coffer "))
 	reqCoder := NewReqCoder()
 
 	//NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations
-	NewOperations(logger, ucCnf, reqCoder, resControl, trn)
+	NewOperations(ucCnf, reqCoder, resControl, trn)
 	//TODO oper.DoOperations()
 }
 

@@ -28,7 +28,7 @@ func (c *Coffer) Write(key string, value []byte) *reports.Report {
 
 func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
@@ -65,7 +65,7 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 
 func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	for _, value := range input {
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
 			rep.Code = codes.ErrExceedingMaxValueSize
@@ -92,6 +92,7 @@ func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
 
 func (c *Coffer) Read(key string) *reports.ReportRead {
 	rep := &reports.ReportRead{Report: reports.Report{}}
+	defer c.panicRecover()
 	repList := c.ReadList([]string{key})
 	rep.Report = repList.Report
 	//rep.Code = repList.Code
@@ -115,7 +116,7 @@ func (c *Coffer) Read(key string) *reports.ReportRead {
 
 func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
@@ -170,7 +171,7 @@ func (c *Coffer) DeleteListOptional(keys []string) *reports.ReportDeleteList {
 
 func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDeleteList {
 	rep := &reports.ReportDeleteList{Report: reports.Report{}}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
@@ -210,7 +211,7 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
 
 	rep := &reports.Report{}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
@@ -242,7 +243,7 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{})
 
 func (c *Coffer) Count() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")

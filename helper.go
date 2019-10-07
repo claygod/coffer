@@ -68,3 +68,9 @@ func (c *Coffer) extractKeysFromMap(input map[string][]byte) []string { // дл�
 	}
 	return keys
 }
+
+// func (c *Coffer) checkPanic() {
+// 	if r := recover(); r != nil {
+// 		c.logger.Error(r, "Object=Coffer")
+// 	}
+// }

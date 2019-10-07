@@ -59,7 +59,7 @@ func Db(dirPath string) *Configurator {
 }
 
 func (c *Configurator) Create() (*Coffer, error, error) {
-	return New(c.config, c.handlers)
+	return new(c.config, c.handlers)
 }
 
 func (c *Configurator) Handler(key string, value *domain.Handler) *Configurator {

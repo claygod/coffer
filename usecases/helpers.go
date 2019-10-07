@@ -23,33 +23,6 @@ func bytesToUint64(b []byte) uint64 {
 	return *(*uint64)(unsafe.Pointer(&x))
 }
 
-// type checkpointName struct {
-// 	dirPath string
-// }
-
-// func (c *checkpointName) getNewCheckPointName() string {
-// 	for {
-// 		newFileName := c.dirPath + strconv.Itoa(int(time.Now().Unix())) + ".check"
-// 		if _, err := os.Stat(newFileName); !os.IsExist(err) {
-// 			return newFileName
-// 		}
-// 		time.Sleep(1 * time.Second)
-// 	}
-// }
-
-// func bodyOperationEncode(req interface{}, code byte) ([]byte, error) {
-// 	var reqBuf bytes.Buffer
-// 	enc := gob.NewEncoder(&reqBuf)
-// 	if err := enc.Encode(req); err != nil {
-// 		return nil, err
-// 	}
-// 	toSaveLog, err := prepareOperatToLog(code, reqBuf.Bytes())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return toSaveLog, nil
-// }
-
 func prepareOperatToLog(code byte, value []byte) ([]byte, error) {
 	var buf bytes.Buffer
 	if _, err := buf.Write(uint64ToBytes(uint64(len(value) + 1))); err != nil {
@@ -62,6 +35,12 @@ func prepareOperatToLog(code byte, value []byte) ([]byte, error) {
 		return nil, err
 	}
 	return buf.Bytes(), nil
+}
+
+func (r *RecordsInteractor) checkPanic() {
+	if rcvr := recover(); rcvr != nil {
+		r.logger.Error(rcvr)
+	}
 }
 
 // func getKeysFromMap(arr map[string][]byte) []string {

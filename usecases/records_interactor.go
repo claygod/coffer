@@ -59,7 +59,7 @@ func NewRecordsInteractor(
 		logger:     logger,
 		loader:     loader,
 		chp:        chp,
-		opr:        NewOperations(logger, config, reqCoder, resControl, trs), //opr,
+		opr:        NewOperations(config, reqCoder, resControl, trs), //opr,
 		trs:        trs,
 		coder:      reqCoder,
 		repo:       repo,
@@ -122,7 +122,7 @@ func (r *RecordsInteractor) Stop() bool {
 	defer r.hasp.Unblock()
 	r.journal.Stop()
 	if err := r.save(); err != nil {
-		r.logger.Error(err, "Object:RecordsInteractor", "Method:Stop")
+		r.logger.Error(err, "Method=Stop")
 		return false
 	} else if r.config.RemoveUnlessLogs {
 		//TODO: тут можно удалять всё старьё кроме последнего чекпоинта
@@ -253,6 +253,7 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 
 func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *reports.ReportDeleteList {
 	//strictMode := true // strict
+	//defer r.checkPanic()
 	rep := &reports.ReportDeleteList{Report: reports.Report{}}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped

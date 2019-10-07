@@ -25,7 +25,7 @@ func NewLoader(config *Config, lgr Logger, chp *checkpoint, reqCoder *ReqCoder, 
 		config: config,
 		logger: lgr,
 		chp:    chp,
-		opr:    NewOperations(lgr, config, reqCoder, resControl, trn),
+		opr:    NewOperations(config, reqCoder, resControl, trn),
 	}
 }
 

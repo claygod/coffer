@@ -32,10 +32,12 @@ type Coffer struct {
 	handlers      domain.HandlersRepository
 	recInteractor *usecases.RecordsInteractor
 	folInteractor *usecases.FollowInteractor
+	panicRecover  func()
 	hasp          usecases.Starter
 }
 
-func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error) {
+func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error) {
+	//defer c.checkPanic()
 	//TODO: проверять получаемый конфиг
 	resControl, err := resources.New(config.ResourcesConfig)
 	if err != nil {
@@ -44,18 +46,26 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	if hdls == nil {
 		hdls = handlers.New()
 	}
+	logger := logrus.New()
 
 	c := &Coffer{
 		config:     config,
-		logger:     logrus.New(), //  logger.New(services.NewLog(logPrefix)),
+		logger:     logger.WithField("Object", "Coffer"), //  logger.New(services.NewLog(logPrefix)),
 		porter:     porter.New(),
 		resControl: resControl,
 		handlers:   hdls, //handlers.New(),
 		hasp:       startstop.New(),
 	}
 
+	c.panicRecover = func() {
+		if r := recover(); r != nil {
+			c.logger.Error(r)
+		}
+	}
+
 	alarmFunc := func(err error) { // для журнала
-		c.logger.Error(err, "Object:Journal", "Method:Write")
+		logger.WithField("Object", "Journal").WithField("Method", "Write").Error(err)
+		//c.logger.Error(err, "Object=Journal", "Method=Write")
 	}
 	//recordsRepo := records.New()
 	riRepo := records.New()
@@ -65,14 +75,14 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	trn := usecases.NewTransaction(c.handlers)
 	chp := usecases.NewCheckpoint(c.config.UsecasesConfig)
 	//opr := usecases.NewOperations(c.logger, c.config.UsecasesConfig, reqCoder, resControl, trn)
-	ldr := usecases.NewLoader(config.UsecasesConfig, c.logger, chp, reqCoder, resControl, trn)
+	ldr := usecases.NewLoader(config.UsecasesConfig, logger.WithField("Object", "Loader"), chp, reqCoder, resControl, trn)
 	jrn, err := journal.New(c.config.JournalConfig, fileNamer, alarmFunc)
 	if err != nil {
 		return nil, err, nil
 	}
 	ri, err, wrn := usecases.NewRecordsInteractor( // RecordsInteractor
 		c.config.UsecasesConfig,
-		c.logger,
+		logger.WithField("Object", "RecordsInteractor"), //c.logger,
 		ldr,
 		chp,
 		//opr,
@@ -92,7 +102,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	c.recInteractor = ri
 
 	fi, err := usecases.NewFollowInteractor( // FollowInteractor
-		c.logger,
+		logger.WithField("Object", "FollowInteractor"), //c.logger,
 		ldr,
 		c.config.UsecasesConfig, //config *Config,
 		chp,                     //*checkpoint,
@@ -112,7 +122,7 @@ func New(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 
 func (c *Coffer) Start() bool { // return prev state
 	//TODO: при аварийной остановке нужно ли иметь возможность запускаться вновь?(StopForever, Concrete - в старт-стоп добавить) возможно, правильный выход - пересоздание и запуск
-	//defer c.checkPanic()
+	defer c.panicRecover()
 
 	c.resControl.Start()
 	c.recInteractor.Start()
@@ -149,7 +159,7 @@ func (c *Coffer) Stop() bool {
 		return true // уже остановлено
 	}
 
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	if !c.hasp.Block() {
 		return false
 	}
@@ -175,7 +185,7 @@ func (c *Coffer) Stop() bool {
 }
 
 func (c *Coffer) StopHard() error {
-	//defer c.checkPanic()
+	defer c.panicRecover()
 	var errOut error
 
 	c.hasp.Block()
@@ -207,6 +217,7 @@ func (c *Coffer) StopHard() error {
 // }
 
 func (c *Coffer) Save() error {
+	defer c.panicRecover()
 	if !c.Stop() {
 		return fmt.Errorf("Could not stop application.")
 	}

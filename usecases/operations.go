@@ -16,16 +16,16 @@ import (
 )
 
 type Operations struct {
-	logger     Logger
+	//logger     Logger
 	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
 	trn        *Transaction
 }
 
-func NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
+func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
 	return &Operations{
-		logger:     logger,
+		//logger:     logger,
 		config:     config,
 		reqCoder:   reqCoder,
 		resControl: resControl,
