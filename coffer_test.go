@@ -174,6 +174,57 @@ func TestCofferTransaction(t *testing.T) {
 	}
 }
 
+func TestCofferTransactionChain(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+	cof1.Write("ccc", []byte("333"))
+	cof1.Write("ddd", []byte("444"))
+
+	//rep0 := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
+	//fmt.Println(string(rep0.Data["aaa"]), string(rep0.Data["bbb"]), string(rep0.Data["ccc"]), string(rep0.Data["ddd"]))
+	if rep := cof1.Transaction("exchange", []string{"ddd", "ccc"}, nil); rep.IsCodeWarning() {
+		t.Error(err)
+		return
+	}
+	if rep := cof1.Transaction("exchange", []string{"ccc", "bbb"}, nil); rep.IsCodeWarning() {
+		t.Error(err)
+		return
+	}
+	if rep := cof1.Transaction("exchange", []string{"bbb", "aaa"}, nil); rep.IsCodeWarning() {
+		t.Error(err)
+		return
+	}
+	// количество записей не должно измениться
+	if rep := cof1.Count(); rep.Count != 4 {
+		t.Errorf("Records (cof1) count, have %d, want 4.", rep.Count)
+		return
+	}
+	// количество записей не должно измениться
+	rep := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
+	if rep.IsCodeWarning() {
+		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
+		return
+	} else if string(rep.Data["aaa"]) != "444" || string(rep.Data["bbb"]) != "111" || string(rep.Data["ccc"]) != "222" || string(rep.Data["ddd"]) != "333" {
+		fmt.Println(rep.Data)
+		t.Errorf("Want aaa==444 bbb==111 ccc==222 ddd==333 , have aaa=%s bbb==%s ccc==%s ddd==%s",
+			string(rep.Data["aaa"]), string(rep.Data["bbb"]), string(rep.Data["ccc"]), string(rep.Data["ddd"]))
+	}
+	cof1.Stop()
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); !rep.IsCodePanicStopped() {
+		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
+		//return
+	}
+}
+
 func TestCofferTransactionRecordsNotFound(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
