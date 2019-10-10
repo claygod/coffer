@@ -165,13 +165,6 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 	}
 }
 
-// func (f *FollowInteractor) addChangesCounter(ops []*domain.Operation) error {
-// 	for _, op := range ops {
-// 		f.changesCounter += int64(len(op.Body)) //считаем в байтах
-// 	}
-// 	return nil
-// }
-
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 	//тут будем брать последние из filenamer
 	fNamesList, err := f.filenamer.GetHalf(f.lastFileNameLog, true)
@@ -180,7 +173,6 @@ func (f *FollowInteractor) findLatestLogs() ([]string, error) {
 		return nil, err
 	}
 	ln := len(fNamesList)
-	//fmt.Println("F:len(fNamesList):", len(fNamesList))
 	if ln <= 1 { // последний лог мы тоже не берём чтобы не ткнуться в ещё наполняемый лог
 		return make([]string, 0), nil
 	}

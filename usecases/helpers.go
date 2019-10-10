@@ -42,11 +42,3 @@ func (r *RecordsInteractor) checkPanic() {
 		r.logger.Error(rcvr)
 	}
 }
-
-// func getKeysFromMap(arr map[string][]byte) []string {
-// 	keys := make([]string, 0, len(arr))
-// 	for key, _ := range arr {
-// 		keys = append(keys, key)
-// 	}
-// 	return keys
-// }

@@ -27,21 +27,17 @@ func NewCheckpoint(config *Config) *checkpoint {
 func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
 	c.m.Lock()
 	defer c.m.Unlock()
-	//chpName := c.getNewCheckPointName()
 	f, err := os.Create(chpName)
 	if err != nil {
 		return err
 	}
-	//fmt.Println("save-1", chpName)
 	err = c.saveToFile(repo, f)
-	//fmt.Println("save-2", err)
 	f.Close()
 	if err != nil {
 		os.Remove(chpName)
 		return err
 	}
 	if err := os.Rename(chpName, chpName+extPoint); err != nil {
-		// err2 := os.Remove(chpName)
 		return fmt.Errorf("%v %v", err, os.Remove(chpName))
 	}
 	return nil
@@ -49,10 +45,9 @@ func (c *checkpoint) save(repo domain.RecordsRepository, chpName string) error {
 
 func (c *checkpoint) saveToFile(repo domain.RecordsRepository, f *os.File) error {
 	chRecord := make(chan *domain.Record, 10) //TODO: size?
-	go repo.Iterator(chRecord)                // l.store.iterator(chRecord)
+	go repo.Iterator(chRecord)
 	for {
 		rec := <-chRecord
-		//fmt.Println("rec: ", rec)
 		if rec == nil {
 			break
 		}
@@ -119,26 +114,11 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 			repo.Reset()
 			return fmt.Errorf("The value is not fully loaded, (%v)", value)
 		}
-		// rec := &domain.Record{
-		// 	Key:   string(key),
-		// 	Value: value,
-		// }
-		//repo.WriteUnsafeRecord(string(key), value) //          SetUnsafeRecord(rec)
 		recs[string(key)] = value
 	}
 	repo.WriteListUnsafe(recs)
 	return nil
 }
-
-// func (c *checkpoint) getNewCheckPointName() string {
-// 	for {
-// 		newFileName := c.dirPath + strconv.Itoa(int(time.Now().Unix())) + ".check"
-// 		if _, err := os.Stat(newFileName); !os.IsExist(err) {
-// 			return newFileName
-// 		}
-// 		time.Sleep(1 * time.Second)
-// 	}
-// }
 
 func (c *checkpoint) prepareRecordToCheckpoint(key string, value []byte) ([]byte, error) {
 	if len(key) > c.config.MaxKeyLength {
@@ -154,9 +134,3 @@ func (c *checkpoint) prepareRecordToCheckpoint(key string, value []byte) ([]byte
 
 	return append(uint64ToBytes(size), (append([]byte(key), value...))...), nil
 }
-
-// func bytesToUint64(b []byte) uint64 {
-// var x [8]byte
-// copy(x[:], b[:])
-// return *(*uint64)(unsafe.Pointer(&x))
-// }
