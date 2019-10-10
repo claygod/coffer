@@ -206,7 +206,7 @@ func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDelet
 // 	return c.Transaction(handlerName, keysCopy, arg)
 // }
 
-func (c *Coffer) Transaction(handlerName string, keys []string, arg interface{}) *reports.Report {
+func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.Report {
 	// tStart := time.Now().UnixNano()
 	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
 

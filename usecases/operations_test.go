@@ -51,7 +51,7 @@ func newMockHandler() *mockHandler {
 }
 
 func (m *mockHandler) Get(handlerName string) (*domain.Handler, error) {
-	hdl := domain.Handler(func(params interface{}, inMap map[string][]byte) (map[string][]byte, error) {
+	hdl := domain.Handler(func(params []byte, inMap map[string][]byte) (map[string][]byte, error) {
 		return inMap, nil
 	})
 	return &hdl, nil //TODO

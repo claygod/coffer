@@ -11,7 +11,7 @@ Handler - обработчик в транзакции.
 добавление записей, а таковые уже могут быть. Уменьшение ключей будет означать удаление записей,
 это возможно, т.к. все ключи залочены и одновременного доступа к ним не может быть.
 */
-type Handler func(interface{}, map[string][]byte) (map[string][]byte, error)
+type Handler func([]byte, map[string][]byte) (map[string][]byte, error)
 
 type Operation struct {
 	Code byte

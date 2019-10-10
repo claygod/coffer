@@ -8,7 +8,7 @@ import (
 	"fmt"
 )
 
-func HandlerExchange(arg interface{}, recs map[string][]byte) (map[string][]byte, error) {
+func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg != nil {
 		return nil, fmt.Errorf("Args not null.")
 	} else if len(recs) != 2 {

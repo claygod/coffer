@@ -1381,7 +1381,7 @@ func forTestClearDir(dir string) error {
 	return nil
 }
 
-func handlerExchange(arg interface{}, recs map[string][]byte) (map[string][]byte, error) {
+func handlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg != nil {
 		return nil, fmt.Errorf("Args not null.")
 	} else if len(recs) != 2 {

@@ -78,5 +78,5 @@ type ReqTransaction struct {
 	Time        time.Time
 	HandlerName string
 	Keys        []string
-	Value       interface{}
+	Value       []byte
 }
