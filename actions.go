@@ -18,14 +18,6 @@ func (c *Coffer) Write(key string, value []byte) *reports.Report {
 	return c.WriteList(map[string][]byte{key: value})
 }
 
-// func (c *Coffer) WriteListSafe(input map[string][]byte) error { // A method with little protection against changing arguments. Slower.
-// 	inCopy, err := c.copyMap(input)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return c.WriteList(inCopy)
-// }
-
 func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
 	defer c.panicRecover()
@@ -35,7 +27,6 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 		return rep
 	}
 	defer c.hasp.Done()
-	//fmt.Println("++1++", c.config.UsecasesConfig.MaxKeyLength, c.config.UsecasesConfig.MaxValueLength)
 	for _, value := range input {
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
 			rep.Code = codes.ErrExceedingMaxValueSize
@@ -105,15 +96,6 @@ func (c *Coffer) Read(key string) *reports.ReportRead {
 	return rep
 }
 
-// func (c *Coffer) ReadListSafe(keys []string) *reports.ReportReadList { // A method with little protection against changing arguments. Slower.
-// 	keysCopy, err := c.copySlice(keys)
-// 	if err != nil {
-
-// 		return nil, nil, err
-// 	}
-// 	return c.ReadList(keysCopy)
-// }
-
 func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -124,7 +106,7 @@ func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	}
 	defer c.hasp.Done()
 
-	if code, err := c.checkLenCountKeys(keys); code != codes.Ok { //TODO: контроль длин и т.д. должен быть и в других экшенах
+	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
 		return rep
@@ -146,20 +128,7 @@ func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 func (c *Coffer) Delete(key string) *reports.Report {
 	repList := c.DeleteListStrict([]string{key})
 	return &repList.Report
-	// rep := &reports.Report{
-	// 	Code:  repList.Code,
-	// 	Error: repList.Error,
-	// }
-	// return rep
 }
-
-// func (c *Coffer) DeleteListSafe(keys []string) error { // A method with little protection against changing arguments. Slower.
-// 	keysCopy, err := c.copySlice(keys)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return c.DeleteList(keysCopy)
-// }
 
 func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
 	return c.deleteList(keys, true)
@@ -197,14 +166,6 @@ func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDelet
 	}
 	return rep
 }
-
-// func (c *Coffer) TransactionSafe(handlerName string, keys []string, arg interface{}) error { // A method with little protection against changing arguments. Slower.
-// 	keysCopy, err := c.copySlice(keys)
-// 	if err != nil {
-// 		return err
-// 	}
-// 	return c.Transaction(handlerName, keysCopy, arg)
-// }
 
 func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.Report {
 	// tStart := time.Now().UnixNano()
