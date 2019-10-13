@@ -236,6 +236,15 @@ func TestCofferTransaction(t *testing.T) {
 	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.IsCodeWarning() {
 		t.Error(err)
 		return
+	} else if rep.Data == nil {
+		t.Error("Want notnull")
+		return
+	} else if bt, ok := rep.Data["aaa"]; !ok || string(bt) != "222" {
+		t.Errorf("Want aaa==222 , have %v", rep.Data)
+		return
+	} else if bt, ok := rep.Data["bbb"]; !ok || string(bt) != "111" {
+		t.Errorf("Want bbb==111 , have %v", rep.Data)
+		return
 	}
 	// количество записей не должно измениться
 	if rep := cof1.Count(); rep.Count != 2 {
