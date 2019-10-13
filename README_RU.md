@@ -217,6 +217,12 @@
 - BenchmarkCofferTransactionPar32NotConcurent-4	100000	4132 ns/op
 - BenchmarkCofferTransactionPar32HalfConcurent-4	100000	4199 ns/op
 
+## Dependencies
+
+- github.com/shirou/gopsutil/disk
+- github.com/shirou/gopsutil/mem
+- github.com/sirupsen/logrus
+
 ## TODO
 
 - [x] журнал при старте должен начинать новый лог
@@ -266,7 +272,7 @@
 - [ ] добавить Usage/Quick start текст в readme
 - [ ] описание кодов ошибок
 - [ ] описание конфигурирования
-- [ ] в описании указать сторонние пакеты (как зависимости)
+- [x] в описании указать сторонние пакеты (как зависимости)
 - [x] репортам добавить методы проверки на все ошибки в духе IsErrBlahBlahBlah
 - [x] все импортируемые пакеты перенести в дистрибутив
 - [x] перевести использование WriteUnsafeRecord на WriteListUnsafe
@@ -276,6 +282,6 @@
 - [x] получение списка ключей с условием по суффиксу RecordsListWithSuffix
 - [x] убрать метод Save
 - [x] при транзакции возвращать в отчёте новые значения
-- [ ] в тестах проверить возвращаемое значение
+- [x] в тестах проверить возвращаемое значение
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
