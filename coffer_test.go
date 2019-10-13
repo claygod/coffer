@@ -135,7 +135,90 @@ func TestCount(t *testing.T) {
 		t.Errorf("Operation `Count`(2) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
 		return
 	}
-	cof1.hasp.Start()
+	//cof1.hasp.Start()
+}
+
+func TestCofferReadListPrefixSuffix(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+	if rep := cof1.RecordsListWithPrefix("pr1"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
+		t.Errorf("Operation `RecordsListWithPrefix`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	if rep := cof1.RecordsListWithSuffix("suf2"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 3 {
+		t.Errorf("Operation `RecordsListWithPrefix`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	if rep := cof1.RecordsListWithSuffix("suf7"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 0 {
+		t.Errorf("Operation `RecordsListWithPrefix`(3) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	cof1.hasp.Stop()
+	if rep := cof1.RecordsListWithPrefix("pr1"); rep.IsCodeOk() || rep.Error == nil {
+		t.Errorf("Operation `RecordsListWithPrefix`(5) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	if rep := cof1.RecordsListWithSuffix("suf2"); rep.IsCodeOk() || rep.Error == nil {
+		t.Errorf("Operation `RecordsListWithPrefix`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+}
+
+func TestCofferReadListUnsafe(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+
+	if rep := cof1.RecordsListUnsafe(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
+		t.Errorf("RecordsListUnsafe`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	if rep := cof1.ReadListUnsafe([]string{"pr1-suf1", "pr2-suf2"}); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
+		t.Errorf("ReadListUnsafe`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	longKey := "long"
+	for i := 0; i < 10; i++ {
+		longKey += longKey
+	}
+	if rep := cof1.ReadListUnsafe([]string{longKey, "pr2-suf2"}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
+		t.Errorf("ReadListUnsafe`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	cof1.hasp.Stop()
+	if rep := cof1.RecordsListUnsafe(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
+		t.Errorf("RecordsListUnsafe`(3) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	if rep := cof1.ReadListUnsafe([]string{"pr1-suf1", "pr2-suf2"}); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
+		t.Errorf("ReadListUnsafe`(4) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	// cof1.hasp.Start()
+}
+
+func TestCofferRecordsList(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+
+	if rep := cof1.RecordsList(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
+		t.Errorf("RecordsList`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	cof1.hasp.Stop()
+	if rep := cof1.RecordsList(); rep.IsCodeOk() || rep.Error == nil {
+		t.Errorf("RecordsList`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
+	}
+	// cof1.hasp.Start()
 }
 
 func TestCofferTransaction(t *testing.T) {

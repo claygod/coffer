@@ -42,13 +42,17 @@ func (s *Records) WriteListUnsafe(list map[string][]byte) {
 	s.store.writeList(list)
 }
 
-func (s *Records) WriteUnsafeRecord(key string, value []byte) {
-	s.store.writeOne(key, value)
-}
+// func (s *Records) WriteUnsafeRecord(key string, value []byte) {
+// 	s.store.writeOne(key, value)
+// }
 
 func (s *Records) ReadList(list []string) (map[string][]byte, []string) {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
+	return s.store.readList(list)
+}
+
+func (s *Records) ReadListUnsafe(list []string) (map[string][]byte, []string) {
 	return s.store.readList(list)
 }
 
@@ -92,7 +96,7 @@ func (s *Records) DelListOptional(keys []string) ([]string, []string) {
 // 	return f(v, curValues)
 // }
 
-func (s *Records) Iterator(chRecord chan *domain.Record) {
+func (s *Records) Iterator(chRecord chan *domain.Record) { // требуется при сохранении в файл
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	chFinish := make(chan struct{})
@@ -105,4 +109,22 @@ func (s *Records) CountRecords() int {
 	s.mtx.Lock()
 	defer s.mtx.Unlock()
 	return s.store.countRecords()
+}
+
+func (s *Records) RecordsList() []string {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.keysList()
+}
+
+func (s *Records) RecordsListWithPrefix(prefix string) []string {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.keysListWithPrefix(prefix)
+}
+
+func (s *Records) RecordsListWithSuffix(suffix string) []string {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.keysListWithSuffix(suffix)
 }

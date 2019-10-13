@@ -6,6 +6,7 @@ package records
 
 import (
 	//"fmt"
+	"strings"
 
 	"github.com/claygod/coffer/domain"
 )
@@ -130,4 +131,32 @@ func (r *storage) iterator(chRecord chan *domain.Record, chFinish chan struct{})
 
 func (r *storage) countRecords() int {
 	return len(r.data)
+}
+
+func (r *storage) keysList() []string {
+	list := make([]string, 0, len(r.data))
+	for key, _ := range r.data {
+		list = append(list, key)
+	}
+	return list
+}
+
+func (r *storage) keysListWithPrefix(prefix string) []string {
+	list := make([]string, 0, len(r.data))
+	for key, _ := range r.data {
+		if strings.HasPrefix(key, prefix) {
+			list = append(list, key)
+		}
+	}
+	return list
+}
+
+func (r *storage) keysListWithSuffix(suffix string) []string {
+	list := make([]string, 0, len(r.data))
+	for key, _ := range r.data {
+		if strings.HasSuffix(key, suffix) {
+			list = append(list, key)
+		}
+	}
+	return list
 }

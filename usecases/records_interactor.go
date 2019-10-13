@@ -193,7 +193,7 @@ func (r *RecordsInteractor) WriteListUnsafe(req *ReqWriteList) *reports.Report {
 		return rep
 	}
 	// выполняем
-	r.repo.WriteList(req.List)                       // проводим операцию  с inmemory хранилищем
+	r.repo.WriteListUnsafe(req.List)                 // проводим операцию  с inmemory хранилищем
 	if err := r.journal.Write(opBytes); err != nil { // журналируем операцию
 		defer r.hasp.Stop()
 		rep.Code = codes.PanicWAL
@@ -203,6 +203,27 @@ func (r *RecordsInteractor) WriteListUnsafe(req *ReqWriteList) *reports.Report {
 	rep.Code = codes.Ok
 	return rep
 }
+
+// func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
+// 	//defer c.checkPanic()
+// 	if !r.hasp.Add() {
+// 		rep := &reports.ReportReadList{Report: reports.Report{}}
+// 		rep.Code = codes.PanicStopped
+// 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+// 		return rep
+// 	}
+// 	defer r.hasp.Done()
+// 	return r.ReadListUnsafe(req)
+// 	// // выполняем
+// 	// data, notFound := r.repo.ReadList(req.Keys)
+// 	// if len(notFound) != 0 {
+// 	// 	rep.Code = codes.ErrReadRecords
+// 	// }
+// 	// //rep.Code = codes.ErrReadRecords
+// 	// rep.Data = data
+// 	// rep.NotFound = notFound
+// 	// return rep
+// }
 
 func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
@@ -215,6 +236,21 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	defer r.hasp.Done()
 	// выполняем
 	data, notFound := r.repo.ReadList(req.Keys)
+	if len(notFound) != 0 {
+		rep.Code = codes.ErrReadRecords
+	}
+	//rep.Code = codes.ErrReadRecords
+	rep.Data = data
+	rep.NotFound = notFound
+	return rep
+}
+
+func (r *RecordsInteractor) ReadListUnsafe(req *ReqLoadList) *reports.ReportReadList {
+	rep := &reports.ReportReadList{Report: reports.Report{}}
+	//defer c.checkPanic()
+
+	// выполняем
+	data, notFound := r.repo.ReadListUnsafe(req.Keys)
 	if len(notFound) != 0 {
 		rep.Code = codes.ErrReadRecords
 	}
@@ -405,6 +441,48 @@ func (r *RecordsInteractor) RecordsCount() *reports.ReportRecordsCount {
 	defer r.hasp.Done()
 	// выполняем
 	rep.Count = r.repo.CountRecords() // проводим операцию  с inmemory хранилищем
+	rep.Code = codes.Ok
+	return rep
+}
+
+func (r *RecordsInteractor) RecordsList() *reports.ReportRecordsList {
+	rep := &reports.ReportRecordsList{Report: reports.Report{}}
+	if !r.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
+	}
+	defer r.hasp.Done()
+	// выполняем
+	rep.Data = r.repo.RecordsList() // проводим операцию  с inmemory хранилищем
+	rep.Code = codes.Ok
+	return rep
+}
+
+func (r *RecordsInteractor) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList {
+	rep := &reports.ReportRecordsList{Report: reports.Report{}}
+	if !r.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
+	}
+	defer r.hasp.Done()
+	// выполняем
+	rep.Data = r.repo.RecordsListWithPrefix(prefix) // проводим операцию  с inmemory хранилищем
+	rep.Code = codes.Ok
+	return rep
+}
+
+func (r *RecordsInteractor) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList {
+	rep := &reports.ReportRecordsList{Report: reports.Report{}}
+	if !r.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
+	}
+	defer r.hasp.Done()
+	// выполняем
+	rep.Data = r.repo.RecordsListWithSuffix(suffix) // проводим операцию  с inmemory хранилищем
 	rep.Code = codes.Ok
 	return rep
 }

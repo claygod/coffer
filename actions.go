@@ -125,6 +125,27 @@ func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	return rep
 }
 
+func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
+	rep := &reports.ReportReadList{Report: reports.Report{}}
+	defer c.panicRecover()
+
+	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
+		rep.Code = code
+		rep.Error = err
+		return rep
+	}
+
+	req := &usecases.ReqLoadList{
+		Time: time.Now(),
+		Keys: keys,
+	}
+	rep = c.recInteractor.ReadListUnsafe(req)
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
 func (c *Coffer) Delete(key string) *reports.Report {
 	repList := c.DeleteListStrict([]string{key})
 	return &repList.Report
@@ -213,6 +234,66 @@ func (c *Coffer) Count() *reports.ReportRecordsCount {
 	defer c.hasp.Done()
 
 	rep = c.recInteractor.RecordsCount()
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) RecordsList() *reports.ReportRecordsList {
+	defer c.panicRecover()
+	if !c.hasp.Add() {
+		rep := &reports.ReportRecordsList{Report: reports.Report{}}
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
+	}
+	defer c.hasp.Done()
+
+	rep := c.recInteractor.RecordsList()
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList {
+	defer c.panicRecover()
+	if !c.hasp.Add() {
+		rep := &reports.ReportRecordsList{Report: reports.Report{}}
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
+	}
+	defer c.hasp.Done()
+
+	rep := c.recInteractor.RecordsListWithPrefix(prefix)
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList {
+	defer c.panicRecover()
+	if !c.hasp.Add() {
+		rep := &reports.ReportRecordsList{Report: reports.Report{}}
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is stopped")
+		return rep
+	}
+	defer c.hasp.Done()
+
+	rep := c.recInteractor.RecordsListWithSuffix(suffix)
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
+	defer c.panicRecover()
+	rep := c.recInteractor.RecordsList()
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
