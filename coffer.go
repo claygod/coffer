@@ -5,7 +5,7 @@ package coffer
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
 import (
-	"fmt"
+	//"fmt"
 	//"time"
 
 	"github.com/claygod/coffer/domain"
@@ -167,7 +167,6 @@ func (c *Coffer) Stop() bool {
 	c.resControl.Stop()
 	c.folInteractor.Stop()
 	c.recInteractor.Stop()
-
 	//TODO: not remove this code!!
 	// if !c.resControl.Stop() {
 	// 	return false
@@ -187,11 +186,9 @@ func (c *Coffer) Stop() bool {
 func (c *Coffer) StopHard() error {
 	defer c.panicRecover()
 	var errOut error
-
 	c.hasp.Block()
 	c.folInteractor.Stop()
 	c.recInteractor.Stop()
-
 	//TODO: not remove this code!!
 	// if !c.hasp.Block() {
 	// 	errOut = fmt.Errorf("Hasp is not stopped.")
@@ -216,13 +213,13 @@ func (c *Coffer) StopHard() error {
 // 	return c.handlers.Set(handlerName, handlerMethod)
 // }
 
-func (c *Coffer) Save() error {
-	defer c.panicRecover()
-	if !c.Stop() {
-		return fmt.Errorf("Could not stop application.")
-	}
-	if !c.Start() {
-		return fmt.Errorf("After stopping to write, the application could not be started.")
-	}
-	return nil
-}
+// func (c *Coffer) Save() error {
+// 	defer c.panicRecover()
+// 	if !c.Stop() {
+// 		return fmt.Errorf("Could not stop application.")
+// 	}
+// 	if !c.Start() {
+// 		return fmt.Errorf("After stopping to write, the application could not be started.")
+// 	}
+// 	return nil
+// }

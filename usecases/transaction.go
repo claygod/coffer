@@ -26,11 +26,11 @@ func NewTransaction(handlers HandleStore) *Transaction {
 	}
 }
 
-func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) *reports.Report {
+func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.RecordsRepository) *reports.ReportTransaction {
 	// tStart := time.Now().UnixNano()
 	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
 
-	rep := &reports.Report{}
+	rep := &reports.ReportTransaction{Report: reports.Report{}}
 	// находим хандлер
 	hdlx, err := t.handlers.Get(reqTr.HandlerName)
 	if err != nil {
@@ -57,5 +57,6 @@ func (t *Transaction) doOperationTransaction(reqTr *ReqTransaction, repo domain.
 	//сохранение изменённых записей (полученных в результате выполнения транзакции)
 	repo.WriteList(novRecsMap)
 	rep.Code = codes.Ok
+	rep.Data = novRecsMap
 	return rep
 }

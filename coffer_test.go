@@ -431,9 +431,9 @@ func TestCofferStartStop(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if err := cof1.Save(); err != nil {
-		t.Error(err)
-	}
+	// if err := cof1.Save(); err != nil {
+	// 	t.Error(err)
+	// }
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 	}
@@ -446,9 +446,9 @@ func TestCofferStartStop(t *testing.T) {
 	if !cof1.Stop() {
 		t.Error("Could not stop the application (2)")
 	}
-	if err := cof1.Save(); err != nil {
-		t.Error(err)
-	}
+	// if err := cof1.Save(); err != nil {
+	// 	t.Error(err)
+	// }
 
 	if rep := cof1.Count(); !rep.IsCodePanicStopped() {
 		//t.Errorf("Report: %v", rep)

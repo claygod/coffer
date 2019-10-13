@@ -188,11 +188,11 @@ func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDelet
 	return rep
 }
 
-func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.Report {
+func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.ReportTransaction {
 	// tStart := time.Now().UnixNano()
 	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
 
-	rep := &reports.Report{}
+	rep := &reports.ReportTransaction{Report: reports.Report{}}
 	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped

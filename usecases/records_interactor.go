@@ -375,11 +375,11 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	return r.opr.operatToLog(op)
 }
 
-func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.Report { // interface{}, map[string][]byte, *domain.Handler
+func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.ReportTransaction { // interface{}, map[string][]byte, *domain.Handler
 	//tStart := time.Now().UnixNano()
 	//defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
 
-	rep := &reports.Report{}
+	rep := &reports.ReportTransaction{Report: reports.Report{}}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")

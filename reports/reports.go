@@ -31,6 +31,11 @@ type ReportReadList struct {
 	NotFound []string
 }
 
+type ReportTransaction struct {
+	Report
+	Data map[string][]byte
+}
+
 type ReportRecordsList struct {
 	Report
 	Data []string
