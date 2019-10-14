@@ -240,6 +240,23 @@ func (c *Coffer) Count() *reports.ReportRecordsCount {
 	return rep
 }
 
+func (c *Coffer) CountUnsafe() *reports.ReportRecordsCount {
+	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
+	defer c.panicRecover()
+	if !c.hasp.IsReady() && !c.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("Coffer is started, !c.hasp.Add()")
+		return rep
+	}
+	defer c.hasp.Done()
+
+	rep = c.recInteractor.RecordsCount()
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
 func (c *Coffer) RecordsList() *reports.ReportRecordsList {
 	defer c.panicRecover()
 	if !c.hasp.Add() {
@@ -250,6 +267,15 @@ func (c *Coffer) RecordsList() *reports.ReportRecordsList {
 	}
 	defer c.hasp.Done()
 
+	rep := c.recInteractor.RecordsList()
+	if rep.Code >= codes.Panic {
+		defer c.Stop()
+	}
+	return rep
+}
+
+func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
+	defer c.panicRecover()
 	rep := c.recInteractor.RecordsList()
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
@@ -285,15 +311,6 @@ func (c *Coffer) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList
 	defer c.hasp.Done()
 
 	rep := c.recInteractor.RecordsListWithSuffix(suffix)
-	if rep.Code >= codes.Panic {
-		defer c.Stop()
-	}
-	return rep
-}
-
-func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
-	defer c.panicRecover()
-	rep := c.recInteractor.RecordsList()
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}

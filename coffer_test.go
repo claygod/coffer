@@ -138,6 +138,31 @@ func TestCount(t *testing.T) {
 	//cof1.hasp.Start()
 }
 
+func TestCountUnsafe(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.Write("aaa", []byte("111"))
+	cof1.Write("bbb", []byte("222"))
+
+	if rep := cof1.CountUnsafe(); !rep.IsCodeOk() || rep.Error != nil || rep.Count != 2 {
+		t.Errorf("Operation `Count`(1) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
+		return
+	}
+
+	cof1.hasp.Stop()
+	if rep := cof1.CountUnsafe(); rep.IsCodePanicStopped() || rep.Error != nil || rep.Count != 2 {
+		t.Errorf("Operation `Count`(2) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
+		return
+	}
+	//cof1.hasp.Start()
+}
+
 func TestCofferReadListPrefixSuffix(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
