@@ -7,6 +7,51 @@
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
+## Table of Contents
+
+ * [API](#api)
+    + [Methods](#methods)
+      - [Start](#start)
+      - [Stop](#stop)
+      - [StopHard](#stophard)
+      - [Save](#save)
+      - [Write](#write)
+      - [WriteList](#writelist)
+      - [WriteListUnsafe](#writelistunsafe)
+      - [Read](#read)
+      - [ReadList](#readlist)
+      - [ReadListUnsafe](#readlistunsafe)
+      - [Delete](#delete)
+      - [DeleteListStrict](#deleteliststrict)
+      - [DeleteListOptional](#sdeletelistoptional)
+      - [Transaction](#transaction)
+      - [Count](#count)
+      - [CountUnsafe](#countunsafe)
+      - [RecordsList](#recordslist)
+      - [RecordsListUnsafe](#recordslistunsafe)
+      - [RecordsListWithPrefix](#recordslistwithprefix)
+      - [RecordsListWithSuffix](#recordslistwithsuffix)
+ * [Config](#config)
+      - [Db](#db)
+      - [BatchSize](#batchsize)
+      - [LimitRecordsPerLogfile](#LimitRecordsPerLogfile)
+      - [FollowPause](#FollowPause)
+      - [LogsByCheckpoint](#LogsByCheckpoint)
+      - [AllowStartupErrLoadLogs](#AllowStartupErrLoadLogs)
+      - [MaxKeyLength](#MaxKeyLength)
+      - [MaxValueLength](#MaxValueLength)
+      - [MaxRecsPerOperation](#MaxRecsPerOperation)
+      - [RemoveUnlessLogs](#RemoveUnlessLogs)
+      - [LimitMemory](#LimitMemory)
+      - [LimitDisk](#LimitDisk)
+      - [Handler](#Handlers)
+      - [Handlers](#Handlers)
+      - [Create](#Create)
+ * [Quick start](#quick-start)
+      - [Старт](#Старт)
+      - [Follow](#Follow)
+
+
 ## API
 
 Запущенная БД после выполнения операции возвращает отчёт с результатами:
@@ -131,7 +176,7 @@
 
 Получить список всех ключей, имеющих указанный в аргументах суффикс (окончание).
 
-## Конфигурирование
+## Config
 
 Фактически, достаточно указать путь к директории базы данных, и все параметры конфигурации установятся на дефолтные:
 
@@ -159,67 +204,67 @@
 			Create()
 ```
 	
-### Db(dirPath)
+### Db
 
 Указываем рабочую директорию, в которой БД будет хранить свои файлы. Для новой базы данных
 директория должна быть свободной от файлов с расширениями log, check, checkpoint.
 
-### BatchSize(batchSize)
+### BatchSize
 
 Максимальное количество записей, которое БД может добавить за один раз. Уменьшение этого параметра
 немного улучшает `latency` (но не слишком сильно). Увеличение этого параметра немного ухудшает `latency`,
 но при этом увеличивает пропускную способность `throughput`.
 
-### LimitRecordsPerLogfile(limitRecordsPerLogfile)
+### LimitRecordsPerLogfile
 
 Количество операций, которые будут записаны в один log-файл. Маленькая цифра заставит БД очень часто создавать
 новые файлы, что отрицательно скажется на скорости работы БД. Большая цифра уменьшает количество пауз на создание
 файлов, но файлы при этом становятся более крупными.
 
-### FollowPause(100*time.Second)
+### FollowPause
 
 Размер интервала для запуска `Follow` интерактора, анализирующего старые логи и периодически создающего
 новые чекпоинты (точки останова).
 
-### LogsByCheckpoint(1000)
+### LogsByCheckpoint
 
 После скольких заполненных лог-файлов необходимо создавать новый чекпоинт, чем меньше цифра, тем чаще создаём.
 Для производительности лучше это делать не слишком часто. 
 
-### AllowStartupErrLoadLogs(true)
+### AllowStartupErrLoadLogs
 
 Опция разрешает работу БД при загрузке, даже в том случае, если последний файл логов закончен некорректно
 (типичная ситуация для нештатного завершения работы). По умолчанию опция разрешена.
 
-### MaxKeyLength(maxKeyLength)
+### MaxKeyLength
 
 Максимально допустимая длина ключа.
 
-### MaxValueLength(maxValueLength)
+### MaxValueLength
 
 Максимальный размер значения для записи.
 
-### MaxRecsPerOperation(1000000)
+### MaxRecsPerOperation
 
 Максимальное количество записей, которое может быть задействовано в одной операции.
 
-### RemoveUnlessLogs(true)
+### RemoveUnlessLogs
 
 Опция удаления старых файлов. После того, как `Follow` создал новый чекпоинт, он с разрешения этой
 опции удаляет теперь уже не нужные логи операций. Если вам по каким-то причина нужно хранить весь лог операций,
 вы можете отключить эту опцию, однако будьте готовы к тому, что это увеличит расход дискового пространства.
 
-### LimitMemory(100 * 1000000)
+### LimitMemory
 
 Минимальный размер свободной оперативной памяти, при котором БД перестаёт выполнять операции
 и останавливается во избежание потери данных.
 
-### LimitDisk(1000 * 1000000)
+### LimitDisk
 
 Минимальный размер свободного места на жёстком диске, при котором БД перестаёт выполнять операции
 и останавливается во избежание потери данных.
 
-### Handler("handler1", &handler1)
+### Handler
 
 Добавить хэндлер транзакции. Важно, чтобы при разных запусках одной и той же БД имя хэндлера
 и результаты его работы были идемпотентны. В противном случае в разное время при разных запусках
@@ -227,11 +272,11 @@
 Если вы предполагаете со временем вносить изменения в хэндлеры,
 возможно добавление в ключ номера версии поможет упорядочить такой процесс.
 
-### Handlers(map[string]*handler)
+### Handlers
 
 Добавить несколько нэндлеров в БД за один раз. Важный момент: хэндлеры с совпадающими ключами перезатираются.
 
-### Create()
+### Create
 
 Обязательная команда (должна быть последней), которая заканчивает конфигурирование и создаёт БД.
 	
