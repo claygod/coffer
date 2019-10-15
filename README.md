@@ -28,7 +28,7 @@ ACID:
       - [Start](#Start)
       - [Follow](#Follow)
  * [Data storage](#Data-storage)
-      - [Downloading data after an incorrect shutdown](#Downloading-data-after-an-incorrect-shutdown)
+      - [Data loading after an incorrect shutdown](#Data-loading-after-an-incorrect-shutdown)
  * [Error codes](#Error-codes)
       - [Code List](#Code-List)
       - [Checking codes through methods](#Checking-codes-through-methods)
@@ -53,7 +53,6 @@ const curDir = "./"
 func main() {
 
 	// STEP init
-	hdlExch := domain.Handler(HandlerExchange)
 	db, err, wrn := coffer.Db(curDir).Create()
 	switch {
 	case err != nil:
@@ -225,21 +224,21 @@ It is enough to indicate the path to the database directory, and all configurati
 
 ```golang
 	Db(dirPath).
-		BatchSize(batchSize).
-		LimitRecordsPerLogfile(limitRecordsPerLogfile).
-		FollowPause(100*time.Second).
-		LogsByCheckpoint(1000).
-		AllowStartupErrLoadLogs(true).
-		MaxKeyLength(maxKeyLength).
-		MaxValueLength(maxValueLength).
-		MaxRecsPerOperation(1000000).
-		RemoveUnlessLogs(true).
-		LimitMemory(100 * 1000000).
-		LimitDisk(1000 * 1000000).
-		Handler("handler1", &handler1).
-		Handler("handler2", &handler2).
-		Handlers(map[string]*handler).
-			Create()
+	BatchSize(batchSize).
+	LimitRecordsPerLogfile(limitRecordsPerLogfile).
+	FollowPause(100*time.Second).
+	LogsByCheckpoint(1000).
+	AllowStartupErrLoadLogs(true).
+	MaxKeyLength(maxKeyLength).
+	MaxValueLength(maxValueLength).
+	MaxRecsPerOperation(1000000).
+	RemoveUnlessLogs(true).
+	LimitMemory(100 * 1000000).
+	LimitDisk(1000 * 1000000).
+	Handler("handler1", &handler1).
+	Handler("handler2", &handler2).
+	Handlers(map[string]*handler).
+	Create()
 ```
 	
 ### Db
@@ -491,8 +490,9 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] remove the Save method
 - [x] when a transaction returns new values ​​in the report
 - [x] in tests check return value
-- [ ] start numbering with large digits, say with a million, or a billion (more convenient for sorting files)
+- [x] start numbering with large digits, say with a million, or a billion (more convenient for sorting files)
 - [ ] all public methods give a correct description-comment
+- [ ] return error and warning in Create method
 
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>

@@ -45,7 +45,6 @@ const curDir = "./"
 func main() {
 
 	// STEP init
-	hdlExch := domain.Handler(HandlerExchange)
 	db, err, wrn := coffer.Db(curDir).Create()
 	switch {
 	case err != nil:
@@ -493,7 +492,8 @@ which monitors the relevance of the current checkpoint.
 - [x] убрать метод Save
 - [x] при транзакции возвращать в отчёте новые значения
 - [x] в тестах проверить возвращаемое значение
-- [ ] начинать нумерацию с больших цифр, допустим с миллиона/миллиарда (удобней для сортировки файлов)
+- [x] начинать нумерацию с больших цифр, допустим с миллиона/миллиарда (удобней для сортировки файлов)
 - [ ] всем публичным методам дать корректное описание-комментарий
+- [ ] описать возврат ошибок и варнингов в методе Create
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
