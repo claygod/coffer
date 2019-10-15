@@ -41,14 +41,14 @@ func main() {
 	defer db.Stop()
 
 	//STEP create accounts
-	if rep := db.WriteList(map[string][]byte{"john_usd": uint64ToBytes(90), "alice_usd": uint64ToBytes(5), "john_stock": uint64ToBytes(5), "alice_stock": uint64ToBytes(25)}); rep.IsCodeWarning() {
+	if rep := db.WriteList(map[string][]byte{"john_usd": uint64ToBytes(90), "alice_usd": uint64ToBytes(5), "john_stock": uint64ToBytes(5), "alice_stock": uint64ToBytes(25)}); rep.IsCodeError() {
 		fmt.Printf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
 
 	//STEP initial
 	rep := db.ReadList([]string{"john_usd", "alice_usd", "john_stock", "alice_stock"})
-	if rep.IsCodeWarning() {
+	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -60,7 +60,7 @@ func main() {
 	showState(db)
 
 	//STEP credit
-	if rep := db.Transaction("credit", []string{"john_usd"}, uint64ToBytes(5)); rep.IsCodeWarning() {
+	if rep := db.Transaction("credit", []string{"john_usd"}, uint64ToBytes(5)); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -68,7 +68,7 @@ func main() {
 	showState(db)
 
 	//STEP debit
-	if rep := db.Transaction("debit", []string{"alice_stock"}, uint64ToBytes(2)); rep.IsCodeWarning() {
+	if rep := db.Transaction("debit", []string{"alice_stock"}, uint64ToBytes(2)); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -83,7 +83,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	if rep := db.Transaction("transfer", []string{"john_usd", "alice_usd"}, buf.Bytes()); rep.IsCodeWarning() {
+	if rep := db.Transaction("transfer", []string{"john_usd", "alice_usd"}, buf.Bytes()); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -100,7 +100,7 @@ func main() {
 		fmt.Println(err)
 		return
 	}
-	if rep := db.Transaction("multi_transfer", []string{"john_usd", "alice_usd", "john_stock", "alice_stock"}, buf.Bytes()); rep.IsCodeWarning() {
+	if rep := db.Transaction("multi_transfer", []string{"john_usd", "alice_usd", "john_stock", "alice_stock"}, buf.Bytes()); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -110,7 +110,7 @@ func main() {
 
 func showState(db *coffer.Coffer) {
 	rep := db.ReadList([]string{"john_usd", "alice_usd", "john_stock", "alice_stock"})
-	if rep.IsCodeWarning() {
+	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}

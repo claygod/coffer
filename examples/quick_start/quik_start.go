@@ -37,30 +37,30 @@ func main() {
 	fmt.Println("- init: db created and started")
 
 	// STEP write
-	if rep := db.Write("foo", []byte("bar")); rep.IsCodeWarning() {
+	if rep := db.Write("foo", []byte("bar")); rep.IsCodeError() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
-	if rep := db.WriteList(map[string][]byte{"john": []byte("ball"), "alice": []byte("flower")}); rep.IsCodeWarning() {
+	if rep := db.WriteList(map[string][]byte{"john": []byte("ball"), "alice": []byte("flower")}); rep.IsCodeError() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
 	fmt.Println("- write: John has ball and Alice has flower")
 
 	// STEP transaction
-	if rep := db.Transaction("exchange", []string{"john", "alice"}, nil); rep.IsCodeWarning() {
+	if rep := db.Transaction("exchange", []string{"john", "alice"}, nil); rep.IsCodeError() {
 		fmt.Sprintf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
 	fmt.Println("- transaction: John and Alice exchanged items")
 
 	// STEP read
-	if rep := db.Read("foo"); rep.IsCodeWarning() {
+	if rep := db.Read("foo"); rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
 	rep := db.ReadList([]string{"john", "alice"})
-	if rep.IsCodeWarning() {
+	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
