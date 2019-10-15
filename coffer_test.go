@@ -817,12 +817,12 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	b1, err := ioutil.ReadFile(dirPath + "1.log") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000001.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b2, err := ioutil.ReadFile(dirPath + "2.log") // сохраняем в память
+	b2, err := ioutil.ReadFile(dirPath + "1000000002.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
@@ -848,11 +848,11 @@ func TestCofferLoadFromLogs(t *testing.T) {
 
 	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
 	t.Log("Stage3")
-	if err := ioutil.WriteFile(dirPath+"3.log", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := ioutil.WriteFile(dirPath+"4.log", b2[:len(b2)-1], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000004.log", b2[:len(b2)-1], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -873,11 +873,11 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	// переименовываем один файл, в результате получив нормальный после битого
 	// но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
 	t.Log("Stage4")
-	if err := ioutil.WriteFile(dirPath+"9.log", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000009.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := ioutil.WriteFile(dirPath+"8.log", b2[:len(b2)-1], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000008.log", b2[:len(b2)-1], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -922,12 +922,12 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	b1, err := ioutil.ReadFile(dirPath + "1.log") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000001.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b2, err := ioutil.ReadFile(dirPath + "2.log") // сохраняем в память
+	b2, err := ioutil.ReadFile(dirPath + "1000000002.log") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
@@ -957,11 +957,11 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 
 	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
 	t.Log("Stage3")
-	if err := ioutil.WriteFile(dirPath+"3.log", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := ioutil.WriteFile(dirPath+"4.log", b2[:len(b2)-1], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000004.log", b2[:len(b2)-1], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -986,11 +986,11 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	// переименовываем один файл, в результате получив нормальный после битого
 	// но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
 	t.Log("Stage4")
-	if err := ioutil.WriteFile(dirPath+"9.log", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000009.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
-	if err := ioutil.WriteFile(dirPath+"8.log", b2[:len(b2)-1], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000008.log", b2[:len(b2)-1], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1020,7 +1020,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	}
 	cof1.Stop()
 	//time.Sleep(5 * time.Millisecond)
-	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
@@ -1028,7 +1028,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	forTestClearDir(dirPath)
 	// проверяем загрузку с нормального, небитого файла
 	t.Log("Stage1")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1046,7 +1046,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	forTestClearDir(dirPath)
 	// проверяем загрузку с битого файла
 	t.Log("Stage2")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1087,7 +1087,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	}
 	cof1.Stop()
 	time.Sleep(5 * time.Millisecond)
-	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
@@ -1095,7 +1095,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	// проверяем загрузку с нормального, небитого файла
 	t.Log("Stage1")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1, os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1, os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1122,7 +1122,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	forTestClearDir(dirPath)
 	// проверяем загрузку с битого файла
 	t.Log("Stage2")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1164,14 +1164,14 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 	// }
 	cof1.Stop()
 	//time.Sleep(1 * time.Second)
-	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// проверяем загрузку с нормального, небитого файла
 	t.Log("Stage1")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
@@ -1214,14 +1214,14 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 	}
 	cof1.Stop()
 	//time.Sleep(5 * time.Second)
-	b1, err := ioutil.ReadFile(dirPath + "3.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	// проверяем загрузку с нормального, небитого файла
 	t.Log("Stage1")
-	if err := ioutil.WriteFile(dirPath+"3.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
+	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}

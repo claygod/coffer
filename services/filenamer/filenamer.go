@@ -16,6 +16,8 @@ import (
 
 //const limitRecordsPerLogfile int64 = 100000
 
+const startNumber int64 = 1000000000
+
 type FileNamer struct {
 	m       sync.Mutex
 	dirPath string
@@ -55,6 +57,10 @@ func (f *FileNamer) GetNewFileName(ext string) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("Error finding a new name: %v", err)
 	}
+	if latestNum == 0 {
+		latestNum = startNumber
+	}
+	///fmt.Println("сгенерирован новый текущий номер ", latestNum)
 	return f.dirPath + strconv.FormatInt(latestNum+1, 10) + ext, nil
 	// }
 	// latestNumLog, err := f.findLatestNum([]string{".log"}) // для ".checkpoint"
