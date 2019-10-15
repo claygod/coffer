@@ -1,4 +1,6 @@
-[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer) [![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer) [![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
+[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer)
+[![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer)
+[![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
 
 # Coffer
 
@@ -9,48 +11,75 @@
 
 ## Table of Contents
 
+ * [Usage](#Usage)
+ * [Examples](#Examples)
  * [API](#api)
     + [Methods](#methods)
-      - [Start](#start)
-      - [Stop](#stop)
-      - [StopHard](#stophard)
-      - [Save](#save)
-      - [Write](#write)
-      - [WriteList](#writelist)
-      - [WriteListUnsafe](#writelistunsafe)
-      - [Read](#read)
-      - [ReadList](#readlist)
-      - [ReadListUnsafe](#readlistunsafe)
-      - [Delete](#delete)
-      - [DeleteListStrict](#deleteliststrict)
-      - [DeleteListOptional](#sdeletelistoptional)
-      - [Transaction](#transaction)
-      - [Count](#count)
-      - [CountUnsafe](#countunsafe)
-      - [RecordsList](#recordslist)
-      - [RecordsListUnsafe](#recordslistunsafe)
-      - [RecordsListWithPrefix](#recordslistwithprefix)
-      - [RecordsListWithSuffix](#recordslistwithsuffix)
  * [Config](#config)
-      - [Db](#db)
-      - [BatchSize](#batchsize)
-      - [LimitRecordsPerLogfile](#LimitRecordsPerLogfile)
-      - [FollowPause](#FollowPause)
-      - [LogsByCheckpoint](#LogsByCheckpoint)
-      - [AllowStartupErrLoadLogs](#AllowStartupErrLoadLogs)
-      - [MaxKeyLength](#MaxKeyLength)
-      - [MaxValueLength](#MaxValueLength)
-      - [MaxRecsPerOperation](#MaxRecsPerOperation)
-      - [RemoveUnlessLogs](#RemoveUnlessLogs)
-      - [LimitMemory](#LimitMemory)
-      - [LimitDisk](#LimitDisk)
-      - [Handler](#Handlers)
-      - [Handlers](#Handlers)
-      - [Create](#Create)
- * [Quick start](#quick-start)
+ * [Запуск](#Запуск)
       - [Старт](#Старт)
       - [Follow](#Follow)
+ * [Хранение данных](#Хранение-данных)
+      - [Загрузка данных после некорректного отключения](#Загрузка-данных-после-некорректного-отключения)
+ * [Коды ошибок](#Коды-ошибок)
+      - [Список кодов](#Список-кодов)
+      - [Проверка кодов через методы](#Проверка-кодов-через-методы)
+ * [Benchmark](#Benchmark)
+ * [Dependencies](#Dependencies)
+ * [ToDo](#TODO)
 
+## Usage
+
+```golang
+package main
+
+import (
+	"fmt"
+
+	"github.com/claygod/coffer"
+	"github.com/claygod/coffer/domain"
+)
+
+const curDir = "./"
+
+func main() {
+
+	// STEP init
+	hdlExch := domain.Handler(HandlerExchange)
+	db, err, wrn := coffer.Db(curDir).Create()
+	switch {
+	case err != nil:
+		fmt.Println("Error:", err)
+		return
+	case wrn != nil:
+		fmt.Println("Warning:", err)
+		return
+	case !db.Start():
+		fmt.Println("Error: not start")
+		return
+	}
+	defer db.Stop()
+
+	// STEP write
+	if rep := db.Write("foo", []byte("bar")); rep.IsCodeWarning() {
+		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
+		return
+	}
+
+	// STEP read
+	if rep := db.Read("foo"); rep.IsCodeWarning() {
+		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
+		return
+	}
+	fmt.Println(string(rep.Data))
+
+}
+```
+
+### Examples
+
+- `Quick start` https://github.com/claygod/coffer/tree/master/examples/quick_start
+- `Finance` https://github.com/claygod/coffer/tree/master/examples/finance
 
 ## API
 
@@ -90,14 +119,13 @@
 
 #### Start
 
-Запустить БД. Большинство методов работает только если БД запущена.
-Пи запуске включается `Follow` интерактор, который следит за актуальностью текущего чекпоинта.
+Run the database. When launched, the `Follow` interactor is turned on,
+which monitors the relevance of the current checkpoint.
 
 #### Stop
 
 Остановить БД. Если вы хотите в своём приложении периодически останавливать и запускать БД,
 возможно, после остановки вы захотите создать новый клиент.
-
 
 #### Write
 
@@ -106,7 +134,7 @@
 
 #### WriteList
 
-Записать в БД несколько записей, указам в агрументах соответствующую `map`.
+Записать в БД несколько записей, указав в агрументах соответствующую `map`.
 Важно: этот аргумент ссылочный, его нельзя изменять!
 
 #### WriteListUnsafe
@@ -280,7 +308,7 @@
 
 Обязательная команда (должна быть последней), которая заканчивает конфигурирование и создаёт БД.
 	
-## Quick start
+## Запуск
 
 ### Старт
 
@@ -340,7 +368,57 @@
 
 ## Коды ошибок
 
-Коды ошибок хранятся здесь: "github.com/claygod/coffer/reports"
+Коды ошибок хранятся здесь: "github.com/claygod/coffer/reports/codes"
+Если получен `Ok` код, значит операция выполнена полностью. Если Код содержит `Error`, значит операция
+не выполнена, выполнена не полностью или выполнена с ошибкой, однако работу с БД можно продолжать.
+Если код содержит `Panic`,  значит состояние БД таково, что работать с ней дальше нельзя.
+
+### Список кодов
+
+- Ok - выполнено без замечаний
+- Error - не выполнено или выполнено не полностью, но работать дальше можно
+- ErrRecordLimitExceeded - превышен лимит записей на одну операцию
+- ErrExceedingMaxValueSize - слишком длинное значение
+- ErrExceedingMaxKeyLength - слишком длинный ключ
+- ErrExceedingZeroKeyLength - слишком короткий ключ
+- ErrHandlerNotFound - не найден хэндлер
+- ErrParseRequest - не получилось подготовить запрос для логгирования
+- ErrResources - не хватает ресурсов
+- ErrNotFound - не найдены ключи
+- ErrReadRecords - ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
+- ErrHandlerReturn - найденный и загруженный хандлер вернул ошибку
+- ErrHandlerResponse - хандлер вернул неполные ответы
+- Panic - не выполнено, дальнейшая работа с БД невозможна
+- PanicStopped - приложение остановлено
+- PanicWAL - ошибка работы журнала проведённых операций
+
+### Проверка кодов через методы
+
+Чтобы не экспортировать в приложение, работающее с БД, у отчётов (Report) есть методы:
+
+- IsCodeOk - выполнено без замечаний
+- IsCodeError - не выполнено или выполнено не полностью, но работать дальше можно
+- IsCodeErrRecordLimitExceeded - превышен лимит записей на одну операцию
+- IsCodeErrExceedingMaxValueSize - слишком длинное значение
+- IsCodeErrExceedingMaxKeyLength - слишком длинный ключ
+- IsCodeErrExceedingZeroKeyLength - слишком короткий ключ
+- IsCodeErrHandlerNotFound - не найден хэндлер
+- IsCodeErrParseRequest - не получилось подготовить запрос для логгирования
+- IsCodeErrResources - не хватает ресурсов
+- IsCodeErrNotFound - не найдены ключи
+- IsCodeErrReadRecords - ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
+- IsCodeErrHandlerReturn - найденный и загруженный хандлер вернул ошибку
+- IsCodeErrHandlerResponse - хандлер вернул неполные ответы
+- IsCodePanic - не выполнено, дальнейшая работа с БД невозможна
+- IsCodePanicStopped - приложение остановлено
+- IsCodePanicWAL - ошибка работы журнала проведённых операций
+
+Для проверки полученных кодов не очень удобно делать большие свитчи. Можно ограничиться всего тремя проверками:
+
+- IsCodeOk - выполнено без замечаний
+- IsCodeError - не выполнено или выполнено не полностью, но работать дальше можно (охватывает ВСЕ ошибки)
+- IsCodePanic - не выполнено, дальнейшая работа с БД невозможна (охватывает ВСЕ паники)
+
 
 ## Benchmark
 
@@ -401,9 +479,9 @@
 - [x] сделать пример с финансовыми транзакциями
 - [ ] пример обработки ошибок
 - [ ] прогнать линтер и устранить все некорректности в коде
-- [ ] добавить Usage/Quick start текст в readme
-- [ ] описание кодов ошибок
-- [ ] описание конфигурирования
+- [x] добавить Usage/Quick start текст в readme
+- [x] описание кодов ошибок
+- [x] описание конфигурирования
 - [x] в описании указать сторонние пакеты (как зависимости)
 - [x] репортам добавить методы проверки на все ошибки в духе IsErrBlahBlahBlah
 - [x] все импортируемые пакеты перенести в дистрибутив
@@ -415,5 +493,7 @@
 - [x] убрать метод Save
 - [x] при транзакции возвращать в отчёте новые значения
 - [x] в тестах проверить возвращаемое значение
+- [ ] начинать нумерацию с больших цифр, допустим с миллиона/миллиарда (удобней для сортировки файлов)
+- [ ] всем публичным методам дать корректное описание-комментарий
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>

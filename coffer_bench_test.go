@@ -97,7 +97,7 @@ func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof
 			u := atomic.AddInt64(&keyConcurent, 1)
 			key := strconv.FormatInt(u, 10)
 			rep := cof1.Write(key, []byte("aaa"+key+"bbb"))
-			if rep.Code >= codes.Warning {
+			if rep.Code >= codes.Error {
 				b.Error(fmt.Sprintf("Code: %d , key: %s", rep.Code, key))
 			}
 		}
@@ -124,7 +124,7 @@ func BenchmarkCofferWriteParallel32LowConcurent(b *testing.B) { // go tool pprof
 		for pb.Next() {
 			key := strconv.Itoa(u)
 			rep := cof1.Write(key, []byte("aaa"+key+"bbb"))
-			if rep.Code >= codes.Warning {
+			if rep.Code >= codes.Error {
 				b.Error(fmt.Sprintf("Code: %d , key: %s", rep.Code, key))
 			}
 			u++
@@ -148,7 +148,7 @@ func BenchmarkCofferTransactionSequence(b *testing.B) { // go tool pprof -web ./
 	for x := 0; x < 500; x += 1 {
 		key := strconv.Itoa(x)
 		rep := cof10.Write(key, []byte(key))
-		if rep.Code >= codes.Warning {
+		if rep.Code >= codes.Error {
 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 		}
 	}
@@ -160,7 +160,7 @@ func BenchmarkCofferTransactionSequence(b *testing.B) { // go tool pprof -web ./
 	b.StartTimer()
 	for i := 0; i < b.N; i++ {
 		rep := cof10.Transaction("exchange", []string{"101", "102"}, nil)
-		if rep.Code >= codes.Warning || rep.Error != nil {
+		if rep.Code >= codes.Error || rep.Error != nil {
 			b.Error("EEEEEEEEERRRRRRRRRRRRRRRRR")
 			//b.Error(fmt.Sprintf("Code: %d , key1: %s, key2: %s . Err %v", rep.Code, keys[0], keys[1], rep.Error))
 		}
@@ -188,7 +188,7 @@ func BenchmarkCofferTransactionPar32NotConcurent(b *testing.B) { // go tool ppro
 			list[key] = []byte("a" + key + "b")
 		}
 		rep := cof11.WriteList(list)
-		if rep.Code >= codes.Warning {
+		if rep.Code >= codes.Error {
 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 		}
 	}
@@ -214,7 +214,7 @@ func BenchmarkCofferTransactionPar32NotConcurent(b *testing.B) { // go tool ppro
 			//tStart := time.Now().UnixNano()
 
 			rep := cof11.Transaction("exchange", []string{strconv.FormatInt(u1, 10), strconv.FormatInt(u2, 10)}, nil)
-			if rep.Code >= codes.Warning {
+			if rep.Code >= codes.Error {
 				b.Error(fmt.Sprintf("Code: %d , key1: %d, key2: %d", rep.Code, u1, u2))
 			}
 			//fmt.Println(rep)
@@ -243,7 +243,7 @@ func BenchmarkCofferTransactionPar32HalfConcurent(b *testing.B) { // go tool ppr
 			list[key] = []byte("a" + key + "b")
 		}
 		rep := cof12.WriteList(list)
-		if rep.Code >= codes.Warning {
+		if rep.Code >= codes.Error {
 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 		}
 	}
@@ -269,7 +269,7 @@ func BenchmarkCofferTransactionPar32HalfConcurent(b *testing.B) { // go tool ppr
 			//tStart := time.Now().UnixNano()
 
 			rep := cof12.Transaction("exchange", []string{strconv.FormatInt(u1, 10), strconv.FormatInt(u2, 10)}, nil)
-			if rep.Code >= codes.Warning {
+			if rep.Code >= codes.Error {
 				b.Error(fmt.Sprintf("Code: %d , key1: %d, key2: %d", rep.Code, u1, u2))
 			}
 			//fmt.Println(rep)

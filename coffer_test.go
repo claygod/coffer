@@ -258,7 +258,7 @@ func TestCofferTransaction(t *testing.T) {
 
 	cof1.Write("aaa", []byte("111"))
 	cof1.Write("bbb", []byte("222"))
-	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"aaa", "bbb"}, nil); rep.IsCodeError() {
 		t.Error(err)
 		return
 	} else if rep.Data == nil {
@@ -278,7 +278,7 @@ func TestCofferTransaction(t *testing.T) {
 	}
 	// количество записей не должно измениться
 	rep := cof1.ReadList([]string{"aaa", "bbb"})
-	if rep.IsCodeWarning() {
+	if rep.IsCodeError() {
 		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
 		return
 	} else if string(rep.Data["aaa"]) != "222" || string(rep.Data["bbb"]) != "111" {
@@ -308,15 +308,15 @@ func TestCofferTransactionChain(t *testing.T) {
 
 	//rep0 := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
 	//fmt.Println(string(rep0.Data["aaa"]), string(rep0.Data["bbb"]), string(rep0.Data["ccc"]), string(rep0.Data["ddd"]))
-	if rep := cof1.Transaction("exchange", []string{"ddd", "ccc"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"ddd", "ccc"}, nil); rep.IsCodeError() {
 		t.Error(err)
 		return
 	}
-	if rep := cof1.Transaction("exchange", []string{"ccc", "bbb"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"ccc", "bbb"}, nil); rep.IsCodeError() {
 		t.Error(err)
 		return
 	}
-	if rep := cof1.Transaction("exchange", []string{"bbb", "aaa"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"bbb", "aaa"}, nil); rep.IsCodeError() {
 		t.Error(err)
 		return
 	}
@@ -327,7 +327,7 @@ func TestCofferTransactionChain(t *testing.T) {
 	}
 	// количество записей не должно измениться
 	rep := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
-	if rep.IsCodeWarning() {
+	if rep.IsCodeError() {
 		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
 		return
 	} else if string(rep.Data["aaa"]) != "444" || string(rep.Data["bbb"]) != "111" || string(rep.Data["ccc"]) != "222" || string(rep.Data["ddd"]) != "333" {
@@ -554,7 +554,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 	}
 	// -- записываем список
 	t.Log("Stage1")
-	if rep := cof1.WriteList(req); rep.IsCodeWarning() || rep.Error != nil {
+	if rep := cof1.WriteList(req); rep.IsCodeError() || rep.Error != nil {
 		t.Error(err)
 	}
 	if rep := cof1.Count(); rep.Count != 9 {
@@ -640,7 +640,7 @@ func TestCofferWriteListUnsafeReadList(t *testing.T) {
 	}
 	// -- записываем список
 	t.Log("Stage1")
-	if rep := cof1.WriteListUnsafe(req); rep.IsCodeWarning() || rep.Error != nil {
+	if rep := cof1.WriteListUnsafe(req); rep.IsCodeError() || rep.Error != nil {
 		t.Error(err)
 		return
 	}
@@ -807,7 +807,7 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		return
 	}
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(100 * time.Millisecond)
@@ -907,12 +907,12 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	//cof1.Start()
 
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(100 * time.Millisecond)
 	}
-	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
 		return
 	}
@@ -1013,7 +1013,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 		return
 	}
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(10 * time.Millisecond)
@@ -1076,12 +1076,12 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	//cof1.SetHandler("exchange", &hdlExch)
 	cof1.Start()
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(10 * time.Millisecond)
 	}
-	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
 		return
 	}
@@ -1153,7 +1153,7 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 	//cof1.SetHandler("exchange", &hdlExch)
 	cof1.Start()
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(10 * time.Millisecond)
@@ -1203,12 +1203,12 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 	// }
 	//cof1.Start()
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeWarning() || rep.Error != nil {
+		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
 		//time.Sleep(10 * time.Millisecond)
 	}
-	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeWarning() {
+	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
 		return
 	}

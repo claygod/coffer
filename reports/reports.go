@@ -65,11 +65,12 @@ type Report struct {
 func (r *Report) IsCodeOk() bool {
 	return r.Code == codes.Ok
 }
-func (r *Report) IsCodeWarning() bool {
-	return r.Code >= codes.Warning
-}
+
+// func (r *Report) IsCodeWarning() bool {
+// 	return r.Code >= codes.Warning
+// }
 func (r *Report) IsCodeError() bool {
-	return r.Code >= codes.Ok
+	return r.Code > codes.Ok && r.Code < codes.Panic
 }
 func (r *Report) IsCodeErrRecordLimitExceeded() bool {
 	return r.Code == codes.ErrRecordLimitExceeded
