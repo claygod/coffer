@@ -2,7 +2,10 @@
 
 # Coffer
 
-Simple ACID* key-value database.
+Simple ACID* key-value database. At medium or even low `latency` provides
+a large `throughput` without sacrificing ACID database properties.
+The database makes it possible to create record headers at its discretion
+and use them as transactions.
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
@@ -22,8 +25,11 @@ ACID:
  * [Usage](#Usage)
  * [Examples](#Examples)
  * [API](#api)
-    + [Methods](#methods)
+      + [Methods](#methods)
  * [Config](#config)
+      + [Handler](#Handler)
+	      - [Handler example without using argument](#Handler-example-without-using-argument)
+	      - [An example of a handler using an argument](#An-example-of-a-handler-using-an-argument)
  * [Launch](#Launch)
       - [Start](#Start)
       - [Follow](#Follow)
@@ -84,6 +90,8 @@ func main() {
 ```
 
 ### Examples
+
+You can find many examples of the use of transactions on these paths.
 
 - `Quick start` https://github.com/claygod/coffer/tree/master/examples/quick_start
 - `Finance` https://github.com/claygod/coffer/tree/master/examples/finance
@@ -302,6 +310,64 @@ Add transaction handler. It is important that for different launches of the same
 and the results of its work are idempotent. Otherwise, at different times, with different starts, handlers will
 work differently, which will lead to a violation of data consistency.
 If you intend to make changes to handlers over time, adding a version number to the key may help streamline this process.
+
+Conditions:
+- The argument passed to the handler must be a number, a slice of bytes.
+- If you need to transfer complex structures, they need to be serialized into bytes.
+- The handler can only operate on existing records.
+- The handler cannot delete database records.
+- The handler at the end of the work should return the new values of all the requested records.
+- The number of entries modified by the header is set in the `MaxRecsPerOperation` configuration
+
+#### Handler example without using argument
+
+```golang
+func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
+	if arg != nil {
+		return nil, fmt.Errorf("Args not null.")
+	} else if len(recs) != 2 {
+		return nil, fmt.Errorf("Want 2 records, have %d", len(recs))
+	}
+	recsKeys := make([]string, 0, 2)
+	recsValues := make([][]byte, 0, 2)
+	for k, v := range recs {
+		recsKeys = append(recsKeys, k)
+		recsValues = append(recsValues, v)
+	}
+	out := make(map[string][]byte, 2)
+	out[recsKeys[0]] = recsValues[1]
+	out[recsKeys[1]] = recsValues[0]
+	return out, nil
+}
+```
+
+#### An example of a handler using an argument
+
+```golang
+func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
+	if arg == nil || len(arg) != 8 {
+		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
+	} else if len(recs) != 1 {
+		return nil, fmt.Errorf("Want 1 record, have %d", len(recs))
+	}
+	delta := bytesToUint64(arg)
+	var recKey string
+	var recValue []byte
+	for k, v := range recs {
+		recKey = k
+		recValue = v
+	}
+	if len(recValue) != 8 {
+		return nil, fmt.Errorf("The length of the value in the record is %d bytes, but 8 bytes are needed", len(recValue))
+	}
+	curAmount := bytesToUint64(recValue)
+	newAmount := curAmount + delta
+	if curAmount > newAmount {
+		return nil, fmt.Errorf("Account overflow. There is %d, a debit of %d.", curAmount, delta)
+	}
+	return map[string][]byte{recKey: uint64ToBytes(newAmount)}, nil
+}
+```
 
 ### Handlers
 

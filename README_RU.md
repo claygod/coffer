@@ -6,6 +6,7 @@
 
 Простая key-value ACID* база данных. При среднем или даже низком `latency` старается обеспечить
 большую пропускную способность `throughput`, не жертвуя при этом ACID свойствами БД.
+БД даёт возможность создавать хидеры записей по своему усмотрению и использовать их в качестве транзакций.
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
@@ -14,8 +15,11 @@
  * [Usage](#Usage)
  * [Examples](#Examples)
  * [API](#api)
-    + [Methods](#methods)
+      + [Methods](#methods)
  * [Config](#config)
+      + [Handler](#Handler)
+	      - [Пример хэндлера без использования агрумента](#Пример-хэндлера-без-использования-агрумента)
+	      - [Пример хэндлера с использованием агрумента](#Пример-хэндлера-с-использованием-агрумента)
  * [Запуск](#Запуск)
       - [Старт](#Старт)
       - [Follow](#Follow)
@@ -76,6 +80,8 @@ func main() {
 ```
 
 ### Examples
+
+По указанным путям вы найдёте много примеров использования транзакций.
 
 - `Quick start` https://github.com/claygod/coffer/tree/master/examples/quick_start
 - `Finance` https://github.com/claygod/coffer/tree/master/examples/finance
@@ -298,6 +304,64 @@ which monitors the relevance of the current checkpoint.
 хэндлеры будут работать по разному, что приведёт к нарушению консистентности данных.
 Если вы предполагаете со временем вносить изменения в хэндлеры,
 возможно добавление в ключ номера версии поможет упорядочить такой процесс.
+
+Ограничения:
+- Аргумент, передаваемый в хэндлер, должен быть числом, слайсом байтов.
+- При необходимости передать сложные структуры, их нужно сериализовать в байты.
+- Хидер может оперировать только уже существующими записями.
+- Хидер не может удалять записи.
+- Хидер по окончании работы должен вернуть новые значения всех запрошенных записей.
+- Количество изменяемых хидером записей установлено в конфигурации `MaxRecsPerOperation`
+
+#### Пример хэндлера без использования агрумента
+
+```golang
+func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
+	if arg != nil {
+		return nil, fmt.Errorf("Args not null.")
+	} else if len(recs) != 2 {
+		return nil, fmt.Errorf("Want 2 records, have %d", len(recs))
+	}
+	recsKeys := make([]string, 0, 2)
+	recsValues := make([][]byte, 0, 2)
+	for k, v := range recs {
+		recsKeys = append(recsKeys, k)
+		recsValues = append(recsValues, v)
+	}
+	out := make(map[string][]byte, 2)
+	out[recsKeys[0]] = recsValues[1]
+	out[recsKeys[1]] = recsValues[0]
+	return out, nil
+}
+```
+
+#### Пример хэндлера с использованием агрумента
+
+```golang
+func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
+	if arg == nil || len(arg) != 8 {
+		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
+	} else if len(recs) != 1 {
+		return nil, fmt.Errorf("Want 1 record, have %d", len(recs))
+	}
+	delta := bytesToUint64(arg)
+	var recKey string
+	var recValue []byte
+	for k, v := range recs {
+		recKey = k
+		recValue = v
+	}
+	if len(recValue) != 8 {
+		return nil, fmt.Errorf("The length of the value in the record is %d bytes, but 8 bytes are needed", len(recValue))
+	}
+	curAmount := bytesToUint64(recValue)
+	newAmount := curAmount + delta
+	if curAmount > newAmount {
+		return nil, fmt.Errorf("Account overflow. There is %d, a debit of %d.", curAmount, delta)
+	}
+	return map[string][]byte{recKey: uint64ToBytes(newAmount)}, nil
+}
+```
 
 ### Handlers
 

@@ -104,7 +104,7 @@ func BenchmarkCofferWriteParallel32NotConcurent(b *testing.B) { // go tool pprof
 	})
 }
 
-func BenchmarkCofferWriteParallel32LowConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
+func BenchmarkCofferWriteParallel32HiConcurent(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	//fmt.Println("222_Запущена копия бенчмарка")
 	b.StopTimer()
 	forTestClearDir(dirPath)
