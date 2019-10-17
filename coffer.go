@@ -45,9 +45,10 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	if err != nil {
 		return nil, err, nil
 	}
-	if hdls == nil {
-		hdls = handlers.New()
-	}
+	//TODO: not remove this code!!
+	// if hdls == nil {
+	// 	hdls = handlers.New()
+	// }
 	logger := logrus.New()
 
 	c := &Coffer{
@@ -166,9 +167,11 @@ func (c *Coffer) Stop() bool {
 	}
 
 	defer c.panicRecover()
-	if !c.hasp.Block() {
-		return false
-	}
+	//TODO: not remove this code!!
+	// if !c.hasp.Block() {
+	// 	return false
+	// }
+	c.hasp.Block()
 	defer c.hasp.Unblock()
 	c.resControl.Stop()
 	c.folInteractor.Stop()
