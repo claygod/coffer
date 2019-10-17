@@ -342,9 +342,9 @@ func TestCofferTransactionRecordsNotFound(t *testing.T) {
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
-	} else {
-		defer cof1.Stop()
 	}
+	defer cof1.Stop()
+
 	cof1.Write("aaa", []byte("111"))
 	cof1.Write("bbb", []byte("222"))
 	if rep := cof1.Transaction("exchange", []string{"xxx", "yyy"}, nil); !rep.IsCodeErrReadRecords() {
@@ -368,9 +368,9 @@ func TestCofferTransactionRecordsZeroLenKeys(t *testing.T) {
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
-	} else {
-		defer cof1.Stop()
 	}
+	defer cof1.Stop()
+
 	if rep := cof1.Transaction("exchange", []string{""}, nil); !rep.IsCodeErrExceedingZeroKeyLength() {
 		t.Errorf("Want codes.ErrExceedingZeroKeyLength , have %v", rep.Code)
 		return
@@ -391,9 +391,9 @@ func TestCofferTransactionRecordsBigLenKeys(t *testing.T) {
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
-	} else {
-		defer cof1.Stop()
 	}
+	defer cof1.Stop()
+
 	if rep := cof1.Transaction("exchange", []string{"xxxxx"}, nil); !rep.IsCodeErrExceedingMaxKeyLength() {
 		t.Errorf("Want codes.ErrExceedingMaxKeyLength , have %v", rep.Code)
 		return
@@ -414,9 +414,9 @@ func TestCofferTransactionRecordsBigOperationsCount(t *testing.T) {
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
-	} else {
-		defer cof1.Stop()
 	}
+	defer cof1.Stop()
+
 	if rep := cof1.Transaction("exchange", []string{"x", "x", "x", "x", "x", "x", "x",
 		"x", "x", "x", "x", "x", "x", "x"}, nil); !rep.IsCodeErrRecordLimitExceeded() {
 		t.Errorf("Want codes.ErrRecordLimitExceeded , have %v", rep.Code)
@@ -438,9 +438,9 @@ func TestCofferTransactionNotFound(t *testing.T) {
 	if !cof1.Start() {
 		t.Error("Could not start the application (1)")
 		return
-	} else {
-		defer cof1.Stop()
 	}
+	defer cof1.Stop()
+
 	if rep := cof1.Transaction("exchangeXXX", []string{"aaa", "bbb"}, nil); !rep.IsCodeErrHandlerNotFound() {
 		t.Error("Handler is not available, but for some reason is executed.")
 		return
@@ -829,9 +829,9 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	if rep := cof111.Count(); rep.Count != 9 {
 		t.Errorf("Records (cof111) count, have %d, wand 9.", rep.Count)
 		return
-	} else {
-		t.Log("Load true logs OK")
 	}
+	t.Log("Load true logs OK")
+
 	cof111.Stop()
 	forTestClearDir(dirPath)
 
@@ -853,9 +853,9 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	if rep := cof2.Count(); rep.Count != 8 { // one record is broken and not there, but for some reason downloaded
 		t.Errorf("Records (cof2) count, have %d, want 8.", rep.Count)
 		return
-	} else {
-		t.Log("Load false logs OK")
 	}
+	t.Log("Load false logs OK")
+
 	cof2.Stop()
 	forTestClearDir(dirPath)
 
@@ -874,10 +874,10 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	if err == nil {
 		t.Error("Want error (The spoiled log...)")
 		return
-	} else {
-		t.Log(wrn)
-		t.Log("Load false/true logs OK")
 	}
+	t.Log(wrn)
+	t.Log("Load false/true logs OK")
+
 	//time.Sleep(15000 * time.Millisecond)
 }
 
@@ -928,9 +928,8 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	if rep := cof111.Count(); rep.Count != 9 {
 		t.Errorf("Records (cof111) count, have %d, wand 9.", rep.Count)
 		return
-	} else {
-		t.Log("Load true logs OK")
 	}
+	t.Log("Load true logs OK")
 	if rep := cof111.Read("aasa10"); string(rep.Data) != "bbsb11" {
 		t.Errorf("Record have %s, wand `bbsb11`.", string(rep.Data))
 		return
@@ -956,9 +955,9 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	if rep := cof2.Count(); rep.Count != 9 { // one record is broken and not there, but for some reason downloaded
 		t.Errorf("Records (cof2) count, have %d, want 9.", rep.Count)
 		return
-	} else {
-		t.Log("Load false logs OK")
 	}
+	t.Log("Load false logs OK")
+
 	if rep := cof2.Read("aasa10"); string(rep.Data) != "bbsb10" { // now the last action (transaction) is canceled
 		t.Errorf("Record have %s, wand `bbsb10`.", string(rep.Data))
 		return
@@ -981,10 +980,10 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	if err == nil {
 		t.Error("Want error (The spoiled log...)")
 		return
-	} else {
-		t.Log(wrn)
-		t.Log("Load false/true logs OK")
 	}
+	t.Log(wrn)
+	t.Log("Load false/true logs OK")
+
 }
 
 func TestCofferLoadFromCheckpoint(t *testing.T) {

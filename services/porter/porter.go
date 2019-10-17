@@ -63,7 +63,7 @@ func (p *Porter) stringsToHashes(keys []string) []int {
 	for _, key := range keys {
 		tempArr[p.stringToHashe(key)] = true
 	}
-	for key, _ := range tempArr {
+	for key := range tempArr {
 		out = append(out, key)
 	}
 	sort.Ints(out)

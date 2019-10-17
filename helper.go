@@ -63,7 +63,7 @@ func (c *Coffer) checkLenCountKeys(keys []string) (codes.Code, error) { // check
 
 func (c *Coffer) extractKeysFromMap(input map[string][]byte) []string {
 	keys := make([]string, 0, len(input))
-	for key, _ := range input {
+	for key := range input {
 		keys = append(keys, key)
 	}
 	return keys

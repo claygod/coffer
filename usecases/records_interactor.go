@@ -449,7 +449,7 @@ func (r *RecordsInteractor) RecordsListWithSuffix(suffix string) *reports.Report
 
 func (r *RecordsInteractor) findExtraKeys(writeList map[string][]byte, curMap map[string][]byte) error {
 	extraKeys := make([]string, 0, len(writeList))
-	for key, _ := range writeList {
+	for key := range writeList {
 		if _, ok := curMap[key]; !ok {
 			extraKeys = append(extraKeys, key)
 		}
@@ -498,7 +498,7 @@ func (r *RecordsInteractor) getFilesByExtList(ext string) ([]string, error) {
 
 func (r *RecordsInteractor) getKeysFromMap(arr map[string][]byte) []string {
 	keys := make([]string, 0, len(arr))
-	for key, _ := range arr {
+	for key := range arr {
 		keys = append(keys, key)
 	}
 	return keys

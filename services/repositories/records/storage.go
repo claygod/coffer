@@ -97,7 +97,7 @@ func (r *storage) countRecords() int {
 
 func (r *storage) keysList() []string {
 	list := make([]string, 0, len(r.data))
-	for key, _ := range r.data {
+	for key := range r.data {
 		list = append(list, key)
 	}
 	return list
@@ -105,7 +105,7 @@ func (r *storage) keysList() []string {
 
 func (r *storage) keysListWithPrefix(prefix string) []string {
 	list := make([]string, 0, len(r.data))
-	for key, _ := range r.data {
+	for key := range r.data {
 		if strings.HasPrefix(key, prefix) {
 			list = append(list, key)
 		}
@@ -115,7 +115,7 @@ func (r *storage) keysListWithPrefix(prefix string) []string {
 
 func (r *storage) keysListWithSuffix(suffix string) []string {
 	list := make([]string, 0, len(r.data))
-	for key, _ := range r.data {
+	for key := range r.data {
 		if strings.HasSuffix(key, suffix) {
 			list = append(list, key)
 		}
