@@ -18,11 +18,17 @@ import (
 
 const startNumber int64 = 1000000000
 
+/*
+FileNamer - logs names creator.
+*/
 type FileNamer struct {
 	m       sync.Mutex
 	dirPath string
 }
 
+/*
+NewFileNamer - create new FileNamer
+*/
 func NewFileNamer(dirPath string) *FileNamer {
 	return &FileNamer{
 		dirPath: dirPath,
@@ -48,6 +54,9 @@ func NewFileNamer(dirPath string) *FileNamer {
 // 	return "", fmt.Errorf("Error finding a new name.")
 // }
 
+/*
+GetNewFileName - get new fileName.
+*/
 func (f *FileNamer) GetNewFileName(ext string) (string, error) {
 
 	f.m.Lock()
@@ -78,6 +87,9 @@ func (f *FileNamer) GetNewFileName(ext string) (string, error) {
 
 }
 
+/*
+GetLatestFileName - get latest file name.
+*/
 func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 	f.m.Lock()
 	defer f.m.Unlock()
@@ -98,6 +110,9 @@ func (f *FileNamer) GetLatestFileName(ext string) (string, error) {
 	}
 }
 
+/*
+GetAfterLatest - get after latest.
+*/
 func (f *FileNamer) GetAfterLatest(last string) ([]string, error) { //TODO: тут названия файлов возвращаются БЕЗ директории
 	f.m.Lock()
 	defer f.m.Unlock()

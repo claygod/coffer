@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+/*
+Config - for ResourcesControl.
+*/
 type Config struct {
 	LimitMemory int64 // minimum available memory (bytes)
 	LimitDisk   int64 // minimum free disk space

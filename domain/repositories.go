@@ -4,6 +4,9 @@ package domain
 // Repositories
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
+/*
+RecordsRepository - records store interface.
+*/
 type RecordsRepository interface {
 	Reset()
 	WriteList(map[string][]byte)
@@ -21,6 +24,9 @@ type RecordsRepository interface {
 	RecordsListWithSuffix(string) []string
 }
 
+/*
+HandlersRepository - handlers store interface.
+*/
 type HandlersRepository interface {
 	Set(string, *Handler)
 	Get(string) (*Handler, error)

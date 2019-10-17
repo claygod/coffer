@@ -8,6 +8,9 @@ import (
 	"fmt"
 )
 
+/*
+HandlerExchange - exchange handler.
+*/
 func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg != nil {
 		return nil, fmt.Errorf("Args not null.")

@@ -9,6 +9,9 @@ import (
 	"strings"
 )
 
+/*
+ClearDir - clear dir from logs, checkpoints.
+*/
 func ClearDir(dir string) error {
 	if !strings.HasSuffix(dir, "/") {
 		dir += "/"

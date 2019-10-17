@@ -15,6 +15,9 @@ import (
 	"github.com/claygod/coffer/reports/codes"
 )
 
+/*
+Operations - uneversal operations structure.
+*/
 type Operations struct {
 	config     *Config
 	reqCoder   *ReqCoder
@@ -22,6 +25,9 @@ type Operations struct {
 	trn        *Transaction
 }
 
+/*
+NewOperations - create new Operations.
+*/
 func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
 	return &Operations{
 		config:     config,
@@ -31,6 +37,9 @@ func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn
 	}
 }
 
+/*
+DoOperations - do operations (write, transaction, delete).
+*/
 func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRepository) error {
 	for _, op := range ops {
 		if !o.resControl.GetPermission(int64(len(op.Body))) {

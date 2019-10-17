@@ -18,6 +18,9 @@ type StartStop struct {
 	pause      time.Duration
 }
 
+/*
+New - create new StartStop
+*/
 func New(args ...time.Duration) *StartStop {
 	pause := pauseDefault
 	if len(args) == 1 {
@@ -29,6 +32,9 @@ func New(args ...time.Duration) *StartStop {
 	}
 }
 
+/*
+Start - launch.
+*/
 func (s *StartStop) Start() bool {
 	for i := 0; i < maxIterations; i++ {
 		if atomic.LoadInt64(&s.enumerator) == stateRun || atomic.CompareAndSwapInt64(&s.enumerator, stateReady, stateRun) {
@@ -40,6 +46,9 @@ func (s *StartStop) Start() bool {
 	return false
 }
 
+/*
+Stop - stopped.
+*/
 func (s *StartStop) Stop() bool {
 	for i := 0; i < maxIterations; i++ {
 		curNum := atomic.LoadInt64(&s.enumerator)
@@ -63,6 +72,9 @@ func (s *StartStop) Stop() bool {
 	return false
 }
 
+/*
+Block - block access.
+*/
 func (s *StartStop) Block() bool {
 	for i := 0; i < maxIterations; i++ {
 		if s.Stop() && atomic.CompareAndSwapInt64(&s.enumerator, stateReady, stateBlocked) {
@@ -74,6 +86,9 @@ func (s *StartStop) Block() bool {
 	return false
 }
 
+/*
+Unblock - unblock access.
+*/
 func (s *StartStop) Unblock() bool {
 	for i := 0; i < maxIterations; i++ {
 		if atomic.CompareAndSwapInt64(&s.enumerator, stateBlocked, stateReady) {
@@ -85,6 +100,9 @@ func (s *StartStop) Unblock() bool {
 	return false
 }
 
+/*
+Add - add task to list.
+*/
 func (s *StartStop) Add() bool {
 	for {
 		curNum := atomic.LoadInt64(&s.enumerator)
@@ -97,6 +115,9 @@ func (s *StartStop) Add() bool {
 	}
 }
 
+/*
+Done - deltask from list.
+*/
 func (s *StartStop) Done() bool {
 	for {
 		curNum := atomic.LoadInt64(&s.enumerator)
@@ -109,10 +130,16 @@ func (s *StartStop) Done() bool {
 	}
 }
 
+/*
+Total - count tasks.
+*/
 func (s *StartStop) Total() int64 {
 	return atomic.LoadInt64(&s.enumerator)
 }
 
+/*
+IsReady - check is ready.
+*/
 func (s *StartStop) IsReady() bool {
 	return atomic.LoadInt64(&s.enumerator) == stateReady
 }

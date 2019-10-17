@@ -8,6 +8,9 @@ import (
 	"time"
 )
 
+/*
+Config - usecases universal config.
+*/
 type Config struct {
 	FollowPause             time.Duration
 	LogsByCheckpoint        int64

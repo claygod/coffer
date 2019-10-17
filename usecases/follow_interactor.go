@@ -83,6 +83,9 @@ func NewFollowInteractor(
 	return fi, nil
 }
 
+/*
+Start - launch FollowInteractor.
+*/
 func (f *FollowInteractor) Start() bool {
 	if !f.hasp.Start() {
 		return false
@@ -91,6 +94,9 @@ func (f *FollowInteractor) Start() bool {
 	return true
 }
 
+/*
+Stop - stop FollowInteractor.
+*/
 func (f *FollowInteractor) Stop() bool {
 	if !f.hasp.Stop() {
 		return false

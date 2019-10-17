@@ -25,6 +25,9 @@ type Porter struct {
 	data [(1 << 24) - 1]int32
 }
 
+/*
+New - create new Porter.
+*/
 func New() *Porter {
 	return &Porter{}
 }

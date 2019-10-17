@@ -25,6 +25,9 @@ import (
 // 	return map[string][]byte{recKey: uint64ToBytes(newAcc)}, nil
 // }
 
+/*
+HandlerCredit - credit handler.
+*/
 func HandlerCredit(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg == nil || len(arg) != 8 {
 		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
@@ -48,6 +51,9 @@ func HandlerCredit(arg []byte, recs map[string][]byte) (map[string][]byte, error
 	return map[string][]byte{recKey: uint64ToBytes(curAcc - delta)}, nil
 }
 
+/*
+HandlerDebit - Debit handler.
+*/
 func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg == nil || len(arg) != 8 {
 		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
@@ -72,6 +78,9 @@ func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error)
 	return map[string][]byte{recKey: uint64ToBytes(newAmount)}, nil
 }
 
+/*
+HandlerTransfer - Transfer handler.
+*/
 func HandlerTransfer(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg == nil {
 		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
@@ -89,6 +98,9 @@ func HandlerTransfer(arg []byte, recs map[string][]byte) (map[string][]byte, err
 	return helperHandlerTransfer(req, recs)
 }
 
+/*
+HandlerMultiTransfer - MultiTransfer handler.
+*/
 func HandlerMultiTransfer(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
 	if arg == nil {
 		return nil, fmt.Errorf("Invalid Argument: %v.", arg)
@@ -153,6 +165,9 @@ func helperHandlerTransfer(req ReqTransfer, recs map[string][]byte) (map[string]
 	return map[string][]byte{req.From: uint64ToBytes(newAmountFrom), req.To: uint64ToBytes(newAmountTo)}, nil
 }
 
+/*
+ReqTransfer - request.
+*/
 type ReqTransfer struct {
 	From   string
 	To     string
