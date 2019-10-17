@@ -38,13 +38,13 @@ Arguments:
 	- chInput	- input channel
 	- batchSize	- batch size
 */
-func newBatcher(workFunc io.Writer, alarmFunc func(error), chInput chan []byte, batchSize int) *batcher { //TODO: кажется при инициализации батчера не нужно ему давать канал
+func newBatcher(workFunc io.Writer, alarmFunc func(error), batchSize int) *batcher {
 	return &batcher{
 		indicator: newIndicator(),
 		work:      workFunc,
 		alarm:     alarmFunc,
-		chInput:   make(chan []byte, batchSize),              // chInput,
-		chStop:    make(chan struct{}, batchRatio*batchSize), //TODO: тут длина может НЕ иметь значение
+		chInput:   make(chan []byte, batchSize),
+		chStop:    make(chan struct{}, batchRatio*batchSize), //TODO: here the length may NOT matter
 		batchSize: batchSize,
 	}
 }
@@ -69,7 +69,7 @@ func (b *batcher) stop() {
 	if b.chStop != nil {
 		close(b.chStop)
 	}
-	//TODO: может пригодится? b.chStop <- struct{}{}
+	//TODO: ? b.chStop <- struct{}{}
 	for {
 		if atomic.LoadInt64(&b.stopFlag) == stateStop {
 			return

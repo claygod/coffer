@@ -48,7 +48,6 @@ func BenchmarkClient(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.
 
 func BenchmarkBatcherClient(b *testing.B) { // go tool pprof -web ./batcher.test ./cpu.txt
 	b.StopTimer()
-	//time.Sleep(10 * time.Millisecond)
 	clt, err := batcher.Open("./tmp.txt", 2000)
 	if err != nil {
 		b.Error("Error `stat` file")
@@ -58,13 +57,6 @@ func BenchmarkBatcherClient(b *testing.B) { // go tool pprof -web ./batcher.test
 
 	u := 0
 	b.SetParallelism(256)
-	// f, err := os.Create("cpu.txt")
-	// if err != nil {
-	// 	b.Error("could not create CPU profile: ", err)
-	// }
-	// if err := pprof.StartCPUProfile(f); err != nil {
-	// 	b.Error("could not start CPU profile: ", err)
-	// }
 	b.StartTimer()
 	b.RunParallel(func(pb *testing.PB) {
 		for pb.Next() {

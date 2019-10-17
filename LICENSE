@@ -5,7 +5,7 @@ The license for this software and associated documentation files (the "Software"
 you accept this license. If you do not accept the license, do not use the "Software". "Software" must not be modified.
 
 "Software" is available under different licensing options designed to accommodate the needs of our various users:
-	1) Free license under the condition that the database "Software" does not contain more than a million records.
+	1) Free license under the condition that the database "Software" does not contain more than ten million records.
 	2) Commercial license does not limit the number of entries in the "Software" database.
 	
 For information about selling software, contact the author of the software by e-mail.

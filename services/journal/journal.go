@@ -15,33 +15,23 @@ import (
 	//"github.com/claygod/tools/batcher"
 )
 
-const limitRecordsPerLogfile int64 = 100000
+//const limitRecordsPerLogfile int64 = 100000
 
 /*
 Journal - transactions logs saver (WAL).
 */
 type Journal struct {
-	m         sync.Mutex
-	config    *Config
-	fileNamer *filenamer.FileNamer
-	counter   int64
-	client    *batcher.Client
-	//dirPath           string
-	alarmFunc func(error)
-	//batchSize         int
+	m                 sync.Mutex
+	config            *Config
+	fileNamer         *filenamer.FileNamer
+	counter           int64
+	client            *batcher.Client
+	alarmFunc         func(error)
 	countBatchClients int64
 	state             int64
 }
 
 func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) {
-	// nName, err := fn.GetNewFileName(".log") //dirPath
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// clt, err := batcher.Open(nName, cnf.BatchSize)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	return &Journal{
 		config:    cnf,
 		fileNamer: fn,
@@ -71,7 +61,7 @@ func (j *Journal) Start() error {
 func (j *Journal) Stop() {
 	j.m.Lock()
 	defer j.m.Unlock()
-	atomic.CompareAndSwapInt64(&j.state, stateStarted, stateStopped) //если не сработает, значит мы уже стопнуты или в панике
+	atomic.CompareAndSwapInt64(&j.state, stateStarted, stateStopped) // if it doesn’t work, then we are already stopped or in a panic
 	j.client.Close()
 	for {
 		if atomic.LoadInt64(&j.countBatchClients) == 0 {
@@ -84,9 +74,8 @@ func (j *Journal) Stop() {
 func (j *Journal) Restart() {
 	// j.m.Lock()
 	// defer j.m.Unlock()
-	//TODO: по идее стейт тут не меняется и его проверять не нужно.
+	//TODO: in theory, the state does not change here and you do not need to check it.
 	atomic.StoreInt64(&j.counter, j.config.LimitRecordsPerLogfile+1)
-	//j.getClient()
 }
 
 func (j *Journal) Write(toSave []byte) error {
@@ -107,11 +96,9 @@ func (j *Journal) Write(toSave []byte) error {
 func (j *Journal) getClient() (*batcher.Client, error) {
 	j.m.Lock()
 	defer j.m.Unlock()
-	//fmt.Println("++j *Journal) getClient+++", j.counter, j.config.LimitRecordsPerLogfile)
 	if j.counter > j.config.LimitRecordsPerLogfile {
 		oldClt := j.client
 		nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
-		//fmt.Println("Journal-1", nName, j.fileNamer)
 		if err != nil {
 			return nil, err
 		}
@@ -127,22 +114,6 @@ func (j *Journal) getClient() (*batcher.Client, error) {
 	j.counter++
 	return j.client, nil
 }
-
-// func (j *Journal) clientReset() error {
-// 	oldClt := j.client
-// 	nName, err := j.fileNamer.GetNewFileName(".log") // j.dirPath
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	clt, err := batcher.Open(nName, j.config.BatchSize)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	j.client = clt
-// 	j.counter = 0
-// 	atomic.AddInt64(&j.countBatchClients, 1)
-// 	j.clientBatchClose(oldClt) //TODO: del GO ?
-// }
 
 func (j *Journal) clientBatchClose(clt *batcher.Client) {
 	clt.Close()

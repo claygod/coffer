@@ -18,7 +18,7 @@ func TestNewOperations(t *testing.T) {
 	ucCnf := &Config{
 		FollowPause:             400 * time.Millisecond,
 		LogsByCheckpoint:        2,
-		DirPath:                 "../test/", // "/home/ed/goPath/src/github.com/claygod/coffer/test",
+		DirPath:                 "../test/",
 		AllowStartupErrLoadLogs: true,
 		MaxKeyLength:            100,
 		MaxValueLength:          10000,
@@ -26,7 +26,7 @@ func TestNewOperations(t *testing.T) {
 	rcCnf := &resources.Config{
 		LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
 		LimitDisk:   1000 * megabyte, // minimum free disk space
-		DirPath:     "../test/",      // "/home/ed/goPath/src/github.com/claygod/coffer/test"
+		DirPath:     "../test/",
 	}
 	resControl, err := resources.New(rcCnf)
 	if err != nil {
@@ -37,10 +37,7 @@ func TestNewOperations(t *testing.T) {
 	trn := NewTransaction(hdl)
 	//logger := logrus.New() //  logger.New(services.NewLog("Coffer "))
 	reqCoder := NewReqCoder()
-
-	//NewOperations(logger Logger, config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations
 	NewOperations(ucCnf, reqCoder, resControl, trn)
-	//TODO oper.DoOperations()
 }
 
 type mockHandler struct {

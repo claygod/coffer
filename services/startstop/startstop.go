@@ -40,32 +40,21 @@ func (s *StartStop) Start() bool {
 	return false
 }
 
-// func (s *StartStop) Stop() bool {
-// 	for i := 0; i < maxIterations; i++ {
-// 		if atomic.LoadInt64(&s.enumerator) == stateReady || atomic.CompareAndSwapInt64(&s.enumerator, stateRun, stateReady) {
-// 			return true
-// 		}
-// 		runtime.Gosched()
-// 		time.Sleep(s.pause)
-// 	}
-// 	return false
-// }
-
 func (s *StartStop) Stop() bool {
 	for i := 0; i < maxIterations; i++ {
 		curNum := atomic.LoadInt64(&s.enumerator)
 		switch {
-		case curNum == -blockedBarrier: // после блокирования все задачи наконец выполнились
+		case curNum == -blockedBarrier: // after blocking all tasks finally completed
 			atomic.CompareAndSwapInt64(&s.enumerator, -blockedBarrier, stateReady)
-		case curNum < stateBlocked: // не все задачи закончены
-		// ждём и надеемся на выполнение всех задач, но новые тут уже точно не появятся
-		case curNum == stateBlocked: // заблокировано но и остановлено тоже
+		case curNum < stateBlocked: // not all tasks are completed
+		// We are waiting and hoping for all the tasks to be completed, but new ones will definitely not appear here
+		case curNum == stateBlocked: // blocked but also stopped
 			return true
-		case curNum == stateReady: // лучший вариант
+		case curNum == stateReady: // the best way
 			return true
 		case curNum == stateRun:
 			atomic.CompareAndSwapInt64(&s.enumerator, stateRun, stateReady)
-		case curNum >= stateRun: // отключаем возможность запуска новых задач
+		case curNum >= stateRun: // disable the ability to start new tasks
 			atomic.CompareAndSwapInt64(&s.enumerator, curNum, curNum-blockedBarrier)
 		}
 		runtime.Gosched()
@@ -99,7 +88,7 @@ func (s *StartStop) Unblock() bool {
 func (s *StartStop) Add() bool {
 	for {
 		curNum := atomic.LoadInt64(&s.enumerator)
-		if curNum <= stateReady { // заблокировано
+		if curNum <= stateReady { // blocked
 			return false
 		} else if atomic.CompareAndSwapInt64(&s.enumerator, curNum, curNum+1) {
 			return true

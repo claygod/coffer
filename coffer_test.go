@@ -40,15 +40,6 @@ func TestNewDirNotFound(t *testing.T) {
 	defer forTestClearDir(dirPath)
 
 	if _, err, _ := Db("./not_found_dir/").BatchSize(2000).
-		// LimitRecordsPerLogfile(5).
-		// FollowPause(400 * time.Millisecond).
-		// LogsByCheckpoint(2).
-		// AllowStartupErrLoadLogs(defaultAllowStartupErrLoadLogs). //--
-		// MaxKeyLength(defaultMaxKeyLength).                       //--
-		// MaxValueLength(defaultMaxValueLength).                   //-
-		// RemoveUnlessLogs(defaultRemoveUnlessLogs).               //--
-		// LimitMemory(int(defaultLimitMemory)).                    //--
-		// LimitDisk(int(defaultLimitDisk)).                        //--
 		MaxRecsPerOperation(10).Create(); err == nil {
 		t.Error("Want error, have nil.")
 	}
@@ -271,12 +262,12 @@ func TestCofferTransaction(t *testing.T) {
 		t.Errorf("Want bbb==111 , have %v", rep.Data)
 		return
 	}
-	// количество записей не должно измениться
+	// the number of records should not change
 	if rep := cof1.Count(); rep.Count != 2 {
 		t.Errorf("Records (cof1) count, have %d, want 2.", rep.Count)
 		return
 	}
-	// количество записей не должно измениться
+	// ---
 	rep := cof1.ReadList([]string{"aaa", "bbb"})
 	if rep.IsCodeError() {
 		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
@@ -306,8 +297,6 @@ func TestCofferTransactionChain(t *testing.T) {
 	cof1.Write("ccc", []byte("333"))
 	cof1.Write("ddd", []byte("444"))
 
-	//rep0 := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
-	//fmt.Println(string(rep0.Data["aaa"]), string(rep0.Data["bbb"]), string(rep0.Data["ccc"]), string(rep0.Data["ddd"]))
 	if rep := cof1.Transaction("exchange", []string{"ddd", "ccc"}, nil); rep.IsCodeError() {
 		t.Error(err)
 		return
@@ -320,12 +309,12 @@ func TestCofferTransactionChain(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// количество записей не должно измениться
+	// the number of records should not change
 	if rep := cof1.Count(); rep.Count != 4 {
 		t.Errorf("Records (cof1) count, have %d, want 4.", rep.Count)
 		return
 	}
-	// количество записей не должно измениться
+	// ---
 	rep := cof1.ReadList([]string{"aaa", "bbb", "ccc", "ddd"})
 	if rep.IsCodeError() {
 		t.Errorf("Transaction results: code=%d , data=%v, not_found=%v, err=%v.", rep.Code, rep.Data, rep.NotFound, rep.Error)
@@ -489,20 +478,20 @@ func TestCofferStartStop(t *testing.T) {
 	}
 }
 
-func TestCofferStopHard(t *testing.T) {
-	forTestClearDir(dirPath)
-	cof1, err := createAndStartNewCofferLength(t, 4, 7)
-	if err != nil {
-		t.Error(err)
-		return
-	}
-	if !cof1.Start() {
-		t.Error("Could not start the application (1)")
-	}
-	if err := cof1.StopHard(); err != nil {
-		t.Error(err)
-	}
-}
+// func TestCofferStopHard(t *testing.T) {
+// 	forTestClearDir(dirPath)
+// 	cof1, err := createAndStartNewCofferLength(t, 4, 7)
+// 	if err != nil {
+// 		t.Error(err)
+// 		return
+// 	}
+// 	if !cof1.Start() {
+// 		t.Error("Could not start the application (1)")
+// 	}
+// 	if err := cof1.StopHard(); err != nil {
+// 		t.Error(err)
+// 	}
+// }
 
 func TestCofferWriteRead(t *testing.T) {
 	defer forTestClearDir(dirPath)
@@ -521,19 +510,19 @@ func TestCofferWriteRead(t *testing.T) {
 		t.Error("Read: want code 0 (Ok), have code: ", rep.Code, " Resp. err.: ", rep.Error, " Resp. data: ", rep.Data)
 		return
 	}
-	// -- пишем слишком большой ключ
+	// -- too big key
 	t.Log("Stage2")
 	if rep := cof1.Write("aaaaa", []byte("bbb")); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
 		t.Error("Write: want code `ErrExceedingMaxKeyLength`, have code: ", rep.Code, " Resp. err.: ", rep.Error)
 		return
 	}
-	// -- пишем слишком большое значение
+	// -- too important
 	t.Log("Stage3")
 	if rep := cof1.Write("dd", []byte("cccccccccccc")); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
 		t.Error("Write: want code `ErrExceedingMaxValueSize`, have code: ", rep.Code, " Resp. err.: ", rep.Error)
 		return
 	}
-	// -- пытаемся считать несуществующую запись
+	// -- trying to read a nonexistent record
 	t.Log("Stage4")
 	if rep := cof1.Read("xx"); rep.Code != codes.ErrReadRecords || rep.Error != nil || rep.Data != nil {
 		t.Error("Read: want code `ErrReadRecords`, have code: ", rep.Code, " Resp. err.: ", rep.Error, " Resp. data: ", rep.Data)
@@ -552,7 +541,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		req["aasa"+strconv.Itoa(i)] = []byte("bbsb" + strconv.Itoa(i))
 	}
-	// -- записываем список
+	// -- write down the list
 	t.Log("Stage1")
 	if rep := cof1.WriteList(req); rep.IsCodeError() || rep.Error != nil {
 		t.Error(err)
@@ -577,7 +566,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 		t.Error(rep)
 		return
 	}
-	// -- считываем реальный список
+	// -- read the real list
 	t.Log("Stage2")
 	rep := cof1.ReadList([]string{"aasa10", "aasa11"})
 	if !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 || len(rep.NotFound) != 0 {
@@ -593,7 +582,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 		t.Errorf("Key `aasa10`: value want `bbsb10` have %s", string(v))
 		return
 	}
-	// -- пытаемся считать и несуществующие записи тоже
+	// -- trying to count non-existent entries too
 	t.Log("Stage3")
 	rep = cof1.ReadList([]string{"aasa10", "aasa90"})
 	if !rep.IsCodeErrReadRecords() || rep.Error != nil || len(rep.Data) != 1 || len(rep.NotFound) != 1 {
@@ -638,7 +627,7 @@ func TestCofferWriteListUnsafeReadList(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		req["aasa"+strconv.Itoa(i)] = []byte("bbsb" + strconv.Itoa(i))
 	}
-	// -- записываем список
+	// -- write down the list
 	t.Log("Stage1")
 	if rep := cof1.WriteListUnsafe(req); rep.IsCodeError() || rep.Error != nil {
 		t.Error(err)
@@ -664,7 +653,7 @@ func TestCofferWriteListUnsafeReadList(t *testing.T) {
 		t.Error(rep)
 		return
 	}
-	// -- считываем реальный список
+	// -- read the real list
 	t.Log("Stage2")
 	rep := cof1.ReadList([]string{"aasa10", "aasa11"})
 	if !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 || len(rep.NotFound) != 0 {
@@ -680,7 +669,7 @@ func TestCofferWriteListUnsafeReadList(t *testing.T) {
 		t.Errorf("Key `aasa10`: value want `bbsb10` have %s", string(v))
 		return
 	}
-	// -- пытаемся считать и несуществующие записи тоже
+	// -- trying to count non-existent entries too
 	t.Log("Stage3")
 	rep = cof1.ReadList([]string{"aasa10", "aasa90"})
 	if !rep.IsCodeErrReadRecords() || rep.Error != nil || len(rep.Data) != 1 || len(rep.NotFound) != 1 {
@@ -755,7 +744,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// попытка записать за один раз слишком много записей
+	// trying to record too many records at a time
 	t.Log("Stage1")
 	reqWriteList := make(map[string][]byte)
 	reqReadList := make([]string, 0)
@@ -770,7 +759,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 		return
 	}
 	t.Log(rep)
-	// попытка прочитать за один раз слишком много записей
+	// trying to read too many records at one time
 	t.Log("Stage2")
 	rep2 := cof1.ReadList(reqReadList)
 	if !rep2.IsCodeErrRecordLimitExceeded() || rep2.Error == nil {
@@ -778,7 +767,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 		t.Error(rep2.Error)
 		return
 	}
-	// попытка удалить Strict за один раз слишком много записей
+	// attempt to delete Strict at once too many records
 	t.Log("Stage3")
 	rep3 := cof1.DeleteListStrict(reqReadList)
 	if !rep3.IsCodeErrRecordLimitExceeded() || rep3.Error == nil {
@@ -786,7 +775,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 		t.Error(rep3.Error)
 		return
 	}
-	// попытка удалить Optional за один раз слишком много записей
+	// attempt to delete Optional at one time too many records
 	t.Log("Stage3")
 	rep3 = cof1.DeleteListOptional(reqReadList)
 	if !rep3.IsCodeErrRecordLimitExceeded() || rep3.Error == nil {
@@ -799,7 +788,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 func TestCofferLoadFromLogs(t *testing.T) {
 	defer forTestClearDir(dirPath)
 
-	// наполняем базу и сохраняем в память её логи
+	// fill the base
 	t.Log("Stage1")
 	cof1, err := createAndStartNewCoffer(t)
 	if err != nil {
@@ -817,12 +806,12 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	b1, err := ioutil.ReadFile(dirPath + "1000000001.log") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000001.log") // save to memory
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b2, err := ioutil.ReadFile(dirPath + "1000000002.log") // сохраняем в память
+	b2, err := ioutil.ReadFile(dirPath + "1000000002.log") // save to memory
 	if err != nil {
 		t.Error(err)
 		return
@@ -846,7 +835,7 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	cof111.Stop()
 	forTestClearDir(dirPath)
 
-	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
+	// specially we corrupt one file, and one record in it should be lost when downloading
 	t.Log("Stage3")
 	if err := ioutil.WriteFile(dirPath+"1000000003.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -861,7 +850,7 @@ func TestCofferLoadFromLogs(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if rep := cof2.Count(); rep.Count != 8 { // одна запись поломана и её нет, а почему-то скачена
+	if rep := cof2.Count(); rep.Count != 8 { // one record is broken and not there, but for some reason downloaded
 		t.Errorf("Records (cof2) count, have %d, want 8.", rep.Count)
 		return
 	} else {
@@ -870,8 +859,8 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	cof2.Stop()
 	forTestClearDir(dirPath)
 
-	// переименовываем один файл, в результате получив нормальный после битого
-	// но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
+	// rename one file, as a result, getting normal after the beaten
+	// but this last file should not be uploaded because loading should stop on it
 	t.Log("Stage4")
 	if err := ioutil.WriteFile(dirPath+"1000000009.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -895,22 +884,18 @@ func TestCofferLoadFromLogs(t *testing.T) {
 func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	defer forTestClearDir(dirPath)
 
-	// наполняем базу и сохраняем в память её логи
+	// fill the base
 	t.Log("Stage1")
 	cof1, err := createAndStartNewCofferT(t)
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	// hdlExch := domain.Handler(handlerExchange)
-	// cof1.SetHandler("exchange", &hdlExch)
-	//cof1.Start()
 
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
-		//time.Sleep(100 * time.Millisecond)
 	}
 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
@@ -922,20 +907,18 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		return
 	}
 	cof1.Stop()
-	b1, err := ioutil.ReadFile(dirPath + "1000000001.log") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000001.log")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	b2, err := ioutil.ReadFile(dirPath + "1000000002.log") // сохраняем в память
+	b2, err := ioutil.ReadFile(dirPath + "1000000002.log")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	//fmt.Println("=> ", string(b1))
-	//fmt.Println("=> ", string(b2))
 
-	// пробуем загрузиться с логов
+	// try to boot from the logs
 	t.Log("Stage2")
 	cof111, err := createAndStartNewCofferT(t)
 	if err != nil {
@@ -955,7 +938,7 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	cof111.Stop()
 	forTestClearDir(dirPath)
 
-	// специально портим один файл, и одна запись в нём при скачке должна быть потеряна
+	// specially we corrupt one file, and one record in it should be lost when downloading
 	t.Log("Stage3")
 	if err := ioutil.WriteFile(dirPath+"1000000003.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -970,21 +953,21 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	if rep := cof2.Count(); rep.Count != 9 { // одна запись поломана и её нет, а почему-то скачена
+	if rep := cof2.Count(); rep.Count != 9 { // one record is broken and not there, but for some reason downloaded
 		t.Errorf("Records (cof2) count, have %d, want 9.", rep.Count)
 		return
 	} else {
 		t.Log("Load false logs OK")
 	}
-	if rep := cof2.Read("aasa10"); string(rep.Data) != "bbsb10" { // теперь последнее действие (транзакция) отменена
+	if rep := cof2.Read("aasa10"); string(rep.Data) != "bbsb10" { // now the last action (transaction) is canceled
 		t.Errorf("Record have %s, wand `bbsb10`.", string(rep.Data))
 		return
 	}
 	cof2.Stop()
 	forTestClearDir(dirPath)
 
-	// переименовываем один файл, в результате получив нормальный после битого
-	// но этот последний файл не должен быть загружен, т.к. загрузка должна остановиться на нём
+	// rename a file, the result will be normal after broken
+	// but this last file should not be uploaded because loading should stop on it
 	t.Log("Stage4")
 	if err := ioutil.WriteFile(dirPath+"1000000009.log", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -1002,7 +985,6 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 		t.Log(wrn)
 		t.Log("Load false/true logs OK")
 	}
-	//time.Sleep(15000 * time.Millisecond)
 }
 
 func TestCofferLoadFromCheckpoint(t *testing.T) {
@@ -1016,17 +998,15 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
-		//time.Sleep(10 * time.Millisecond)
 	}
 	cof1.Stop()
-	//time.Sleep(5 * time.Millisecond)
-	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint")
 	if err != nil {
 		t.Error(err)
 		return
 	}
 	forTestClearDir(dirPath)
-	// проверяем загрузку с нормального, небитого файла
+	// check the download from a normal file
 	t.Log("Stage1")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -1038,13 +1018,13 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 		return
 	}
 
-	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены
+	if rep := cof2.Count(); rep.Count != 9 { // not all entries downloaded
 		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
 		return
 	}
 	cof2.Stop()
 	forTestClearDir(dirPath)
-	// проверяем загрузку с битого файла
+	// check download from a broken file
 	t.Log("Stage2")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
@@ -1056,7 +1036,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 		return
 	}
 
-	if rep := cof3.Count(); rep.Count != 0 { // все записи битого чекпоинта должны быть проигнорированы
+	if rep := cof3.Count(); rep.Count != 0 { // all records of the broken checkpoint should be ignored
 		t.Errorf("Records (cof3) count, have %d, wand 0.", rep.Count)
 		return
 	}
@@ -1072,14 +1052,11 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 		t.Error(wrn)
 		return
 	}
-	//hdlExch := domain.Handler(handlerExchange)
-	//cof1.SetHandler("exchange", &hdlExch)
 	cof1.Start()
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
-		//time.Sleep(10 * time.Millisecond)
 	}
 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
@@ -1093,7 +1070,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 		return
 	}
 	forTestClearDir(dirPath)
-	// проверяем загрузку с нормального, небитого файла
+	// check the download from a normal file
 	t.Log("Stage1")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1, os.ModePerm); err != nil {
 		t.Error(err)
@@ -1105,7 +1082,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 		return
 	}
 
-	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены
+	if rep := cof2.Count(); rep.Count != 9 { // not all entries downloaded
 		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
 		return
 	}
@@ -1120,19 +1097,19 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	}
 	cof2.Stop()
 	forTestClearDir(dirPath)
-	// проверяем загрузку с битого файла
+	// check download from a broken file
 	t.Log("Stage2")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
 		return
 	}
 	cof3, err := createAndStartNewCoffer(t)
-	if err != nil { // при загрузке с битого файла он игнорируется
+	if err != nil { // when loading from a damaged file, it is ignored
 		t.Error(err)
 		return
 	}
 
-	if rep := cof3.Count(); rep.Count != 0 { // все записи битого чекпоинта должны быть проигнорированы
+	if rep := cof3.Count(); rep.Count != 0 { // all records of the broken checkpoint should be ignored
 		t.Errorf("Records (cof3) count, have %d, wand 0.", rep.Count)
 		return
 	}
@@ -1149,27 +1126,19 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 		t.Error(wrn)
 		return
 	}
-	//hdlExch := domain.Handler(handlerExchange)
-	//cof1.SetHandler("exchange", &hdlExch)
 	cof1.Start()
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
-		//time.Sleep(10 * time.Millisecond)
 	}
-	// if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.Code >= codes.Warning {
-	// 	t.Error(rep)
-	// 	return
-	// }
 	cof1.Stop()
-	//time.Sleep(1 * time.Second)
-	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
+	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint")
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	// проверяем загрузку с нормального, небитого файла
+	// check the download from a normal file
 	t.Log("Stage1")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
@@ -1181,7 +1150,7 @@ func TestCofferLoadFromFalseCheckpointTrueLogs(t *testing.T) {
 		return
 	}
 
-	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
+	if rep := cof2.Count(); rep.Count != 9 { // not all records are downloaded, although with a damaged checkpoint everything should have been downloaded from the logs
 		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
 		return
 	}
@@ -1196,30 +1165,22 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	// hdlExch := domain.Handler(handlerExchange)
-	// if err := cof1.SetHandler("exchange", &hdlExch); err != nil {
-	// 	t.Error(wrn)
-	// 	return
-	// }
-	//cof1.Start()
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 		}
-		//time.Sleep(10 * time.Millisecond)
 	}
 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
 		t.Error(rep)
 		return
 	}
 	cof1.Stop()
-	//time.Sleep(5 * time.Second)
 	b1, err := ioutil.ReadFile(dirPath + "1000000003.checkpoint") // сохраняем в память
 	if err != nil {
 		t.Error(err)
 		return
 	}
-	// проверяем загрузку с нормального, небитого файла
+	// check the download from a normal file
 	t.Log("Stage1")
 	if err := ioutil.WriteFile(dirPath+"1000000003.checkpoint", b1[:len(b1)-2], os.ModePerm); err != nil {
 		t.Error(err)
@@ -1230,13 +1191,8 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	//hdlExch := domain.Handler(handlerExchange)
-	// if err := cof2.SetHandler("exchange", &hdlExch); err != nil {
-	// 	t.Error(wrn)
-	// 	return
-	// }
 
-	if rep := cof2.Count(); rep.Count != 9 { // не все записи скачены, хотя при битом чекпоинте всё должно было быть скачено с логов
+	if rep := cof2.Count(); rep.Count != 9 { // not all records are downloaded, although with a broken checkpoint everything should have been downloaded from the logs
 		t.Errorf("Records (cof2) count, have %d, wand 9.", rep.Count)
 		return
 	}
@@ -1250,13 +1206,11 @@ func TestCofferLoadFromFalseCheckpointTrueLogsTransaction(t *testing.T) {
 func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 	cof1, err, wrn := createNewCoffer()
 	if err != nil {
-		//fmt.Println("++1++", err)
 		return nil, err
 	} else if wrn != nil {
 		t.Log(wrn)
 	}
 	if !cof1.Start() {
-		//fmt.Println("++2++")
 		return nil, fmt.Errorf("Failed to start (cof)")
 	}
 	return cof1, nil
@@ -1265,13 +1219,11 @@ func createAndStartNewCoffer(t *testing.T) (*Coffer, error) {
 func createAndStartNewCofferT(t *testing.T) (*Coffer, error) {
 	cof1, err, wrn := createNewCofferT()
 	if err != nil {
-		//fmt.Println("++1++", err)
 		return nil, err
 	} else if wrn != nil {
 		t.Log(wrn)
 	}
 	if !cof1.Start() {
-		//fmt.Println("++2++")
 		return nil, fmt.Errorf("Failed to start (cof)")
 	}
 	return cof1, nil
@@ -1304,32 +1256,6 @@ func createAndStartNewCofferLengthB(t *testing.B, maxKeyLength int, maxValueLeng
 }
 
 func createNewCoffer() (*Coffer, error, error) {
-	// jCnf := &journal.Config{
-	// 	BatchSize:              2000,
-	// 	LimitRecordsPerLogfile: 5,
-	// }
-	// ucCnf := &usecases.Config{
-	// 	FollowPause:             400 * time.Millisecond,
-	// 	LogsByCheckpoint:        2,
-	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-	// 	AllowStartupErrLoadLogs: true,
-	// 	MaxKeyLength:            100,
-	// 	MaxValueLength:          10000,
-	// 	RemoveUnlessLogs:        true, // чистим логи после использования
-	// }
-	// rcCnf := &resources.Config{
-	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
-	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	// }
-
-	// cnf := &Config{
-	// 	JournalConfig:       jCnf,
-	// 	UsecasesConfig:      ucCnf,
-	// 	ResourcesConfig:     rcCnf,
-	// 	MaxRecsPerOperation: 10,
-	// }
-	//--------------------
 	return Db(dirPath).BatchSize(2000).
 		LimitRecordsPerLogfile(5).
 		FollowPause(400 * time.Millisecond).
@@ -1343,41 +1269,11 @@ func createNewCoffer() (*Coffer, error, error) {
 		MaxRecsPerOperation(10).
 		Create()
 
-	//return New(cnf, nil)
 }
 
 func createNewCofferT() (*Coffer, error, error) {
-	// jCnf := &journal.Config{
-	// 	BatchSize:              2000,
-	// 	LimitRecordsPerLogfile: 5,
-	// }
-	// ucCnf := &usecases.Config{
-	// 	FollowPause:             400 * time.Millisecond,
-	// 	LogsByCheckpoint:        2,
-	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-	// 	AllowStartupErrLoadLogs: true,
-	// 	MaxKeyLength:            100,
-	// 	MaxValueLength:          10000,
-	// 	RemoveUnlessLogs:        true, // чистим логи после использования
-	// }
-	// rcCnf := &resources.Config{
-	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
-	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	// }
-
-	// cnf := &Config{
-	// 	JournalConfig:       jCnf,
-	// 	UsecasesConfig:      ucCnf,
-	// 	ResourcesConfig:     rcCnf,
-	// 	MaxRecsPerOperation: 10,
-	// 	//MaxKeyLength:        100,
-	// 	//MaxValueLength:      10000,
-	// }
 
 	hdlExch := domain.Handler(handlerExchange)
-	// hdls := handlers.New()
-	// hdls.Set("exchange", &hdlExch)
 	return Db(dirPath).BatchSize(2000).
 		LimitRecordsPerLogfile(5).
 		FollowPause(400*time.Millisecond).
@@ -1385,37 +1281,9 @@ func createNewCofferT() (*Coffer, error, error) {
 		MaxRecsPerOperation(10).
 		Handler("exchange", &hdlExch).
 		Create()
-	//return New(cnf, hdls)
 }
 
 func createNewCofferLength4(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
-	// jCnf := &journal.Config{
-	// 	BatchSize:              2000,
-	// 	LimitRecordsPerLogfile: 5,
-	// }
-	// ucCnf := &usecases.Config{
-	// 	FollowPause:             400 * time.Millisecond,
-	// 	LogsByCheckpoint:        2,
-	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-	// 	AllowStartupErrLoadLogs: true,
-	// 	MaxKeyLength:            maxKeyLength,
-	// 	MaxValueLength:          maxValueLength,
-	// 	RemoveUnlessLogs:        true, // чистим логи после использования
-	// }
-	// rcCnf := &resources.Config{
-	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
-	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	// }
-
-	// cnf := &Config{
-	// 	JournalConfig:       jCnf,
-	// 	UsecasesConfig:      ucCnf,
-	// 	ResourcesConfig:     rcCnf,
-	// 	MaxRecsPerOperation: 10,
-	// 	//MaxKeyLength:        100,
-	// 	//MaxValueLength:      10000,
-	// }
 	return Db(dirPath).BatchSize(2000).
 		LimitRecordsPerLogfile(5).
 		FollowPause(400 * time.Millisecond).
@@ -1423,42 +1291,11 @@ func createNewCofferLength4(maxKeyLength int, maxValueLength int) (*Coffer, erro
 		MaxKeyLength(maxKeyLength).
 		MaxValueLength(maxValueLength).
 		MaxRecsPerOperation(10).
-		//Handler("exchange", &hdlExch).
 		Create()
-	//return New(cnf, nil)
 }
 
 func createNewCofferLength4T(maxKeyLength int, maxValueLength int) (*Coffer, error, error) {
-	// jCnf := &journal.Config{
-	// 	BatchSize:              2000,
-	// 	LimitRecordsPerLogfile: 5,
-	// }
-	// ucCnf := &usecases.Config{
-	// 	FollowPause:             400 * time.Millisecond,
-	// 	LogsByCheckpoint:        2,
-	// 	DirPath:                 dirPath, // "/home/ed/goPath/src/github.com/claygod/coffer/test",
-	// 	AllowStartupErrLoadLogs: true,
-	// 	MaxKeyLength:            maxKeyLength,
-	// 	MaxValueLength:          maxValueLength,
-	// 	RemoveUnlessLogs:        true, // чистим логи после использования
-	// }
-	// rcCnf := &resources.Config{
-	// 	LimitMemory: 1000 * megabyte, // minimum available memory (bytes)
-	// 	LimitDisk:   1000 * megabyte, // minimum free disk space
-	// 	DirPath:     dirPath,         // "/home/ed/goPath/src/github.com/claygod/coffer/test"
-	// }
-
-	// cnf := &Config{
-	// 	JournalConfig:       jCnf,
-	// 	UsecasesConfig:      ucCnf,
-	// 	ResourcesConfig:     rcCnf,
-	// 	MaxRecsPerOperation: 10,
-	// 	//MaxKeyLength:        100,
-	// 	//MaxValueLength:      10000,
-	// }
 	hdlExch := domain.Handler(handlerExchange)
-	// hdls := handlers.New()
-	// hdls.Set("exchange", &hdlExch)
 	return Db(dirPath).BatchSize(2000).
 		LimitRecordsPerLogfile(5).
 		FollowPause(400 * time.Millisecond).
@@ -1466,9 +1303,8 @@ func createNewCofferLength4T(maxKeyLength int, maxValueLength int) (*Coffer, err
 		MaxKeyLength(maxKeyLength).
 		MaxValueLength(maxValueLength).
 		MaxRecsPerOperation(10).
-		Handlers(map[string]*domain.Handler{"exchange": &hdlExch}). //Handler("exchange", &hdlExch).
+		Handlers(map[string]*domain.Handler{"exchange": &hdlExch}).
 		Create()
-	//return New(cnf, hdls)
 }
 
 func forTestClearDir(dir string) error {
@@ -1486,14 +1322,9 @@ func forTestClearDir(dir string) error {
 		return err
 	}
 	for _, name := range names {
-		//fmt.Println(name)
 		if strings.HasSuffix(name, ".log") || strings.HasSuffix(name, ".check") || strings.HasSuffix(name, ".checkpoint") {
 			os.Remove(dir + name)
 		}
-		//		err = os.RemoveAll(filepath.Join(dir, name))
-		//		if err != nil {
-		//			return err
-		//		}
 	}
 	return nil
 }

@@ -29,9 +29,9 @@ func NewLoader(config *Config, lgr Logger, chp *checkpoint, reqCoder *ReqCoder, 
 
 func (l *Loader) LoadLatestValidCheckpoint(chpList []string, repo domain.RecordsRepository) (string, error) {
 	for i := len(chpList) - 1; i >= 0; i-- {
-		fChName := chpList[i]                              // l.config.DirPath +
-		if fChName != extCheck+extPoint && fChName != "" { //TODO: del `fChName != extCheck+extPoint`
-			if err := l.loadCheckpoint(fChName, repo); err != nil { //загружаем последний checkpoint // chp.  load(r.repo, fChName)
+		fChName := chpList[i]
+		if fChName != extCheck+extPoint && fChName != "" {
+			if err := l.loadCheckpoint(fChName, repo); err != nil { // load the last checkpoint
 				l.logger.Info(err)
 			} else {
 				return fChName, nil
@@ -42,8 +42,8 @@ func (l *Loader) LoadLatestValidCheckpoint(chpList []string, repo domain.Records
 }
 
 func (l *Loader) loadCheckpoint(chpName string, repo domain.RecordsRepository) error {
-	if err := l.chp.load(repo, l.config.DirPath+chpName); err != nil { //загружаем последний checkpoint
-		repo.Reset() //TODO:  это делается в checkpoins, но можно и продублировать (пока)
+	if err := l.chp.load(repo, l.config.DirPath+chpName); err != nil { // load the last checkpoint
+		repo.Reset() //TODO:  this is done in checkpoints, but you can duplicate (for now)
 		return err
 	}
 	return nil
@@ -61,7 +61,7 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 		}
 		if wrn != nil {
 			wr = wrn
-			switch counter { // два варианта, т.к. иногда будет лог с нулевым содержимым последним
+			switch counter { // two options, as sometimes there will be a log with zero content last
 			case len(fList):
 				if !l.config.AllowStartupErrLoadLogs {
 					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
@@ -80,7 +80,7 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 				if !l.config.AllowStartupErrLoadLogs {
 					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
 				} else {
-					brk = true //return nil, wrn
+					brk = true
 				}
 			default:
 				return fmt.Errorf("The spoiled log (%s) .", l.config.DirPath+fName), wrn

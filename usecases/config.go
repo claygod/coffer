@@ -13,7 +13,7 @@ type Config struct {
 	LogsByCheckpoint        int64
 	DirPath                 string
 	AllowStartupErrLoadLogs bool
-	RemoveUnlessLogs        bool // удаление логов после того, как они  попали в чекпоинт
+	RemoveUnlessLogs        bool // deleting logs after they hit the checkpoint
 	MaxKeyLength            int  //  = int(uint64(1)<<16) - 1
 	MaxValueLength          int  //  = int(uint64(1)<<48) - 1
 }

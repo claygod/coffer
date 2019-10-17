@@ -45,11 +45,11 @@ import (
 // 	c.logger.Error(err).Context("Object", "Journal").Context("Method", "Write").Send()
 // }
 
-func (c *Coffer) checkLenCountKeys(keys []string) (codes.Code, error) { // проверка параметров ключей операции
-	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // контроль максимально допустимого количества добавленных записей за одну операцию
+func (c *Coffer) checkLenCountKeys(keys []string) (codes.Code, error) { // checking operation key parameters
+	if ln := len(keys); ln > c.config.MaxRecsPerOperation { // control the maximum allowable number of added records per operation
 		return codes.ErrRecordLimitExceeded, fmt.Errorf("The allowable number of entries in operation %d, and in the request %d.", c.config.MaxRecsPerOperation, ln)
 	}
-	for _, key := range keys { // контроль максимально допустимой и нулевой длины ключа
+	for _, key := range keys { // control of the maximum permissible and zero key length
 		ln := len(key)
 		if ln > c.config.UsecasesConfig.MaxKeyLength {
 			return codes.ErrExceedingMaxKeyLength, fmt.Errorf("The admissible key length is %d; there is a key with a length of %d in the request.", c.config.UsecasesConfig.MaxKeyLength, ln)
@@ -61,7 +61,7 @@ func (c *Coffer) checkLenCountKeys(keys []string) (codes.Code, error) { // пр�
 	return codes.Ok, nil
 }
 
-func (c *Coffer) extractKeysFromMap(input map[string][]byte) []string { // для журнала
+func (c *Coffer) extractKeysFromMap(input map[string][]byte) []string {
 	keys := make([]string, 0, len(input))
 	for key, _ := range input {
 		keys = append(keys, key)

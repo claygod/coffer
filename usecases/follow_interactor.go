@@ -15,6 +15,20 @@ import (
 	"github.com/claygod/coffer/domain"
 )
 
+/*
+FollowInteractor - after the database is launched, it writes all operations to the log. As a result,
+the log can grow very much. If in the end, at the end of the application, the database is correctly stopped,
+a new checkpoint will appear, and at the next start, the data will be taken from it.
+However, the stop may not be correct, and a new checkpoint will not be created.
+
+In this case, at a new start, the database will be forced to load the old checkpoint, and re-perform all operations
+that were completed and recorded in the log. This can turn out to be quite significant in time, and as a result,
+the database will take longer to load, which is not always acceptable for applications.
+
+That is why there is a follower mechanism in the database that methodically goes through the logs in the process of
+the database and periodically creates checkpoints that are much closer to the current moment.
+Also, the follower has the function of cleaning old logs and checkpoints to free up space on your hard drive.
+*/
 type FollowInteractor struct {
 	//m               sync.Mutex
 	logger Logger
@@ -29,6 +43,9 @@ type FollowInteractor struct {
 	hasp            Starter
 }
 
+/*
+NewFollowInteractor - create new interactor.
+*/
 func NewFollowInteractor(
 	logger Logger,
 	loader *Loader,
@@ -82,8 +99,8 @@ func (f *FollowInteractor) Stop() bool {
 }
 
 /*
-worker - циклическое приближение чекпойнтов к актуальному состоянию.
-При любой ошибке работа останавливается (как минимум до перезагрузки).
+worker - cyclic approximation of checkpoints to the current state.
+If any error occurs, operation stops (at least until a reboot).
 */
 func (f *FollowInteractor) worker() {
 	for {
@@ -111,21 +128,17 @@ func (f *FollowInteractor) follow() error {
 	if len(list) == 0 {
 		return nil
 	}
-	//fmt.Println("F:запущен follow, list: ", list)
 	err, wrn := f.loader.LoadLogs(list, f.repo)
 	if err != nil {
 		return err
 	}
-	if wrn != nil { // на битых файлах мы тоже стопаем
+	if wrn != nil { // we also stop on broken files
 		return wrn
 	}
-	atomic.AddInt64(&f.changesCounter, int64(len(list))) // через атомик, чтобы при необходимости брать этот параметр, не было конкурентных проблем
-	//f.changesCounter += len(list)
+	atomic.AddInt64(&f.changesCounter, int64(len(list)))
 	logFileName := f.config.DirPath + list[len(list)-1]
 	if atomic.LoadInt64((&f.changesCounter)) > f.config.LogsByCheckpoint && logFileName != f.lastFileNameLog {
-		//fmt.Println("F:создал новый checkpoint: ", logFileName)
 		if err := f.newCheckpoint(logFileName); err != nil {
-			//fmt.Println("F:что-то пошло не так: ", err)
 			return err
 		}
 		if f.config.RemoveUnlessLogs {
@@ -135,11 +148,10 @@ func (f *FollowInteractor) follow() error {
 		//f.changesCounter = 0
 	}
 	f.lastFileNameLog = logFileName
-
 	return nil
 }
 
-func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: учёт и удаление ненужных логов при усложнении вынести в отдельную сущность
+func (f *FollowInteractor) removingUselessLogs(lastLogPath string) {
 	// f.m.Lock()
 	// defer f.m.Unlock()
 	list1, err := f.filenamer.GetHalf(lastLogPath, false)
@@ -147,7 +159,7 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 		f.logger.Warning(err)
 	}
 	for _, lgName := range list1 {
-		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
+		err := os.Remove(f.config.DirPath + lgName) // we don’t look at errors if some file is not deleted accidentally, it’s not scary
 		if err != nil {
 			f.logger.Warning(err)
 		}
@@ -158,7 +170,7 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 		f.logger.Warning(err)
 	}
 	for _, lgName := range list2 {
-		err := os.Remove(f.config.DirPath + lgName) // на ошибки не смотрим, если какой-то файл случайно не удалится, не страшно
+		err := os.Remove(f.config.DirPath + lgName) // we don’t look at errors if some file is not deleted accidentally, it’s not scary
 		if err != nil {
 			f.logger.Warning(err)
 		}
@@ -166,14 +178,12 @@ func (f *FollowInteractor) removingUselessLogs(lastLogPath string) { //TODO: у�
 }
 
 func (f *FollowInteractor) findLatestLogs() ([]string, error) {
-	//тут будем брать последние из filenamer
 	fNamesList, err := f.filenamer.GetHalf(f.lastFileNameLog, true)
 	if err != nil {
-		//fmt.Println("F:err7:", err)
 		return nil, err
 	}
 	ln := len(fNamesList)
-	if ln <= 1 { // последний лог мы тоже не берём чтобы не ткнуться в ещё наполняемый лог
+	if ln <= 1 { // we don’t take the last log so as not to stumble into the log that is still being filled
 		return make([]string, 0), nil
 	}
 	return fNamesList[0 : ln-2], nil
@@ -200,7 +210,7 @@ func (f *FollowInteractor) newCheckpoint(logFileName string) error {
 	return nil
 }
 
-func (f *FollowInteractor) getNewCheckpointName(logFileName string) string { // просто меняем расширение файла
+func (f *FollowInteractor) getNewCheckpointName(logFileName string) string {
 	// strs := strings.Split(logFileName, ".")
 	// return strs[0] + ".check"
 	return strings.Replace(logFileName, extLog, extCheck, 1)

@@ -29,8 +29,8 @@ func Open(filePath string, batchSize int, alarmFunc func(error)) (*Client, error
 	if err != nil {
 		return nil, err
 	}
-	chIn := make(chan []byte, batchSize)
-	nb := newBatcher(newWriter(f), alarmFunc, chIn, batchSize)
+	//chIn := make(chan []byte, batchSize)
+	nb := newBatcher(newWriter(f), alarmFunc, batchSize)
 	nb.start()
 
 	return &Client{

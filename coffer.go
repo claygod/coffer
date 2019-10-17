@@ -24,6 +24,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+/*
+Coffer - Simple ACID* key-value database.
+*/
 type Coffer struct {
 	config        *Config
 	logger        usecases.Logger
@@ -37,8 +40,7 @@ type Coffer struct {
 }
 
 func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error) {
-	//defer c.checkPanic()
-	//TODO: проверять получаемый конфиг
+	//TODO: check received config
 	resControl, err := resources.New(config.ResourcesConfig)
 	if err != nil {
 		return nil, err, nil
@@ -50,10 +52,10 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 
 	c := &Coffer{
 		config:     config,
-		logger:     logger.WithField("Object", "Coffer"), //  logger.New(services.NewLog(logPrefix)),
+		logger:     logger.WithField("Object", "Coffer"),
 		porter:     porter.New(),
 		resControl: resControl,
-		handlers:   hdls, //handlers.New(),
+		handlers:   hdls,
 		hasp:       startstop.New(),
 	}
 
@@ -65,9 +67,7 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 
 	alarmFunc := func(err error) { // для журнала
 		logger.WithField("Object", "Journal").WithField("Method", "Write").Error(err)
-		//c.logger.Error(err, "Object=Journal", "Method=Write")
 	}
-	//recordsRepo := records.New()
 	riRepo := records.New()
 	fiRepo := records.New()
 	reqCoder := usecases.NewReqCoder()
@@ -80,7 +80,7 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	if err != nil {
 		return nil, err, nil
 	}
-	ri, err, wrn := usecases.NewRecordsInteractor( // RecordsInteractor
+	ri, err, wrn := usecases.NewRecordsInteractor(
 		c.config.UsecasesConfig,
 		logger.WithField("Object", "RecordsInteractor"), //c.logger,
 		ldr,
@@ -91,7 +91,7 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 		riRepo, //recordsRepo,
 		c.handlers,
 		resControl,
-		c.porter,
+		//c.porter,
 		jrn,
 		fileNamer,
 		startstop.New(),
@@ -101,11 +101,11 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	}
 	c.recInteractor = ri
 
-	fi, err := usecases.NewFollowInteractor( // FollowInteractor
-		logger.WithField("Object", "FollowInteractor"), //c.logger,
+	fi, err := usecases.NewFollowInteractor(
+		logger.WithField("Object", "FollowInteractor"),
 		ldr,
-		c.config.UsecasesConfig, //config *Config,
-		chp,                     //*checkpoint,
+		c.config.UsecasesConfig,
+		chp, //*checkpoint,
 		//opr,                     // *operations,
 		fiRepo, //recordsRepo,
 		fileNamer,
@@ -116,12 +116,15 @@ func new(config *Config, hdls domain.HandlersRepository) (*Coffer, error, error)
 	}
 	c.folInteractor = fi
 
-	//fmt.Println(fileNamer)
 	return c, nil, nil
 }
 
-func (c *Coffer) Start() bool { // return prev state
-	//TODO: при аварийной остановке нужно ли иметь возможность запускаться вновь?(StopForever, Concrete - в старт-стоп добавить) возможно, правильный выход - пересоздание и запуск
+/*
+Start - database launch
+*/
+func (c *Coffer) Start() bool {
+	//TODO: при аварийной остановке нужно ли иметь возможность запускаться вновь?
+	// (StopForever, Concrete - в старт-стоп добавить) возможно, правильный выход - пересоздание и запуск
 	defer c.panicRecover()
 
 	c.resControl.Start()
@@ -154,9 +157,12 @@ func (c *Coffer) Start() bool { // return prev state
 	return true
 }
 
+/*
+Stop - database stop
+*/
 func (c *Coffer) Stop() bool {
 	if c.hasp.IsReady() {
-		return true // уже остановлено
+		return true // already stopped
 	}
 
 	defer c.panicRecover()
@@ -183,43 +189,25 @@ func (c *Coffer) Stop() bool {
 	return true
 }
 
-func (c *Coffer) StopHard() error {
-	defer c.panicRecover()
-	var errOut error
-	c.hasp.Block()
-	c.folInteractor.Stop()
-	c.recInteractor.Stop()
-	//TODO: not remove this code!!
-	// if !c.hasp.Block() {
-	// 	errOut = fmt.Errorf("Hasp is not stopped.")
-	// }
-	// if !c.folInteractor.Stop() {
-	// 	errOut = fmt.Errorf("%v Follow Interactor is not stopped.", errOut)
-	// }
-	// if !c.recInteractor.Stop() {
-	// 	errOut = fmt.Errorf("%v Records Interactor is not stopped.", errOut)
-	// }
-	return errOut
-}
-
 // /*
-// SetHandler - add handler. This can be done both before launch and during database operation.
+// StopHard - immediate stop of the database, without waiting for the stop of internal processes.
+// The operation is quick, but extremely dangerous.
 // */
-// func (c *Coffer) SetHandler(handlerName string, handlerMethod *domain.Handler) error {
-// 	//defer c.checkPanic()
-// 	if !c.hasp.IsReady() {
-// 		return fmt.Errorf("Handles cannot be added while the application is running.")
-// 	}
-// 	return c.handlers.Set(handlerName, handlerMethod)
-// }
-
-// func (c *Coffer) Save() error {
+// func (c *Coffer) StopHard() error {
 // 	defer c.panicRecover()
-// 	if !c.Stop() {
-// 		return fmt.Errorf("Could not stop application.")
-// 	}
-// 	if !c.Start() {
-// 		return fmt.Errorf("After stopping to write, the application could not be started.")
-// 	}
-// 	return nil
+// 	var errOut error
+// 	c.hasp.Block()
+// 	c.folInteractor.Stop()
+// 	c.recInteractor.Stop()
+// 	//TODO: not remove this code!!
+// 	// if !c.hasp.Block() {
+// 	// 	errOut = fmt.Errorf("Hasp is not stopped.")
+// 	// }
+// 	// if !c.folInteractor.Stop() {
+// 	// 	errOut = fmt.Errorf("%v Follow Interactor is not stopped.", errOut)
+// 	// }
+// 	// if !c.recInteractor.Stop() {
+// 	// 	errOut = fmt.Errorf("%v Records Interactor is not stopped.", errOut)
+// 	// }
+// 	return errOut
 // }

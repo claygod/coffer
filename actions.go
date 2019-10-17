@@ -14,10 +14,18 @@ import (
 	"github.com/claygod/coffer/usecases"
 )
 
+/*
+Write a new record in the database, specifying the key and value.
+Their length must satisfy the requirements specified in the configuration.
+*/
 func (c *Coffer) Write(key string, value []byte) *reports.Report {
 	return c.WriteList(map[string][]byte{key: value})
 }
 
+/*
+WriteList - write several records to the database by specifying `map` in the arguments.
+Important: this argument is a reference; it cannot be changed in the calling code!
+*/
 func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
 	defer c.panicRecover()
@@ -44,7 +52,7 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
 	req := &usecases.ReqWriteList{
-		Time: time.Now(), //т.к. время берём ПОСЛЕ операции Catch для конкретно этих записей временных коллизий не будет
+		Time: time.Now(),
 		List: input,
 	}
 	rep = c.recInteractor.WriteList(req)
@@ -54,6 +62,11 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 	return rep
 }
 
+/*
+WriteListUnsafe - write several records to the database by specifying `map` in the arguments.
+This method exists in order to fill it up a little faster before starting the database.
+The method does not imply concurrent use.
+*/
 func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
 	defer c.panicRecover()
@@ -81,6 +94,10 @@ func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
 	return rep
 }
 
+/*
+Read one entry from the database. In the received `report` there will be a result code, and if it is positive,
+that will be the value in the `data` field.
+*/
 func (c *Coffer) Read(key string) *reports.ReportRead {
 	rep := &reports.ReportRead{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -96,6 +113,10 @@ func (c *Coffer) Read(key string) *reports.ReportRead {
 	return rep
 }
 
+/*
+ReadList - read a few entries. There is a limit on the maximum number of readable entries in the configuration.
+In addition to the found records, a list of not found records is returned.
+*/
 func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -125,6 +146,10 @@ func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	return rep
 }
 
+/*
+ReadListUnsafe - read a few entries. The method can be called when the database is stopped (not running).
+The method does not imply concurrent use.
+*/
 func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -146,15 +171,26 @@ func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
 	return rep
 }
 
+/*
+Delete - remove a single record.
+*/
 func (c *Coffer) Delete(key string) *reports.Report {
 	repList := c.DeleteListStrict([]string{key})
 	return &repList.Report
 }
 
+/*
+DeleteListStrict - delete several records, but only if they are all in the database.
+If at least one entry is missing, then no record will be deleted.
+*/
 func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
 	return c.deleteList(keys, true)
 }
 
+/*
+DeleteListOptional - delete multiple entries. Those entries from the list
+that will be found in the database will be deleted.
+*/
 func (c *Coffer) DeleteListOptional(keys []string) *reports.ReportDeleteList {
 	return c.deleteList(keys, false)
 }
@@ -188,9 +224,15 @@ func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDelet
 	return rep
 }
 
+/*
+Transaction - execute a handler. The transaction handler must be registered in the database at the stage
+of creating and configuring the database. Responsibility for the consistency of the functionality
+of transaction handlers between different database launches rests with the database user.
+The transaction returns the new values stored in the database.
+*/
 func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.ReportTransaction {
 	// tStart := time.Now().UnixNano()
-	// defer fmt.Println("Время проведения оперерации ", time.Now().UnixNano()-tStart)
+	// defer fmt.Println("Operation time ", time.Now().UnixNano()-tStart)
 
 	rep := &reports.ReportTransaction{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -223,6 +265,10 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *rep
 	return rep
 }
 
+/*
+Count - get the number of records in the database.
+A query can only be made to a running database
+*/
 func (c *Coffer) Count() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -240,6 +286,10 @@ func (c *Coffer) Count() *reports.ReportRecordsCount {
 	return rep
 }
 
+/*
+CountUnsafe - get the number of records in the database.
+Queries to a stopped / not running database cannot be done in parallel!
+*/
 func (c *Coffer) CountUnsafe() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
 	defer c.panicRecover()
@@ -257,6 +307,11 @@ func (c *Coffer) CountUnsafe() *reports.ReportRecordsCount {
 	return rep
 }
 
+/*
+RecordsList - get a list of all database keys. With a large number of records in the database,
+the query will be slow, so use its only in case of emergency.
+The method only works when the database is running.
+*/
 func (c *Coffer) RecordsList() *reports.ReportRecordsList {
 	defer c.panicRecover()
 	if !c.hasp.Add() {
@@ -274,6 +329,11 @@ func (c *Coffer) RecordsList() *reports.ReportRecordsList {
 	return rep
 }
 
+/*
+RecordsListUnsafe - get a list of all database keys. With a large number of records in the database,
+the query will be slow, so use its only in case of emergency. When using a query with
+a stopped/not_running database, competitiveness prohibited.
+*/
 func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
 	defer c.panicRecover()
 	rep := c.recInteractor.RecordsList()
@@ -283,6 +343,10 @@ func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
 	return rep
 }
 
+/*
+RecordsListWithPrefix - get a list of all the keys having prefix
+specified in the argument (start with that string).
+*/
 func (c *Coffer) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList {
 	defer c.panicRecover()
 	if !c.hasp.Add() {
@@ -300,6 +364,9 @@ func (c *Coffer) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList
 	return rep
 }
 
+/*
+RecordsListWithSuffix - get a list of all the keys that have the specified argument suffix (ending).
+*/
 func (c *Coffer) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList {
 	defer c.panicRecover()
 	if !c.hasp.Add() {

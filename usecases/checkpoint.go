@@ -18,6 +18,9 @@ type checkpoint struct {
 	config *Config
 }
 
+/*
+NewCheckpoint - create new checkpoint.
+*/
 func NewCheckpoint(config *Config) *checkpoint {
 	return &checkpoint{
 		config: config,
@@ -93,7 +96,7 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 		key := make([]byte, sizeKey)
 		n, err := f.Read(key)
 		if err != nil {
-			// if err == io.EOF { // тут EOF не должно быть?
+			// if err == io.EOF { // EOF ?
 			// break
 			// }
 			return err
@@ -105,7 +108,7 @@ func (c *checkpoint) loadFromFile(repo domain.RecordsRepository, f *os.File) err
 		value := make([]byte, int(sizeValue))
 		n, err = f.Read(value)
 		if err != nil {
-			// if err == io.EOF { // тут EOF не должно быть?
+			// if err == io.EOF { // EOF ?
 			// break
 			// }
 			repo.Reset()

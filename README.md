@@ -534,8 +534,8 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] testing helper helpers
 - [x] when creating a database, immediately add a list of handlers, because and loading from the logs also happens immediately
 - [x] add a convenient configurator when creating a database
-- [ ] translate comments into English
-- [ ] clear code from old artifacts
+- [x] translate comments into English
+- [x] clear code from old artifacts
 - [ ] create a directory for documentation
 - [x] create a directory for examples
 - [x] make a simple example with writing, transaction and reading
@@ -557,7 +557,7 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] when a transaction returns new values ​​in the report
 - [x] in tests check return value
 - [x] start numbering with large digits, say with a million, or a billion (more convenient for sorting files)
-- [ ] all public methods give a correct description-comment
+- [x] all public methods give a correct description-comment
 - [ ] return error and warning in Create method
 
 

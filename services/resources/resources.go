@@ -29,6 +29,9 @@ type ResourcesControl struct {
 	//hasp       int64
 }
 
+/*
+New - create ResourcesControl
+*/
 func New(cnf *Config) (*ResourcesControl, error) {
 	m := &ResourcesControl{
 		config:  cnf,
@@ -55,6 +58,9 @@ func New(cnf *Config) (*ResourcesControl, error) {
 	return m, nil
 }
 
+/*
+Start - launch ResourcesControl
+*/
 func (r *ResourcesControl) Start() bool {
 	res := r.starter.Start()
 	if res {

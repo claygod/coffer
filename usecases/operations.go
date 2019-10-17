@@ -16,7 +16,6 @@ import (
 )
 
 type Operations struct {
-	//logger     Logger
 	config     *Config
 	reqCoder   *ReqCoder
 	resControl Resourcer
@@ -25,7 +24,6 @@ type Operations struct {
 
 func NewOperations(config *Config, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Operations {
 	return &Operations{
-		//logger:     logger,
 		config:     config,
 		reqCoder:   reqCoder,
 		resControl: resControl,
@@ -38,7 +36,6 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 		if !o.resControl.GetPermission(int64(len(op.Body))) {
 			return fmt.Errorf("Operation code %d, len(body)=%d, Not permission!", op.Code, len(op.Body))
 		}
-		//fmt.Println("Operation: ", string(op.Body))
 		//TODO: пока не проверяем результаты операций, считаем, что раз он были ок в первый раз, должны быть ок и сейчас
 		// если не ок, то надо всё останавливать, т.к. все записанные операции раньше были успешными
 		switch op.Code {
@@ -64,7 +61,6 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 			if err != nil {
 				return err
 			} else if notFound := repo.DelListStrict(reqDL.Keys); len(notFound) != 0 {
-				//notFound := repo.DelListStrict(reqDL.Keys) //результат не важен, главное, что он такой же как и в предыдущий раз
 				return fmt.Errorf("Operations:DoOperations:DeleteList:Keys not found: %s", strings.Join(notFound, ", "))
 			}
 		case codeDeleteListOptional:
@@ -77,7 +73,6 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 		default:
 			return fmt.Errorf("Unknown operation `%d`", op.Code)
 		}
-		//f.changesCounter += int64(len(op.Body)) //считаем в байтах
 	}
 	return nil
 }
@@ -90,68 +85,56 @@ func (o *Operations) loadFromFile(filePath string) ([]*domain.Operation, error, 
 	defer opFile.Close()
 	fInfo, err := opFile.Stat()
 	if err != nil || fInfo.Size() == 0 {
-		return make([]*domain.Operation, 0), nil, nil //тут можно и nil возвращать, но лучше всё же пустой список
+		return make([]*domain.Operation, 0), nil, nil // here you can return nil, but it’s better to still have an empty list
 	}
 	ops, wrn := o.loadOperationsFromFile(opFile)
 	return ops, nil, wrn
 }
 
 /*
-loadOperationsFromFile - скачиваем операции из файла, возвращаемая ошибка
-скорей всего означает, что какая-то операция не полностью была записана и невозможно
-было её прочитать. Соответственно, ошибки не критические, и скорее нужны для логов.
-(Так как критические, были бы при невозможности открыть файл, отсутствии директории,
-а в данном случае в аргументах уже открытый файл, осталось его только прочитать.)
+loadOperationsFromFile - download operations from a file, return error
+most likely means that some operation was not completely recorded and it was impossible to read it.
+Accordingly, errors are not critical, and are rather needed for logs.
+(Since it’s critical, if it were impossible to open the file, there was no directory,
+and in this case the file is already open in the arguments, it remains only to read it.)
 */
 func (o *Operations) loadOperationsFromFile(fl *os.File) ([]*domain.Operation, error) {
 	// st, _ := fl.Stat()
 	// flSize := st.Size()
-
 	//stat, _ := fl.Stat()
 	//fmt.Println("stst: ", stat.Size(), fl.Name())
+
 	counReadedBytes := 0
 	ops := make([]*domain.Operation, 0, 16)
 	rSize := make([]byte, 8)
 	var errOut error
 	for {
-		//fmt.Println("---loadOperationsFromFile")
 		_, err := fl.Read(rSize)
 		if err != nil {
-			//fmt.Println("OP:LD:err1: ", err)
 			if err != io.EOF {
-				errOut = err //o.logger.Warning(err)
+				errOut = err
 			}
 			break
-			//return nil, err
 		}
-		//fmt.Println("OP:LD:1:rSize: ", rSize)
 		counReadedBytes += 8
 		rSuint64 := bytesToUint64(rSize)
-		//fmt.Println("OP:LD:1:rSuint64: ", rSuint64)
 		bTotal := make([]byte, int(rSuint64))
 		n, err := fl.Read(bTotal)
 		if err != nil {
-			// if err == io.EOF { // тут EOF не должно быть?????
+			// if err == io.EOF { // EOF ?
 			// break
 			// }
-			//fmt.Println("OP:LD:err2: ", err)
-			errOut = err //o.logger.Warning(err)
+			errOut = err
 			break
-			//return nil, err
 		} else if n != int(rSuint64) {
 			errOut = fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
-			//o.logger.Warning(fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64))
-			//fmt.Println("OP:LD:err3: ", n, int(rSuint64), rSuint64)
 			break
-			//return nil, fmt.Errorf("The operation is not fully loaded: %d from %d )", n, rSuint64)
 		}
 		op, err := o.logToOperat(bTotal)
 		if err != nil {
-			errOut = err // o.logger.Warning(err)
+			errOut = err
 			break
-			//return nil, err
 		}
-		//fmt.Println("OP:LD:OP: ", op)
 		ops = append(ops, op)
 	}
 	return ops, errOut
@@ -172,7 +155,7 @@ func (o *Operations) operatToLog(op *domain.Operation) ([]byte, error) {
 }
 
 func (o *Operations) logToOperat(in []byte) (*domain.Operation, error) {
-	if len(in) < 3 { //TODO: разобраться с минимальной цифрой (через тесты)
+	if len(in) < 3 { //TODO: deal with the minimum number (through tests)
 		return nil, fmt.Errorf("Len of input operation array == %d", len(in))
 	}
 	op := &domain.Operation{
