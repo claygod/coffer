@@ -12,6 +12,9 @@ import (
 	"github.com/claygod/coffer/usecases"
 )
 
+/*
+Config - Coffer configuration
+*/
 type Config struct {
 	JournalConfig   *journal.Config
 	UsecasesConfig  *usecases.Config

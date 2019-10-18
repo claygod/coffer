@@ -172,7 +172,7 @@ func (r *Report) IsCodeErrHandlerReturn() bool {
 }
 
 /*
-IsCodeErrHandlerResponse- checking code for error ErrHandlerResponse
+IsCodeErrHandlerResponse - checking code for error ErrHandlerResponse
 */
 func (r *Report) IsCodeErrHandlerResponse() bool {
 	return r.Code == codes.ErrHandlerResponse

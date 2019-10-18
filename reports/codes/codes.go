@@ -10,7 +10,7 @@ Code - response code type
 type Code int64
 
 const (
-	//OK - done without errors
+	//Ok - done without errors
 	Ok Code = iota // выполнено без замечаний
 	//Error - completed with errors, but you can continue to work
 	Error // не выполнено, но работать дальше можно
@@ -24,7 +24,7 @@ const (
 	ErrExceedingZeroKeyLength // слишком короткий ключ
 	//ErrHandlerNotFound - not found handler
 	ErrHandlerNotFound // не найден хэндлер
-	//ErrParseReques - failed to prepare a request for logging
+	//ErrParseRequest - failed to prepare a request for logging
 	ErrParseRequest // не получилось подготовить запрос для логгирования
 	//ErrResources - not enough resources
 	ErrResources // не хватает ресурсов

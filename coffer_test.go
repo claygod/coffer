@@ -1062,7 +1062,8 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	}
 	cof1.Start()
 	for i := 10; i < 19; i++ {
-		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
+		rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i)))
+		if rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
 			return
 		}
