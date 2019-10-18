@@ -22,11 +22,9 @@ worker - basic cycle.
 	- zeroes the buffer under the new batch
 */
 func (b *batcher) worker() {
-	//fmt.Println("----------22--- ")
 	var buf bytes.Buffer
 	for {
 		buf.Reset()
-		//fmt.Println("-1 собрались получить с входного канала")
 		var u int
 		// begin
 		select {
@@ -39,12 +37,10 @@ func (b *batcher) worker() {
 			if len(b.chInput) == 0 {
 				atomic.StoreInt64(&b.stopFlag, stateStop)
 				return
-			} else {
-				continue
 			}
+			continue
 
 		case inData := <-b.chInput:
-			//fmt.Println("++--inData++1++", len(inData), string(inData))
 			if _, err := buf.Write(inData); err != nil {
 				b.alarm(err)
 
@@ -59,7 +55,6 @@ func (b *batcher) worker() {
 		for i := 0; i < b.batchSize; i++ { // -1
 			select {
 			case inData := <-b.chInput:
-				//fmt.Println("++--inData++2++", len(inData), string(inData), "++++++++++++++++++++++++++++++++++++")
 				if _, err := buf.Write(inData); err != nil {
 					b.alarm(err)
 				} else {
@@ -72,16 +67,12 @@ func (b *batcher) worker() {
 		// batch to out
 		bOut := buf.Bytes()
 		if len(bOut) > 0 {
-			//fmt.Println("************* Текущий батч - ", u, len(bOut))
 			if _, err := b.work.Write(bOut); err != nil {
 				atomic.StoreInt64(&b.stopFlag, stateStop)
 				b.alarm(err)
 				return
 			}
-			//b.indicator.switchChan()
-			//buf.Reset()
 		} else {
-			//fmt.Println("************** Почему-то  len(bOut) == 0 ")
 			time.Sleep(100 * time.Microsecond)
 			runtime.Gosched()
 		}
@@ -91,16 +82,12 @@ func (b *batcher) worker() {
 			if len(b.chInput) == 0 {
 				atomic.StoreInt64(&b.stopFlag, stateStop)
 				return
-			} else {
-				continue
 			}
+			continue
 		default:
 		}
-		// cursor (indicator)  switch
 		b.indicator.switchChan()
 		buf.Reset()
-
-		//time.Sleep(100 * time.Millisecond)
 	}
 }
 
@@ -113,13 +100,11 @@ func (b *batcher) fillBuf(buf bytes.Buffer, counter *int64) error {
 	case inData := <-b.chInput:
 		if _, err := buf.Write(inData); err != nil {
 			return err
-
 		}
 		//default:
 		//break
 	}
 	// batch fill
-	//fmt.Println("-2 получили, может быть ещё что-то получим")
 	for i := 0; i < b.batchSize; i++ { // -1
 		select {
 		case inData := <-b.chInput:
@@ -142,17 +127,13 @@ func (b *batcher) fillBuf(buf bytes.Buffer, counter *int64) error {
 func (b *batcher) writeBuf(buf bytes.Buffer, counter *int64) error {
 	bOut := buf.Bytes()
 	if len(bOut) > 0 {
-		//fmt.Println("************* Текущий батч - ", u)
 		if _, err := b.work.Write(buf.Bytes()); err != nil {
-			// atomic.StoreInt64(&b.stopFlag, stateStop)
-			// b.alarm(err)
 			return err
 		}
 		//b.indicator.switchChan()
 		//buf.Reset()
 	} else {
-		//fmt.Println("************** Почему-то  len(bOut) == 0 ")
-		time.Sleep(100000 * time.Microsecond)
+		time.Sleep(pauseByEmptyBuf)
 		runtime.Gosched()
 	}
 	atomic.AddInt64(counter, -1)

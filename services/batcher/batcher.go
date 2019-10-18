@@ -8,9 +8,11 @@ import (
 	"io"
 	"runtime"
 	"sync/atomic"
+	"time"
 )
 
-const batchRatio int = 10 // how many batches fit into the input channel
+const batchRatio int = 10                                    // how many batches fit into the input channel
+const pauseByEmptyBuf time.Duration = 200 * time.Millisecond // do not change!
 
 const (
 	stateStop int64 = 0 << iota

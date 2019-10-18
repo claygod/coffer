@@ -4,28 +4,42 @@ package codes
 // Config
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
+/*
+Code - response code type
+*/
 type Code int64
 
 const (
-	//TODO: коды в отдельный пакет
+	//OK - done without errors
 	Ok Code = iota // выполнено без замечаний
-
-	//Warning // выполнено но с замечаниями
-
-	Error                     // не выполнено, но работать дальше можно
-	ErrRecordLimitExceeded    // превышен лимит записей на одну операцию
-	ErrExceedingMaxValueSize  // слишком длинное значение
-	ErrExceedingMaxKeyLength  // слишком длинный ключ
+	//Error - completed with errors, but you can continue to work
+	Error // не выполнено, но работать дальше можно
+	//ErrRecordLimitExceeded - record limit per operation exceeded
+	ErrRecordLimitExceeded // превышен лимит записей на одну операцию
+	//ErrExceedingMaxValueSize - value too long
+	ErrExceedingMaxValueSize // слишком длинное значение
+	//ErrExceedingMaxKeyLength - key is too long
+	ErrExceedingMaxKeyLength // слишком длинный ключ
+	//ErrExceedingZeroKeyLength - key too short
 	ErrExceedingZeroKeyLength // слишком короткий ключ
-	ErrHandlerNotFound        // не найден хэндлер
-	ErrParseRequest           // не получилось подготовить запрос для логгирования
-	ErrResources              // не хватает ресурсов
-	ErrNotFound               // не найдены ключи
-	ErrReadRecords            // ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
-	ErrHandlerReturn          // найденный и загруженный хандлер вернул ошибку
-	ErrHandlerResponse        // хандлер вернул неполные ответы
-
+	//ErrHandlerNotFound - not found handler
+	ErrHandlerNotFound // не найден хэндлер
+	//ErrParseReques - failed to prepare a request for logging
+	ErrParseRequest // не получилось подготовить запрос для логгирования
+	//ErrResources - not enough resources
+	ErrResources // не хватает ресурсов
+	//ErrNotFound - no keys found
+	ErrNotFound // не найдены ключи
+	//ErrReadRecords - error reading records for a transaction (in the absence of at least one record, a transaction cannot be performed)
+	ErrReadRecords // ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
+	//ErrHandlerReturn - found and loaded handler returned an error
+	ErrHandlerReturn // найденный и загруженный хандлер вернул ошибку
+	//ErrHandlerResponse - handler returned incomplete answers
+	ErrHandlerResponse // хандлер вернул неполные ответы
+	//Panic - not completed, further work with the database is impossible
 	Panic // не выполнено, дальнейшая работа с БД невозможна
+	//PanicStopped - the database is stopped, so you can’t work with it
 	PanicStopped
+	//PanicWAL - operation logging error, database stopped
 	PanicWAL
 )

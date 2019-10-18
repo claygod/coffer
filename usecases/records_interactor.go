@@ -19,6 +19,9 @@ import (
 	//"github.com/claygod/coffer/services/journal"
 )
 
+/*
+RecordsInteractor - the main request handler for operations with database records.
+*/
 type RecordsInteractor struct {
 	config     *Config
 	logger     Logger
@@ -36,6 +39,9 @@ type RecordsInteractor struct {
 	hasp      Starter
 }
 
+/*
+NewRecordsInteractor - create new RecordsInteractor
+*/
 func NewRecordsInteractor(
 	config *Config,
 	logger Logger,
@@ -101,6 +107,9 @@ func NewRecordsInteractor(
 	return r, nil, nil
 }
 
+/*
+Start - start the interactor.
+*/
 func (r *RecordsInteractor) Start() bool {
 	if err := r.journal.Start(); err != nil {
 		return false
@@ -108,6 +117,9 @@ func (r *RecordsInteractor) Start() bool {
 	return r.hasp.Start()
 }
 
+/*
+Stop - stop the interactor.
+*/
 func (r *RecordsInteractor) Stop() bool {
 	if !r.hasp.Block() {
 		return false
@@ -131,9 +143,9 @@ func (r *RecordsInteractor) save(args ...string) error {
 		nm, err := r.filenamer.GetNewFileName(extCheck + extPoint)
 		if err != nil {
 			return err
-		} else {
-			novName = nm
 		}
+		novName = nm
+
 	}
 	novName = strings.Replace(novName, extCheck+extPoint, extCheck, 1)
 	if err := r.chp.save(r.repo, novName); err != nil {
@@ -143,6 +155,9 @@ func (r *RecordsInteractor) save(args ...string) error {
 	return nil
 }
 
+/*
+WriteList - set a few records in safe mode.
+*/
 func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 	rep := &reports.Report{}
 	if !r.hasp.Add() {
@@ -176,6 +191,9 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 	return rep
 }
 
+/*
+WriteListUnsafe - set a few records in unsafe mode.
+*/
 func (r *RecordsInteractor) WriteListUnsafe(req *ReqWriteList) *reports.Report {
 	rep := &reports.Report{}
 	// prepare the byte version of the operation for the log
@@ -197,6 +215,9 @@ func (r *RecordsInteractor) WriteListUnsafe(req *ReqWriteList) *reports.Report {
 	return rep
 }
 
+/*
+ReadList - get a few records in safe mode.
+*/
 func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer r.checkPanic()
@@ -217,6 +238,9 @@ func (r *RecordsInteractor) ReadList(req *ReqLoadList) *reports.ReportReadList {
 	return rep
 }
 
+/*
+ReadListUnsafe - get a few records in unsafe mode.
+*/
 func (r *RecordsInteractor) ReadListUnsafe(req *ReqLoadList) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer r.checkPanic()
@@ -231,6 +255,9 @@ func (r *RecordsInteractor) ReadListUnsafe(req *ReqLoadList) *reports.ReportRead
 	return rep
 }
 
+/*
+DeleteList - delete multiple records in the database.
+*/
 func (r *RecordsInteractor) DeleteList(req *ReqDeleteList, strictMode bool) *reports.ReportDeleteList {
 	defer r.checkPanic()
 	rep := &reports.ReportDeleteList{Report: reports.Report{}}
@@ -345,6 +372,9 @@ func (r *RecordsInteractor) reqTransactionToLog(req *ReqTransaction) ([]byte, er
 	return r.opr.operatToLog(op)
 }
 
+/*
+Transaction - complete a transaction.
+*/
 func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.ReportTransaction { // interface{}, map[string][]byte, *domain.Handler
 	//tStart := time.Now().UnixNano()
 	//defer fmt.Println("Operation time ", time.Now().UnixNano()-tStart)
@@ -391,6 +421,9 @@ func (r *RecordsInteractor) Transaction(req *ReqTransaction) *reports.ReportTran
 	return rep
 }
 
+/*
+RecordsCount - get the total number of records in the database.
+*/
 func (r *RecordsInteractor) RecordsCount() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
 	if !r.hasp.Add() {
@@ -405,6 +438,9 @@ func (r *RecordsInteractor) RecordsCount() *reports.ReportRecordsCount {
 	return rep
 }
 
+/*
+RecordsList - get records list
+*/
 func (r *RecordsInteractor) RecordsList() *reports.ReportRecordsList {
 	rep := &reports.ReportRecordsList{Report: reports.Report{}}
 	if !r.hasp.Add() {
@@ -419,6 +455,9 @@ func (r *RecordsInteractor) RecordsList() *reports.ReportRecordsList {
 	return rep
 }
 
+/*
+RecordsListWithPrefix - get records list with prefix.
+*/
 func (r *RecordsInteractor) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList {
 	rep := &reports.ReportRecordsList{Report: reports.Report{}}
 	if !r.hasp.Add() {
@@ -433,6 +472,9 @@ func (r *RecordsInteractor) RecordsListWithPrefix(prefix string) *reports.Report
 	return rep
 }
 
+/*
+RecordsListWithSuffix - get records list with suffix.
+*/
 func (r *RecordsInteractor) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList {
 	rep := &reports.ReportRecordsList{Report: reports.Report{}}
 	if !r.hasp.Add() {

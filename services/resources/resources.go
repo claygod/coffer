@@ -71,6 +71,9 @@ func (r *ResourcesControl) Start() bool {
 	//atomic.StoreInt64(&r.hasp, 0)
 }
 
+/*
+Stop - ResourcesControl stop.
+*/
 func (r *ResourcesControl) Stop() bool {
 	return r.starter.Stop()
 	//atomic.StoreInt64(&r.hasp, 0)
@@ -108,10 +111,9 @@ func (r *ResourcesControl) setFreeDisk() error {
 	if err != nil {
 		atomic.StoreInt64(&r.freeDisk, 0)
 		return err
-	} else {
-		atomic.StoreInt64(&r.freeDisk, int64(us.Free))
-		return nil
 	}
+	atomic.StoreInt64(&r.freeDisk, int64(us.Free))
+	return nil
 }
 
 func (r *ResourcesControl) setFreeMemory() error {
@@ -119,10 +121,9 @@ func (r *ResourcesControl) setFreeMemory() error {
 	if err != nil {
 		atomic.StoreInt64(&r.freeMemory, 0)
 		return err
-	} else {
-		atomic.StoreInt64(&r.freeMemory, int64(vms.Available))
-		return nil
 	}
+	atomic.StoreInt64(&r.freeMemory, int64(vms.Available))
+	return nil
 }
 
 func (r *ResourcesControl) getPermissionDisk(size int64) bool {

@@ -4,6 +4,9 @@ package journal
 // Journal (config)
 // Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
 
+/*
+Config - journal configuration.
+*/
 type Config struct {
 	//DirPath                string
 	BatchSize              int

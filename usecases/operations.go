@@ -76,9 +76,8 @@ func (o *Operations) DoOperations(ops []*domain.Operation, repo domain.RecordsRe
 			reqDL, err := o.reqCoder.ReqDeleteListDecode(op.Body)
 			if err != nil {
 				return err
-			} else {
-				repo.DelListOptional(reqDL.Keys)
 			}
+			repo.DelListOptional(reqDL.Keys)
 		default:
 			return fmt.Errorf("Unknown operation `%d`", op.Code)
 		}

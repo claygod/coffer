@@ -4,8 +4,8 @@
 
 Simple ACID* key-value database. At medium or even low `latency` provides
 a large `throughput` without sacrificing ACID database properties.
-The database makes it possible to create record headers at its discretion
-and use them as transactions.
+The database makes it possible to create record headers at its discretion and use them as transactions.
+The maximum size of the stored data is limited by the size of the computer's RAM.
 
 *is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
 
@@ -559,6 +559,8 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] start numbering with large digits, say with a million, or a billion (more convenient for sorting files)
 - [x] all public methods give a correct description-comment
 - [ ] return error and warning in Create method
+- [ ] pause in the batcher - check its size, set the optimal
+- [ ] add in the description that the data during the operation of the database is stored both on disk and in memory
 
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>

@@ -41,7 +41,7 @@ func Open(filePath string, batchSize int, alarmFunc func(error)) (*Client, error
 }
 
 /*
-Write -
+Write - write data.
 */
 func (c *Client) Write(in []byte) {
 
@@ -56,6 +56,9 @@ func (c *Client) Write(in []byte) {
 	//fmt.Println("step 5")
 }
 
+/*
+Close - stop and close Client.
+*/
 func (c *Client) Close() {
 	if c.b == nil {
 		return

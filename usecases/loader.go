@@ -11,6 +11,9 @@ import (
 	"github.com/claygod/coffer/domain"
 )
 
+/*
+Loader - assistant for loading logs and checkpoints.
+*/
 type Loader struct {
 	config *Config
 	logger Logger
@@ -18,6 +21,9 @@ type Loader struct {
 	opr    *Operations
 }
 
+/*
+NewLoader - create new Loader
+*/
 func NewLoader(config *Config, lgr Logger, chp *checkpoint, reqCoder *ReqCoder, resControl Resourcer, trn *Transaction) *Loader {
 	return &Loader{
 		config: config,
@@ -27,6 +33,9 @@ func NewLoader(config *Config, lgr Logger, chp *checkpoint, reqCoder *ReqCoder, 
 	}
 }
 
+/*
+LoadLatestValidCheckpoint - download the last valid checkpoint (from the list).
+*/
 func (l *Loader) LoadLatestValidCheckpoint(chpList []string, repo domain.RecordsRepository) (string, error) {
 	for i := len(chpList) - 1; i >= 0; i-- {
 		fChName := chpList[i]
@@ -49,6 +58,9 @@ func (l *Loader) loadCheckpoint(chpName string, repo domain.RecordsRepository) e
 	return nil
 }
 
+/*
+LoadLogs - loading logs from the files from the list.
+*/
 func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error, error) {
 	counter := 0
 	var wr error
@@ -65,9 +77,8 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 			case len(fList):
 				if !l.config.AllowStartupErrLoadLogs {
 					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
-				} else {
-					brk = true
 				}
+				brk = true
 			case len(fList) - 1:
 				stat, err := os.Stat(l.config.DirPath + fList[len(fList)-1])
 				if err != nil {
@@ -79,9 +90,8 @@ func (l *Loader) LoadLogs(fList []string, repo domain.RecordsRepository) (error,
 				}
 				if !l.config.AllowStartupErrLoadLogs {
 					return fmt.Errorf("The spoiled log. l.config.AllowStartupErrLoadLogs == false"), wrn
-				} else {
-					brk = true
 				}
+				brk = true
 			default:
 				return fmt.Errorf("The spoiled log (%s) .", l.config.DirPath+fName), wrn
 			}

@@ -10,13 +10,22 @@ import (
 	"time"
 )
 
+/*
+ReqCoder - requests encoder and decoder.
+*/
 type ReqCoder struct {
 }
 
+/*
+NewReqCoder - create new ReqCoder.
+*/
 func NewReqCoder() *ReqCoder {
 	return &ReqCoder{}
 }
 
+/*
+ReqWriteListEncode - encode ReqWriteList
+*/
 func (r *ReqCoder) ReqWriteListEncode(req *ReqWriteList) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -24,6 +33,9 @@ func (r *ReqCoder) ReqWriteListEncode(req *ReqWriteList) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+/*
+ReqDeleteListEncode - encode ReqDeleteList
+*/
 func (r *ReqCoder) ReqDeleteListEncode(req *ReqDeleteList) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -31,6 +43,9 @@ func (r *ReqCoder) ReqDeleteListEncode(req *ReqDeleteList) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+/*
+ReqTransactionEncode - encode ReqTransaction
+*/
 func (r *ReqCoder) ReqTransactionEncode(req *ReqTransaction) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -38,6 +53,9 @@ func (r *ReqCoder) ReqTransactionEncode(req *ReqTransaction) ([]byte, error) {
 	return buf.Bytes(), err
 }
 
+/*
+ReqWriteListDecode - decode ReqWriteList
+*/
 func (r *ReqCoder) ReqWriteListDecode(body []byte) (*ReqWriteList, error) {
 	dec := gob.NewDecoder(bytes.NewBuffer(body))
 	var req ReqWriteList
@@ -45,6 +63,9 @@ func (r *ReqCoder) ReqWriteListDecode(body []byte) (*ReqWriteList, error) {
 	return &req, err
 }
 
+/*
+ReqDeleteListDecode - decode ReqDeleteList
+*/
 func (r *ReqCoder) ReqDeleteListDecode(body []byte) (*ReqDeleteList, error) {
 	dec := gob.NewDecoder(bytes.NewBuffer(body))
 	var req ReqDeleteList
@@ -52,6 +73,9 @@ func (r *ReqCoder) ReqDeleteListDecode(body []byte) (*ReqDeleteList, error) {
 	return &req, err
 }
 
+/*
+ReqTransactionDecode - decode ReqTransaction
+*/
 func (r *ReqCoder) ReqTransactionDecode(body []byte) (*ReqTransaction, error) {
 	dec := gob.NewDecoder(bytes.NewBuffer(body))
 	var req ReqTransaction
@@ -59,21 +83,33 @@ func (r *ReqCoder) ReqTransactionDecode(body []byte) (*ReqTransaction, error) {
 	return &req, err
 }
 
+/*
+ReqWriteList - write list request
+*/
 type ReqWriteList struct {
 	Time time.Time
 	List map[string][]byte
 }
 
+/*
+ReqLoadList - load list  request
+*/
 type ReqLoadList struct {
 	Time time.Time
 	Keys []string
 }
 
+/*
+ReqDeleteList - delete list request
+*/
 type ReqDeleteList struct {
 	Time time.Time
 	Keys []string
 }
 
+/*
+ReqTransaction - transaction request
+*/
 type ReqTransaction struct {
 	Time        time.Time
 	HandlerName string

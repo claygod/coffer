@@ -15,11 +15,17 @@ import (
 	"github.com/claygod/coffer/reports/codes"
 )
 
+/*
+Transaction - starts processing transaction handlers.
+*/
 type Transaction struct {
 	//repo domain.RecordsRepository
 	handlers HandleStore
 }
 
+/*
+NewTransaction - create new Transaction.
+*/
 func NewTransaction(handlers HandleStore) *Transaction {
 	return &Transaction{
 		handlers: handlers,

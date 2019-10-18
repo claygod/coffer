@@ -31,6 +31,9 @@ type Journal struct {
 	state             int64
 }
 
+/*
+New - create new Journal.
+*/
 func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal, error) {
 	return &Journal{
 		config:    cnf,
@@ -43,6 +46,9 @@ func New(cnf *Config, fn *filenamer.FileNamer, alarmFunc func(error)) (*Journal,
 	}, nil
 }
 
+/*
+Start - launch the journal.
+*/
 func (j *Journal) Start() error {
 	j.m.Lock()
 	defer j.m.Unlock()
@@ -58,6 +64,9 @@ func (j *Journal) Start() error {
 	return nil
 }
 
+/*
+Stop - stop the journal.
+*/
 func (j *Journal) Stop() {
 	j.m.Lock()
 	defer j.m.Unlock()
@@ -71,6 +80,9 @@ func (j *Journal) Stop() {
 	}
 }
 
+/*
+Restart - restart the Journal. The counter is set so that the next write is in a new file.
+*/
 func (j *Journal) Restart() {
 	// j.m.Lock()
 	// defer j.m.Unlock()
@@ -78,6 +90,9 @@ func (j *Journal) Restart() {
 	atomic.StoreInt64(&j.counter, j.config.LimitRecordsPerLogfile+1)
 }
 
+/*
+Write - write data to log file.
+*/
 func (j *Journal) Write(toSave []byte) error {
 	if st := atomic.LoadInt64(&j.state); st != stateStarted {
 		return fmt.Errorf("State is `%d` (not started).", st)
@@ -87,9 +102,9 @@ func (j *Journal) Write(toSave []byte) error {
 		j.alarmFunc(err)
 		atomic.StoreInt64(&j.state, statePanic)
 		return err
-	} else {
-		clt.Write(toSave)
 	}
+	clt.Write(toSave)
+
 	return nil
 }
 

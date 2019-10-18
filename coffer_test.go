@@ -199,11 +199,13 @@ func TestCofferReadListUnsafe(t *testing.T) {
 	if rep := cof1.ReadListUnsafe([]string{"pr1-suf1", "pr2-suf2"}); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
 		t.Errorf("ReadListUnsafe`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
-	longKey := "long"
-	for i := 0; i < 10; i++ {
-		longKey += longKey
+	//longKey := "loooonnggggg"
+	longKey := make([]byte, 2000)
+	for i := 0; i < 2000; i++ {
+		longKey[i] = 101
 	}
-	if rep := cof1.ReadListUnsafe([]string{longKey, "pr2-suf2"}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
+
+	if rep := cof1.ReadListUnsafe([]string{string(longKey), "pr2-suf2"}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
 		t.Errorf("ReadListUnsafe`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
 	cof1.hasp.Stop()
@@ -550,19 +552,21 @@ func TestCofferWriteListReadList(t *testing.T) {
 		t.Errorf("Records (cof1) count, have %d, wand 9.", rep.Count)
 		return
 	}
-	longKey := "loooonnggggg"
-	for i := 0; i < 1000; i++ {
-		longKey += "!"
+	//longKey := "loooonnggggg"
+	longKey := make([]byte, 2000)
+	for i := 0; i < 2000; i++ {
+		longKey[i] = 101
 	}
-	longValue := "loooonnggggg"
-	for i := 0; i < 1000; i++ {
-		longValue += longKey
+	//longValue := "loooonnggggg"
+	longValue := make([]byte, 20000)
+	for i := 0; i < 20000; i++ {
+		longValue[i] = 102
 	}
-	if rep := cof1.WriteList(map[string][]byte{longKey: []byte("zzz")}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
+	if rep := cof1.WriteList(map[string][]byte{string(longKey): []byte("zzz")}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
-	if rep := cof1.WriteList(map[string][]byte{"shortKey": []byte(longValue)}); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
+	if rep := cof1.WriteList(map[string][]byte{"shortKey": longValue}); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
@@ -637,19 +641,21 @@ func TestCofferWriteListUnsafeReadList(t *testing.T) {
 		t.Errorf("Records (cof1) count, have %d, wand 9.", rep.Count)
 		return
 	}
-	longKey := "loooonnggggg"
-	for i := 0; i < 1000; i++ {
-		longKey += "!"
+	//longKey := "loooonnggggg"
+	longKey := make([]byte, 2000)
+	for i := 0; i < 2000; i++ {
+		longKey[i] = 101
 	}
-	longValue := "loooonnggggg"
-	for i := 0; i < 1000; i++ {
-		longValue += longKey
+	//longValue := "loooonnggggg"
+	longValue := make([]byte, 20000)
+	for i := 0; i < 20000; i++ {
+		longValue[i] = 102
 	}
-	if rep := cof1.WriteListUnsafe(map[string][]byte{longKey: []byte("zzz")}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
+	if rep := cof1.WriteListUnsafe(map[string][]byte{string(longKey): []byte("zzz")}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
-	if rep := cof1.WriteListUnsafe(map[string][]byte{"shortKey": []byte(longValue)}); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
+	if rep := cof1.WriteListUnsafe(map[string][]byte{"shortKey": longValue}); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
@@ -798,6 +804,7 @@ func TestCofferLoadFromLogs(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
+			return
 		}
 		//time.Sleep(100 * time.Millisecond)
 	}
@@ -895,6 +902,7 @@ func TestCofferLoadFromLogsTransaction(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
+			return
 		}
 	}
 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
@@ -996,6 +1004,7 @@ func TestCofferLoadFromCheckpoint(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb")); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
+			return
 		}
 	}
 	cof1.Stop()
@@ -1055,6 +1064,7 @@ func TestCofferLoadFromCheckpointTransaction(t *testing.T) {
 	for i := 10; i < 19; i++ {
 		if rep := cof1.Write("aasa"+strconv.Itoa(i), []byte("bbsb"+strconv.Itoa(i))); rep.IsCodeError() || rep.Error != nil {
 			t.Error(err)
+			return
 		}
 	}
 	if rep := cof1.Transaction("exchange", []string{"aasa10", "aasa11"}, nil); rep.IsCodeError() {
