@@ -1,4 +1,4 @@
-package coffer
+package filenamer
 
 // Coffer
 // Filenamer
