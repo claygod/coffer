@@ -189,7 +189,7 @@ func (f *FileNamer) GetHalf(last string, more bool) ([]string, error) { //TODO: 
 	outListInt := make([]int, 0, len(numList))
 	for i, fNum := range numList {
 		if more && fNum > lastInt {
-			outListInt = numList[i:len(numList)]
+			outListInt = numList[i:]
 			break
 		} else if !more && fNum >= lastInt {
 			outListInt = numList[0:i]

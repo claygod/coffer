@@ -163,7 +163,7 @@ func TestCofferReadListPrefixSuffix(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
 	if rep := cof1.RecordsListWithPrefix("pr1"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
 		t.Errorf("Operation `RecordsListWithPrefix`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
@@ -191,7 +191,7 @@ func TestCofferReadListUnsafe(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
 
 	if rep := cof1.RecordsListUnsafe(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
 		t.Errorf("RecordsListUnsafe`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
@@ -227,7 +227,7 @@ func TestCofferRecordsList(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": []byte{1}, "pr1-suf2": []byte{1}, "pr2-suf1": []byte{1}, "pr2-suf2": []byte{1}, "pr3-suf2": []byte{1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
 
 	if rep := cof1.RecordsList(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
 		t.Errorf("RecordsList`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
