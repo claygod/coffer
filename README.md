@@ -560,7 +560,10 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] all public methods give a correct description-comment
 - [ ] return error and warning in Create method
 - [ ] pause in the batcher - check its size, set the optimal
-- [ ] add in the description that the data during the operation of the database is stored both on disk and in memory
+- [x] add in the description that the data during the operation of the database is stored both on disk and in memory
+- [ ] method for obtaining all log files and checkpoints
+- [ ] method for viewing the log file
+- [ ] method of viewing the checkpoint file
 
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
