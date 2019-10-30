@@ -565,5 +565,6 @@ func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error)
 - [ ] метод получения всех файлов логов и чекпоинтов
 - [ ] метод просмотра файла лога
 - [ ] метод просмотра файла чекпоинта
+- [ ] метод строгой записи в базу (только если запись с таким ключём не существует)
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
