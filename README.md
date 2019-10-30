@@ -564,6 +564,7 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [ ] method for obtaining all log files and checkpoints
 - [ ] method for viewing the log file
 - [ ] method of viewing the checkpoint file
+- [ ] the method of strict entry into the database (only if the entry with such a key does not exist)
 
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
