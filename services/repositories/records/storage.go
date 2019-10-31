@@ -43,6 +43,30 @@ func (r *storage) writeList(list map[string][]byte) {
 	}
 }
 
+func (r *storage) writeListIfNot(list map[string][]byte) []string {
+	found := make([]string, 0, len(list))
+	for key := range list { // first check if all of these keys
+		if _, ok := r.data[key]; ok {
+			found = append(found, key)
+		}
+	}
+	if len(found) == 0 {
+		r.writeList(list)
+	}
+	return found
+}
+
+func (r *storage) writeListOptional(list map[string][]byte) []string {
+	found := make([]string, 0, len(list))
+	for key, value := range list { // first check if all of these keys
+		if _, ok := r.data[key]; ok {
+			found = append(found, key)
+		}
+		r.data[key] = value
+	}
+	return found
+}
+
 func (r *storage) writeOne(key string, value []byte) {
 	r.data[key] = value
 }

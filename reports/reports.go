@@ -76,6 +76,14 @@ type ReportRecordsCount struct {
 }
 
 /*
+ReportWriteList - report returned after operation WriteList Optional/Strict.
+*/
+type ReportWriteList struct {
+	Report
+	Found []string
+}
+
+/*
 Report - report returned after operation.
 */
 type Report struct {
@@ -155,6 +163,13 @@ IsCodeErrNotFound - checking code for error ErrNotFound
 */
 func (r *Report) IsCodeErrNotFound() bool {
 	return r.Code == codes.ErrNotFound
+}
+
+/*
+IsCodeErrRecordsFound - checking code for error ErrRecordsFound
+*/
+func (r *Report) IsCodeErrRecordsFound() bool {
+	return r.Code == codes.ErrRecordsFound
 }
 
 /*

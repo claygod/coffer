@@ -30,6 +30,8 @@ const (
 	ErrResources // не хватает ресурсов
 	//ErrNotFound - no keys found
 	ErrNotFound // не найдены ключи
+	//ErrRecordsFound - keys found during recording
+	ErrRecordsFound // при попытке записи найдены ключи
 	//ErrReadRecords - error reading records for a transaction (in the absence of at least one record, a transaction cannot be performed)
 	ErrReadRecords // ошибка считывания записей для транзакции (при отсутствии хоть одной записи транзакцию нельзя проводить)
 	//ErrHandlerReturn - found and loaded handler returned an error

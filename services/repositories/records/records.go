@@ -48,6 +48,24 @@ func (s *Records) WriteList(list map[string][]byte) {
 }
 
 /*
+WriteListStrict - write records list (strict mode).
+*/
+func (s *Records) WriteListStrict(list map[string][]byte) []string {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.writeListIfNot(list)
+}
+
+/*
+WriteListOptional - write records list (strict mode).
+*/
+func (s *Records) WriteListOptional(list map[string][]byte) []string {
+	s.mtx.Lock()
+	defer s.mtx.Unlock()
+	return s.store.writeListOptional(list)
+}
+
+/*
 WriteListUnsafe - unsafe write records list.
 */
 func (s *Records) WriteListUnsafe(list map[string][]byte) {

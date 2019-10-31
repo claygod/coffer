@@ -41,7 +41,7 @@ func main() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
-	if rep := db.WriteList(map[string][]byte{"john": []byte("ball"), "alice": []byte("flower")}); rep.IsCodeError() {
+	if rep := db.WriteList(map[string][]byte{"john": []byte("ball"), "alice": []byte("flower")}, true); rep.IsCodeError() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}

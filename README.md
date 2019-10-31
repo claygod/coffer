@@ -151,6 +151,12 @@ Their length must satisfy the requirements specified in the configuration.
 #### WriteList
 
 Write several records to the database by specifying `map` in the arguments.
+Strict mode (strictMode=true):
+	The operation will be performed if there are no records with such keys yet.
+	Otherwise, a list of existing records is returned.
+Optional mode (strictMode=false):
+	The operation will be performed regardless of whether there are records with such keys or not.
+	A list of existing records is returned.
 Important: this argument is a reference; it cannot be changed in the calling code!
 
 #### WriteListUnsafe
@@ -560,7 +566,11 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] all public methods give a correct description-comment
 - [ ] return error and warning in Create method
 - [ ] pause in the batcher - check its size, set the optimal
-- [ ] add in the description that the data during the operation of the database is stored both on disk and in memory
+- [x] add in the description that the data during the operation of the database is stored both on disk and in memory
+- [ ] method for obtaining all log files and checkpoints
+- [ ] method for viewing the log file
+- [ ] method of viewing the checkpoint file
+- [ ] the method of strict entry into the database (only if the entry with such a key does not exist)
 
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>

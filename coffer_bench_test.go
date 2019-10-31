@@ -51,7 +51,7 @@ func BenchmarkClean(b *testing.B) {
 // 			key := strconv.Itoa(z)
 // 			list[key] = []byte("a" + key + "b")
 // 		}
-// 		rep := cof1.WriteList(list)
+// 		rep := cof1.WriteList(list, false)
 // 		if rep.Code >= codes.Warning {
 // 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 // 		}
@@ -173,7 +173,7 @@ func BenchmarkCofferTransactionPar32NotConcurent(b *testing.B) { // go tool ppro
 			key := strconv.Itoa(z)
 			list[key] = []byte("a" + key + "b")
 		}
-		rep := cof11.WriteList(list)
+		rep := cof11.WriteList(list, false)
 		if rep.Code >= codes.Error {
 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 		}
@@ -215,7 +215,7 @@ func BenchmarkCofferTransactionPar32HalfConcurent(b *testing.B) { // go tool ppr
 			key := strconv.Itoa(z)
 			list[key] = []byte("a" + key + "b")
 		}
-		rep := cof12.WriteList(list)
+		rep := cof12.WriteList(list, false)
 		if rep.Code >= codes.Error {
 			b.Error(fmt.Sprintf("Code_: %d , err: %v", rep.Code, rep.Error))
 		}

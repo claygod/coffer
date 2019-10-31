@@ -10,6 +10,8 @@ RecordsRepository - records store interface.
 type RecordsRepository interface {
 	Reset()
 	WriteList(map[string][]byte)
+	WriteListStrict(map[string][]byte) []string
+	WriteListOptional(map[string][]byte) []string
 	WriteListUnsafe(map[string][]byte)
 	//WriteUnsafeRecord(string, []byte)
 	ReadList([]string) (map[string][]byte, []string)

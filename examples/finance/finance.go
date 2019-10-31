@@ -41,7 +41,7 @@ func main() {
 	defer db.Stop()
 
 	//STEP create accounts
-	if rep := db.WriteList(map[string][]byte{"john_usd": uint64ToBytes(90), "alice_usd": uint64ToBytes(5), "john_stock": uint64ToBytes(5), "alice_stock": uint64ToBytes(25)}); rep.IsCodeError() {
+	if rep := db.WriteList(map[string][]byte{"john_usd": uint64ToBytes(90), "alice_usd": uint64ToBytes(5), "john_stock": uint64ToBytes(5), "alice_stock": uint64ToBytes(25)}, true); rep.IsCodeError() {
 		fmt.Printf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}

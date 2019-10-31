@@ -46,6 +46,30 @@ func TestNewDirNotFound(t *testing.T) {
 
 }
 
+func TestWriteList(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferT(t)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.Write("aaa", []byte("111"))
+	if rep := cof1.WriteList(map[string][]byte{"aaa": []byte("1"), "bbb": []byte("2")}, true); !rep.IsCodeErrRecordsFound() {
+		t.Errorf("Operation `WriteList`(1) results: code=%d ,  found=%v, err=%v.", rep.Code, rep.Found, rep.Error)
+		return
+	}
+	if rep := cof1.WriteList(map[string][]byte{"ccc": []byte("1"), "ddd": []byte("2")}, true); rep.IsCodeErrRecordsFound() {
+		t.Errorf("Operation `WriteList`(2) results: code=%d ,  found=%v, err=%v.", rep.Code, rep.Found, rep.Error)
+		return
+	}
+	if rep := cof1.Count(); !rep.IsCodeOk() || rep.Error != nil || rep.Count != 3 {
+		t.Errorf("Operation `Count`(3) results: code=%d , count=%v, err=%v.", rep.Code, rep.Count, rep.Error)
+		return
+	}
+}
+
 func TestDeleteList(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
@@ -163,7 +187,7 @@ func TestCofferReadListPrefixSuffix(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}}, false)
 	if rep := cof1.RecordsListWithPrefix("pr1"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
 		t.Errorf("Operation `RecordsListWithPrefix`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
@@ -191,7 +215,7 @@ func TestCofferReadListUnsafe(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}}, false)
 
 	if rep := cof1.RecordsListUnsafe(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
 		t.Errorf("RecordsListUnsafe`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
@@ -227,7 +251,7 @@ func TestCofferRecordsList(t *testing.T) {
 		return
 	}
 	defer cof1.Stop()
-	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}})
+	cof1.WriteList(map[string][]byte{"pr1-suf1": {1}, "pr1-suf2": {1}, "pr2-suf1": {1}, "pr2-suf2": {1}, "pr3-suf2": {1}}, false)
 
 	if rep := cof1.RecordsList(); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 5 {
 		t.Errorf("RecordsList`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
@@ -545,7 +569,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 	}
 	// -- write down the list
 	t.Log("Stage1")
-	if rep := cof1.WriteList(req); rep.IsCodeError() || rep.Error != nil {
+	if rep := cof1.WriteList(req, false); rep.IsCodeError() || rep.Error != nil {
 		t.Error(err)
 	}
 	if rep := cof1.Count(); rep.Count != 9 {
@@ -562,11 +586,11 @@ func TestCofferWriteListReadList(t *testing.T) {
 	for i := 0; i < 20000; i++ {
 		longValue[i] = 102
 	}
-	if rep := cof1.WriteList(map[string][]byte{string(longKey): []byte("zzz")}); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
+	if rep := cof1.WriteList(map[string][]byte{string(longKey): []byte("zzz")}, false); !rep.IsCodeErrExceedingMaxKeyLength() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
-	if rep := cof1.WriteList(map[string][]byte{"shortKey": longValue}); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
+	if rep := cof1.WriteList(map[string][]byte{"shortKey": longValue}, false); !rep.IsCodeErrExceedingMaxValueSize() || rep.Error == nil {
 		t.Error(rep)
 		return
 	}
@@ -615,7 +639,7 @@ func TestCofferWriteListReadList(t *testing.T) {
 		//return
 	}
 
-	if rep := cof1.WriteList(req); !rep.IsCodePanicStopped() || rep.Error == nil {
+	if rep := cof1.WriteList(req, false); !rep.IsCodePanicStopped() || rep.Error == nil {
 		t.Errorf("Have code `PanicStopped` want `%d` ", rep.Code)
 	}
 }
@@ -758,7 +782,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 		reqWriteList["aasa"+strconv.Itoa(i)] = []byte("bbsb" + strconv.Itoa(i))
 		reqReadList = append(reqReadList, "aasa"+strconv.Itoa(i))
 	}
-	rep := cof1.WriteList(reqWriteList)
+	rep := cof1.WriteList(reqWriteList, false)
 	if !rep.IsCodeErrRecordLimitExceeded() || rep.Error == nil {
 		t.Errorf("Want `ErrRecordLimitExceeded` have code `%d`", rep.Code)
 		t.Error(rep.Error)

@@ -155,11 +155,47 @@ func (r *RecordsInteractor) save(args ...string) error {
 	return nil
 }
 
+// /*
+// WriteList - set a few records in safe mode.
+// */
+// func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
+// 	rep := &reports.Report{}
+// 	if !r.hasp.Add() {
+// 		rep.Code = codes.PanicStopped
+// 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+// 		return rep
+// 	}
+// 	defer r.hasp.Done()
+// 	// prepare the byte version of the operation for the log
+// 	opBytes, err := r.reqWriteListToLog(req)
+// 	if err != nil {
+// 		rep.Code = codes.ErrParseRequest
+// 		rep.Error = err
+// 		return rep
+// 	}
+// 	// check if there are enough resources (memory, disk) to complete the task
+// 	if !r.resControl.GetPermission(int64(len(opBytes))) {
+// 		rep.Code = codes.ErrResources
+// 		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
+// 		return rep
+// 	}
+// 	// execute
+// 	r.repo.WriteList(req.List)
+// 	if err := r.journal.Write(opBytes); err != nil {
+// 		defer r.hasp.Stop()
+// 		rep.Code = codes.PanicWAL
+// 		rep.Error = err
+// 		return rep
+// 	}
+// 	rep.Code = codes.Ok
+// 	return rep
+// }
+
 /*
-WriteList - set a few records in safe mode.
+WriteListOptional - set a few records in safe mode.
 */
-func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
-	rep := &reports.Report{}
+func (r *RecordsInteractor) WriteListOptional(req *ReqWriteList) *reports.ReportWriteList {
+	rep := &reports.ReportWriteList{Report: reports.Report{}}
 	if !r.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
@@ -180,7 +216,7 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 		return rep
 	}
 	// execute
-	r.repo.WriteList(req.List)
+	rep.Found = r.repo.WriteListOptional(req.List)
 	if err := r.journal.Write(opBytes); err != nil {
 		defer r.hasp.Stop()
 		rep.Code = codes.PanicWAL
@@ -188,6 +224,47 @@ func (r *RecordsInteractor) WriteList(req *ReqWriteList) *reports.Report {
 		return rep
 	}
 	rep.Code = codes.Ok
+	return rep
+}
+
+/*
+WriteListStrict - set a few records in strict mode.
+*/
+func (r *RecordsInteractor) WriteListStrict(req *ReqWriteList) *reports.ReportWriteList {
+	rep := &reports.ReportWriteList{Report: reports.Report{}}
+	if !r.hasp.Add() {
+		rep.Code = codes.PanicStopped
+		rep.Error = fmt.Errorf("RecordsInteractor is stopped")
+		return rep
+	}
+	defer r.hasp.Done()
+	// prepare the byte version of the operation for the log
+	opBytes, err := r.reqWriteListToLog(req)
+	if err != nil {
+		rep.Code = codes.ErrParseRequest
+		rep.Error = err
+		return rep
+	}
+	// check if there are enough resources (memory, disk) to complete the task
+	if !r.resControl.GetPermission(int64(len(opBytes))) {
+		rep.Code = codes.ErrResources
+		rep.Error = fmt.Errorf("Insufficient resources (memory, disk)")
+		return rep
+	}
+	// execute
+	rep.Found = r.repo.WriteListStrict(req.List)
+	if err := r.journal.Write(opBytes); err != nil {
+		defer r.hasp.Stop()
+		rep.Code = codes.PanicWAL
+		rep.Error = err
+		return rep
+	}
+	if len(rep.Found) == 0 {
+		rep.Code = codes.Ok
+	} else {
+		rep.Code = codes.ErrRecordsFound
+	}
+
 	return rep
 }
 

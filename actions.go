@@ -18,16 +18,62 @@ import (
 Write a new record in the database, specifying the key and value.
 Their length must satisfy the requirements specified in the configuration.
 */
-func (c *Coffer) Write(key string, value []byte) *reports.Report {
-	return c.WriteList(map[string][]byte{key: value})
+func (c *Coffer) Write(key string, value []byte) *reports.ReportWriteList {
+	return c.WriteList(map[string][]byte{key: value}, false)
 }
 
+// /*
+// WriteList222 - write several records to the database by specifying `map` in the arguments.
+// Important: this argument is a reference; it cannot be changed in the calling code!
+// */
+// func (c *Coffer) WriteList222(input map[string][]byte) *reports.Report {
+// 	rep := &reports.Report{}
+// 	defer c.panicRecover()
+// 	if !c.hasp.Add() {
+// 		rep.Code = codes.PanicStopped
+// 		rep.Error = fmt.Errorf("Coffer is stopped")
+// 		return rep
+// 	}
+// 	defer c.hasp.Done()
+// 	for _, value := range input {
+// 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
+// 			rep.Code = codes.ErrExceedingMaxValueSize
+// 			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+// 			return rep
+// 		}
+// 	}
+// 	keys := c.extractKeysFromMap(input)
+// 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
+// 		rep.Code = code
+// 		rep.Error = err
+// 		return rep
+// 	}
+
+// 	c.porter.Catch(keys)
+// 	defer c.porter.Throw(keys)
+// 	req := &usecases.ReqWriteList{
+// 		Time: time.Now(),
+// 		List: input,
+// 	}
+// 	rep = c.recInteractor.WriteList(req)
+// 	if rep.Code >= codes.Panic {
+// 		defer c.Stop()
+// 	}
+// 	return rep
+// }
+
 /*
-WriteList - write several records to the database by specifying `map` in the arguments.
+WriteListStrict - write several records to the database by specifying `map` in the arguments.
+Strict mode (true):
+	The operation will be performed if there are no records with such keys yet.
+	Otherwise, a list of existing records is returned.
+Optional mode (false):
+	The operation will be performed regardless of whether there are records with such keys or not.
+	A list of existing records is returned.
 Important: this argument is a reference; it cannot be changed in the calling code!
 */
-func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
-	rep := &reports.Report{}
+func (c *Coffer) WriteList(input map[string][]byte, strictMode bool) *reports.ReportWriteList {
+	rep := &reports.ReportWriteList{Report: reports.Report{}}
 	defer c.panicRecover()
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
@@ -55,7 +101,13 @@ func (c *Coffer) WriteList(input map[string][]byte) *reports.Report {
 		Time: time.Now(),
 		List: input,
 	}
-	rep = c.recInteractor.WriteList(req)
+
+	if strictMode {
+		rep = c.recInteractor.WriteListStrict(req)
+	} else {
+		rep = c.recInteractor.WriteListOptional(req)
+	}
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
