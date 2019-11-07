@@ -1,6 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer)
-[![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer)
-[![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
+[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go) [![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer) [![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
 
 # Coffer
 
