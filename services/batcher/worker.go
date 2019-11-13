@@ -59,6 +59,7 @@ func (b *batcher) worker() {
 					b.alarm(err)
 				} else {
 					u++
+					b.indicator.switchChan()
 				}
 			default:
 				break
