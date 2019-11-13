@@ -63,7 +63,7 @@ func (c *Coffer) Write(key string, value []byte) *reports.ReportWriteList {
 // }
 
 /*
-WriteListStrict - write several records to the database by specifying `map` in the arguments.
+WriteList - write several records to the database by specifying `map` in the arguments.
 Strict mode (true):
 	The operation will be performed if there are no records with such keys yet.
 	Otherwise, a list of existing records is returned.
