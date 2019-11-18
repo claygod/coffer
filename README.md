@@ -1,4 +1,4 @@
-[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer) [![Mentioned in Awesome Go](https://awesome.re/mentioned-badge.svg)](https://github.com/avelino/awesome-go) [![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer) [![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
+[![GoDoc](https://godoc.org/github.com/claygod/coffer?status.svg)](https://godoc.org/github.com/claygod/coffer) [![Travis CI](https://travis-ci.org/claygod/coffer.svg?branch=master)](https://travis-ci.org/claygod/coffer) [![Go Report Card](https://goreportcard.com/badge/github.com/claygod/coffer)](https://goreportcard.com/report/github.com/claygod/coffer) [![codecov](https://codecov.io/gh/claygod/coffer/branch/master/graph/badge.svg)](https://codecov.io/gh/claygod/coffer)
 
 # Coffer
 
@@ -28,16 +28,16 @@ ACID:
       + [Methods](#methods)
  * [Config](#config)
       + [Handler](#Handler)
-	      - [Handler example without using argument](#Handler-example-without-using-argument)
-	      - [An example of a handler using an argument](#An-example-of-a-handler-using-an-argument)
+	      - [Example of a handler without using an argument](#Example-of-a-handler-without-using-an-argument)
+	      - [Example of a handler using an argument](#Example-of-a-handler-using-an-argument)
  * [Launch](#Launch)
       - [Start](#Start)
       - [Follow](#Follow)
  * [Data storage](#Data-storage)
-      - [Data loading after an incorrect shutdown](#Data-loading-after-an-incorrect-shutdown)
+      - [Loading data after an incorrect shutdown](#Loading-data-after-an-incorrect-shutdown)
  * [Error codes](#Error-codes)
       - [Code List](#Code-List)
-      - [Checking codes through methods](#Checking-codes-through-methods)
+      - [Code checks through methods](#Code-checks-through-methods)
  * [Benchmark](#Benchmark)
  * [Dependencies](#Dependencies)
  * [ToDo](#TODO)
@@ -51,6 +51,7 @@ import (
 	"fmt"
 
 	"github.com/claygod/coffer"
+	"github.com/claygod/coffer/domain"
 )
 
 const curDir = "./"
@@ -73,14 +74,13 @@ func main() {
 	defer db.Stop()
 
 	// STEP write
-	if rep := db.Write("foo", []byte("bar")); rep.IsCodeError() {
+	if rep := db.Write("foo", []byte("bar")); rep.IsCodeWarning() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
 
 	// STEP read
-	rep := db.Read("foo")
-	if rep.IsCodeError() {
+	if rep := db.Read("foo"); rep.IsCodeWarning() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
@@ -91,19 +91,19 @@ func main() {
 
 ### Examples
 
-You can find many examples of the use of transactions on these paths.
+Use the following links to find many examples how use the transactions:
 
 - `Quick start` https://github.com/claygod/coffer/tree/master/examples/quick_start
 - `Finance` https://github.com/claygod/coffer/tree/master/examples/finance
 
 ## API
 
-After the operation is completed, the database returns a report containing:
+Started DB returns reports after has performed an operation. Reports containing:
 - code (error codes here: `github.com/claygod/coffer/reports/codes`)
 - error
 - data
 - other details
-Reporting structures here: `github.com/claygod/coffer/reports`
+Reporting structures read here:: `github.com/claygod/coffer/reports`
 
 ### Methods
 
@@ -128,57 +128,64 @@ Reporting structures here: `github.com/claygod/coffer/reports`
 * RecordsListWithPrefix
 * RecordsListWithSuffix
 
-Attention! All requests whose names contain `Unsafe` can be executed as if running,
-and when the database is stopped (not running). In the second case, you cannot make queries in parallel,
-otherwise, database consistency will be compromised and data will be lost.
+Pay attention!
+
+All requests which names contain `Unsafe` can be usually executed in both cases: when the
+database is running or stopped (not running). In the second case (when DB is stopped),
+should not make requests in parallel, because in this case the consistency of DB can
+be compromised and data lost.
+
 Other methods work only if the database is running.
 
 #### Start
 
-Запустить БД. Большинство методов работает только если БД запущена.
-Пи запуске включается `Follow` интерактор, который следит за актуальностью текущего чекпоинта.
+The `Follow` interactor turns on while running a database. It controls the relevance of the
+current checkpoint.
 
 #### Stop
 
-Stop db. If you want to periodically stop and start the database in your application,
-you may want to create a new client after the stop.
+Stop DB. If you want to periodically stop and start the database in your application, probably,
+you may want to create a new client when the DB has been stopped.
 
 #### Write
 
-Write a new record in the database, specifying the key and value.
-Their length must satisfy the requirements specified in the configuration.
+Write a new record in a database specifying the key and value. Their length must satisfy the
+requirements specified in configuration files.
 
 #### WriteList
 
-Write several records to the database by specifying `map` in the arguments.
+Write several records to the database specifying corresponding `map` in the arguments.
+
 Strict mode (strictMode=true):
-	The operation will be performed if there are no records with such keys yet.
-	Otherwise, a list of existing records is returned.
+	The operation performs if there are no records with these keys.
+	A list of existed records is returned.
+	
 Optional mode (strictMode=false):
-	The operation will be performed regardless of whether there are records with such keys or not.
-	A list of existing records is returned.
-Important: this argument is a reference; it cannot be changed in the calling code!
+	The operation performs regardless of whether there are records with these keys or not.
+	A list of existed records is returned.
+	
+Important: this argument is a reference argument; it cannot be changed in the called code!
 
 #### WriteListUnsafe
 
-Write several records to the database by specifying `map` in the arguments.
-This method exists in order to fill it up a little faster before starting the database.
-The method does not imply concurrent use.
+Write several records to the database specified the corresponding map in the arguments.
+This method exists in order to fill the database faster before it starts.
+The method is not for parallel use.
 
 #### Read
 
-Read one entry from the database. In the received `report` there will be a result code, and if it is positive,
-that will be the value in the `data` field.
+Read one record from the database. In the received report there will be a result code.
+If it is positive, that means that the value in the right data field.
 
 #### ReadList
 
-Read a few entries. There is a limit on the maximum number of readable entries in the configuration.
-In addition to the found records, a list of not found records is returned.
+Read several records. There is a limit on the maximum number of readable records in the
+configuration. Except found records the list of not found records is returned.
 
 #### ReadListUnsafe
 
-Read a few entries. The method can be called when the database is stopped (not running).
-The method does not imply concurrent use.
+Read several records. The method can be called when the database is stopped (not running).
+The method is not for parallel use.
 
 #### Delete
 
@@ -186,55 +193,58 @@ Remove a single record.
 
 #### DeleteListStrict
 
-Delete several records, but only if they are all in the database. If at least one entry is missing,
-then no record will be deleted.
+Delete several records. It is possible only if all records are in the database.
+If at least there is a lack of one record, none of records will be deleted.
 
 #### DeleteListOptional
 
-Delete multiple entries. Those entries from the list that will be found in the database will be deleted.
+Delete several records. All found records from the list in will be deleted in DB.
 
 #### Transaction
 
-Execute a transaction. The transaction handler must be registered in the database at the stage
-of creating and configuring the database. Responsibility for the consistency of the functionality
-of transaction handlers between different database launches rests with the database user.
-The transaction returns the new values stored in the database.
+Make a transaction. The transaction should be added in the database at the stage of creating
+and configuring. The user of the database is responsible for the consistency of the functionality of
+transaction handlers between different runs of the database.
+The transaction returns new values which are stored in the DB.
 
 #### Count
 
-Get the number of records in the database. A query can only be made to a running database
+Get the number of records in the database. A request can be made only when the database has started.
 
 #### CountUnsafe
 
-Get the number of records in the database. Queries to a stopped / not running database cannot be done in parallel!
+Get the number of records in the database. Requests to a stopped (or not running),
+database cannot be made in parallel!
 
 #### RecordsList
 
-Get a list of all database keys. With a large number of records in the database, the query will be slow, so use
-its only in case of emergency. The method only works when the database is running.
+Get a list of all database keys. With a large number of records in the database, the request
+will be slow. Use it only at great need to avoid problems.
+The method works only when the database is running.
 
 #### RecordsListUnsafe
 
-Get a list of all database keys. With a large number of records in the database, the query will be slow, so use
-its only in case of emergency. When using a query with a stopped / not running database, competitiveness
-prohibited.
+Get a list of all database keys. With a large number of records in the database, the request
+will be slow. Use it only at great need to avoid problems. The method is not for parallel use
+while using a request when database is stopped (or not running).
 
 #### RecordsListWithPrefix
 
-Get a list of all the keys having prefix specified in the argument (start with that string).
+Get a list of all keys with prefix specified in the argument (prefix is the begging of record string).
 
 #### RecordsListWithSuffix
 
-Get a list of all the keys that have the specified argument suffix (ending).
+Get a list of all the keys with specified suffix in the argument (Suffix is in the ending of record string).
 
 ## Config
 
-It is enough to indicate the path to the database directory, and all configuration parameters will be set to default:
+If you specify the path to the database directory all configuration parameters will be
+reset to the default:
 
 	cof, err, wrn := Db(dirPath) . Create()
 
-Дефолтные значения можно увидеть в файле `/config.go` .
-Однако каждый из параметров можно сконфигурировать:
+Default values can be found in the `/config.go` file. But each of the parameters can be
+configured:
 
 ```golang
 	Db(dirPath).
@@ -257,75 +267,89 @@ It is enough to indicate the path to the database directory, and all configurati
 	
 ### Db
 
-Specify the working directory in which the database will store its files. For a new database
-the directory should be free of files with the extensions log, check, checkpoint.
+Specify the work directory where the database will store files. In case of a new
+database the directory should not contain files with the “log”, “check”, “checkpoint”
+extensions.
 
 ### BatchSize
 
-The maximum number of records that a batch inside a database can add at a time (this applies to setting up internal processes, this does not apply to the number of records added at a time). Decreasing this parameter slightly improves the `latency` (but not too much). Increasing this parameter slightly degrades the `latency`, but at the same time increases the throughput `throughput`.
+The maximum number of records which database can add at a time (this applies to
+setting up internal processes; this does not apply to the number of records added at a
+time).
+Decreasing of this parameter slightly improves the `latency` (but not too much).
+Increasing of this parameter slightly degrades the `latency`, but at the same time
+increases the `throughput`.
 
 ### LimitRecordsPerLogfile
 
-The number of operations to be written to one log file. A small number will make the database very often create
-new files, which will adversely affect the speed of the database. A large number reduces the number of pauses for creation
-files, but the files become larger.
+A number of operations which is going to be written to one log file. Small number
+forces the database creates new files very often, and it adversely affects the speed of
+the database. A big number reduces the number of pauses while creating files, but
+the size of files increases.
 
 ### FollowPause
 
-The size of the time interval for starting the `Follow` interactor, which analyzes old logs and periodically creates
-new checkpoints.
+The size of the time interval for starting the `Follow` interactor, which analyzes old
+logs and periodically creates new checkpoints.
 
 ### LogsByCheckpoint
 
-After how many completed log files it is necessary to create a new checkpoint (the smaller the number, the more often we create).
-For good performance, it’s better not to do it too often.
+The option specifies after how many full log files it is necessary to create a new
+checkpoint (the smaller number, the more often it should be created). For good
+productivity, it’s better not to do it too often.
 
 ### AllowStartupErrLoadLogs
 
-The option allows the database to work at startup, even if the last log file was completed incorrectly, i.e. the last record is corrupted (a typical situation for an abnormal shutdown). By default, the option is enabled.
+The option allows the database works at startup, even if the last log file was
+completed incorrectly, i.e. the last record is corrupted (a typical situation for an
+abnormal shutdown). By default, the option is enabled.
 
 ### MaxKeyLength
 
-The maximum allowed key length.
+This is the maximum allowable key length.
 
 ### MaxValueLength
 
-The maximum size of the value to write.
+This is the maximum size of the value length.
 
 ### MaxRecsPerOperation
 
-The maximum number of records that can be involved in one operation.
+This is the maximum number of records that is possible per operation.
 
 ### RemoveUnlessLogs
 
-Option to delete old files. After `Follow` created a new checkpoint, with the permission of this option,
-it now removes the unnecessary operation logs. If for some reason you need to store the entire log of operations,
-you can disable this option, but be prepared for the fact that this will increase the consumption of disk space.
+The option is for deleting old files. After `Follow` has created a new checkpoint, with the
+permission of this option, it removes unnecessary operations logs. If for some reason
+it’s needed to store the whole log of operations, this option can be disabled. But be
+ready that this will increase the consumption of disk space.
 
 ### LimitMemory
 
-The minimum size of free RAM at which the database stops performing operations and stops to avoid data loss.
+This is the minimum size of free RAM. When this limit reaches, the database
+terminates all operations and stops to avoid data loss.
 
 ### LimitDisk
 
-The minimum amount of free space on the hard drive at which the database stops performing operations and stops to avoid data loss.
+This is the minimum amount of free space on the hard drive. When this limit reaches,
+the database terminates all operations and stops to avoid data loss.
 
 ### Handler
 
-Add transaction handler. It is important that for different launches of the same database, the name of the handler
-and the results of its work are idempotent. Otherwise, at different times, with different starts, handlers will
-work differently, which will lead to a violation of data consistency.
-If you intend to make changes to handlers over time, adding a version number to the key may help streamline this process.
+Add a transaction handler. It is important that the name of the handler and the results
+of its work should be idempotent while running the same database at different time.
+Otherwise handlers will work differently and it will leads to a violation of data
+consistency. If you intend to make changes to handlers time to time, adding a version
+number to the key helps streamline this process.
 
 Conditions:
-- The argument passed to the handler must be a number, a slice of bytes.
-- If you need to transfer complex structures, they need to be serialized into bytes.
+- The argument passed to the handler must be a number (a slice of bytes).
+- If you need to transfer complex structures, it must be serialized into bytes.
 - The handler can only operate on existing records.
 - The handler cannot delete database records.
-- The handler at the end of the work should return the new values of all the requested records.
-- The number of entries modified by the header is set in the `MaxRecsPerOperation` configuration
+- The handler should return the new values of all the requested records at the end of his work.
+- The number of records modified with the header is specified in the `MaxRecsPerOperation` configuration.
 
-#### Handler example without using argument
+#### Example of a handler without using an argument
 
 ```golang
 func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
@@ -347,7 +371,7 @@ func HandlerExchange(arg []byte, recs map[string][]byte) (map[string][]byte, err
 }
 ```
 
-#### An example of a handler using an argument
+#### Example of a handler using an argument
 
 ```golang
 func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error) {
@@ -377,71 +401,93 @@ func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error)
 
 ### Handlers
 
-Add multiple handlers to the database at a time. Important: handlers with matching keys are overwritten.
+Add several handlers to the database at once. Important: handlers with matching keys
+are overwritten.
 
 ### Create
 
-The required command (must be the last one) finishes the configuration and creates the database.
+A mandatory command (must be the last one) finishes the configuration and creates
+the database.
 
 ## Launch
 
 ### Start
 
-At start, the last number should be a checkpoint. If this is not so, then the stop was incorrect.
-Then the last uncorrected checkpoint and all the logs after it are loaded until it is possible. On a beat log
-or the last log, the download ends. The database creates a new checkpoint, and after that the answer is returned,
-and the database is ready to start.
+At starting DB, the number in the end should be a checkpoint. If it is not, the database
+has been stopped incorrectly. In this “error” case the last available checkpoint and all
+logs after the checkpoint are loaded until it is possible.
+
+Load the data until it is possible and finish the loading (there is must be a broken log
+(log with uncompleted data) or last log which has created before database has been
+stopped incorrectly, so you can load all available data). After all available data has
+loaded the database creates a new checkpoint. Only after it you can continue work
+with code.
 
 ### Follow
 
-After the database is launched, it writes all operations to the log. As a result, the log can grow very much.
-If in the end, at the end of the application, the database is correctly stopped, a new checkpoint will appear,
-and at the next start, the data will be taken from it.
-However, the stop may not be correct, and a new checkpoint will not be created.
+After the database has been started, it writes all operations to a log. As a result, the
+log file can greatly grow. If at the end of the application work the database is correctly
+stopped, a new checkpoint appears. At the next start of DB, the data will be taken
+from it.
 
-In this case, at a new start, the database will be forced to load the old checkpoint, and re-perform all operations
-that were completed and recorded in the log. This can turn out to be quite significant in time, and as a result,
-the database will take longer to load, which is not always acceptable for applications.
+But if the database is incorrectly stopped a new checkpoint will not be created. In this
+case, at a new start of DB, the database loads the old checkpoint and re-performs all
+operations that has been completed and recorded in the log. This process can take
+much time, and as a result, the database will be loading for a long time (not always
+acceptable for applications).
 
-That is why there is a follower mechanism in the database that methodically goes through the logs in the process of
-the database and periodically creates checkpoints that are much closer to the current moment.
-Also, the follower has the function of cleaning old logs and checkpoints to free up space on your hard drive.
+That is why there is the follower mechanism in the database that methodically goes
+through the logs while working of the database and periodically creates checkpoints
+which are closer to the current moment. Also, the follower has a functionality to clean
+old logs and checkpoints in order to free up the space of hard drive.
 
 ## Data storage
 
-Your data is stored as files in the directory that you specified when creating the database.
-Files with the extension `log` contain a description of the operations performed.
-Files with the extension `checkpoint` contain snapshots of the state of the database at a certain point.
-Files with the `check` extension contain an incomplete snapshot of the state of the database.
-Using the `RemoveUnlessLogs` configuration parameter, you can order the database to delete old
-and unnecessary files in order to save disk space.
+Your data is stored as files in the directory that has been specified while creating the
+database. Files with the log extension contain a description of completed operations.
+Files with the `checkpoint` extension contain snapshots of the database state at a
+certain point. Files with the `check` extension contain an incomplete snapshot of the
+database state. Using the `RemoveUnlessLogs` configuration parameter, you can force
+the database to delete old and unnecessary files in order to save the disk space.
 
-If the database is stopped in the normal mode, then the last file written to the disk will be the file `checkpoint`,
-and its number will be the maximum. If the database is stopped incorrectly, then most likely the file with
-the extension `log` or` check` will have the maximum number.
+If the database is stopped in the regular mode, the last file, which has been written to
+the disk, is the `checkpoint` file. The number of the `checkpoint` will be the maximum
+number. If the database is stopped incorrectly, most likely that files with the `log` or
+`check` extensions will have the maximum number.
 
-Attention! until the database is completely stopped, it is forbidden to carry out any operations with database files.
+Attention! Before the database has not been completely stopped, it is forbidden to
+carry out any operations with database files.
 
-If you want to copy the database somewhere, you must copy the entire contents of the directory.
-If you want to take a minimum of files when copying, then you need to copy the file with the `checkpoint` extension,
-which has the maximum number, and all files with the` log` extension, which have a number larger than the copied checkpoint file.
+If you want to copy the database to somewhere, you must copy all content of the
+directory. If you want to take a minimum of files while copying, then you need: to
+copy the file with the `checkpoint` extension (which has the maximum number), and
+all files with the `log` extension (which have bigger number than copied file with the
+`checkpoint` extension).
 
 ### Data loading after an incorrect shutdown
 
-If the application using the database is not completed correctly, then at the next boot, the database will try
-to find the last valid snapshot of the `checkpoint` state. Having found this file, the database will load it,
-after which it will load all the `log` files with large numbers. We expect that the last `log` file may
-not be completely filled, because during the recording work could be interrupted. Therefore, the download
-from the damaged file will be performed to the damaged (unrecorded) section, after which the database download
-is considered complete. At the end of the download, the database creates a new `checkpoint`.
-If system crashes occur during the start (load) of the database, errors and violation of data consistency are possible.
+If the application work, which is using the database, is not completed correctly, then
+at the next staring the application, the database will try to find the last valid snapshot
+of the `checkpoint` state.
+
+When the file is found, the database will upload it, and then upload all the `log` files
+with big numbers. We expect that the last `log` file might not be filled completely
+because during the recording the work could be interrupted.
+
+Only undamaged part is uploaded from the damaged file and after that the database
+uploading is considering as completed.
+
+At the end of the uploading, the database creates a new `checkpoint`. If system
+crashes occur during the start (loading) of the database, it possible to get errors and
+violation of data consistency.
 
 ## Error Codes
 
 Error codes are stored here: `github.com/claygod/coffer/reports/codes`
-If the `Ok` code is received, then the operation is complete. If the Code contains `Error`, then the operation
-has not been completed, it is incomplete, or completed with an error, but you can continue working with the database.
-If the code contains `Panic`, then the state of the database is such that you cannot continue to work with it.
+If the `Ok` code is received, the operation is finished completely. If the Code contains
+`Error` (the operation has not been completed or not fully completed, or completed
+with an error), you can continue working with the database. If the code contains
+`Panic`, you cannot continue working with the database because of it stage.
 
 ### Code List
 
@@ -452,19 +498,20 @@ If the code contains `Panic`, then the state of the database is such that you ca
 - ErrExceedingMaxKeyLength - key is too long
 - ErrExceedingZeroKeyLength - key is too short
 - ErrHandlerNotFound - no handler found
-- ErrParseRequest - failed to prepare a request for logging
+- ErrParseRequest – preparing of logging request was failed
 - ErrResources - not enough resources
-- ErrNotFound - no keys found
-- ErrReadRecords - error reading records for a transaction (in the absence of at least one record, a transaction cannot be performed)
-- ErrHandlerReturn - the found and downloaded handler returned an error
-- ErrHandlerResponse - handler returned incomplete answers
-- Panic - not done, further work with the database is impossible
-- PanicStopped - application stopped
-- PanicWAL - an error in the operation log
+- ErrNotFound - no keys are found
+- ErrReadRecords - reading records error for a transaction (if there is a lack of at least one record, a transaction cannot be performed)
+- ErrHandlerReturn - found and uploaded handler returned an error
+- ErrHandlerResponse - handler returned incomplete reply
+- Panic - not finished, further work with the database is impossible
+- PanicStopped – application has been stopped
+- PanicWAL - an error occurred in the operation log
 
-### Checking codes through methods
+### Codes checks through methods
 
-In order not to export to an application that works with a database, reports have methods:
+In order not to export data to an application (which works with a database), reports
+have methods:
 
 - IsCodeOk - done without comment
 - IsCodeError - not completed or not fully completed, but you can continue to work
@@ -473,17 +520,18 @@ In order not to export to an application that works with a database, reports hav
 - IsCodeErrExceedingMaxKeyLength - key is too long
 - IsCodeErrExceedingZeroKeyLength - key is too short
 - IsCodeErrHandlerNotFound - no handler found
-- IsCodeErrParseRequest - failed to prepare a request for logging
+- IsCodeErrParseRequest - preparing of logging request was failed
 - IsCodeErrResources - not enough resources
-- IsCodeErrNotFound - no keys found
-- IsCodeErrReadRecords - error reading records for a transaction (in the absence of at least one record, a transaction cannot be performed)
-- IsCodeErrHandlerReturn - the found and loaded handler returned an error
-- IsCodeErrHandlerResponse - handler returned incomplete answers
-- IsCodePanic - not completed, further work with the database is impossible
-- IsCodePanicStopped - application stopped
-- IsCodePanicWAL - error in the operation log
+- IsCodeErrNotFound - no keys are found
+- IsCodeErrReadRecords - reading records error for a transaction (if there is a lack of at least one record, a transaction cannot be performed)
+- IsCodeErrHandlerReturn – found and uploaded handler returned an error
+- IsCodeErrHandlerResponse - handler returned incomplete reply
+- IsCodePanic - not finished, further work with the database is impossible
+- IsCodePanicStopped – application has been stopped
+- IsCodePanicWAL - error occurred in the operation log
 
-It is not very convenient to make large switches to check the received codes. You can limit yourself to just three checks:
+It is not very convenient to make large switches to check the received codes. You can
+limit yourself to just three checks:
 
 - IsCodeOk - done without comment
 - IsCodeError - not completed or not fully completed, but you can continue to work (covers ALL errors)
@@ -505,14 +553,14 @@ It is not very convenient to make large switches to check the received codes. Yo
 ## TODO
 
 - [x] the log should start a new log at startup
-- [x] deal with the names of checkpoints and logs (numbering logic)
-- [x] launch and follower operation
-- [x] cleaning unwanted logs with a follower
+- [x] study out the names of checkpoints and logs (numbering logic)
+- [x] launch and work of follower
+- [x] cleaning unnecessary logs via follower
 - [ ] provide an opportunity not to delete old logs, add a test!
-- [x] loading from broken files to stop loading, but work continued (AllowStartupErrLoadLogs)
+- [x] loading from broken files to stop loading, but work must continue (AllowStartupErrLoadLogs)
 - [x] cyclic loading of checkpoints until they run out (with errors)
-- [x] return not of errors, but of progress reports
-- [x] add DeleteOptional, including in Operations
+- [x] returns not errors, but reports of work that’s been completed
+- [x] add DeleteOptional, and add it in Operations too
 - [x] test Count
 - [x] Write test
 - [x] Read test
@@ -524,22 +572,22 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] test RecordsListWithSuffix
 - [x] ReadListUnsafe test
 - [x] boot test with a broken log (last, the rest are ok)
-- [x] download test with broken checkpoint
-- [x] boot test with a broken log and another log following it
+- [x] boot test with broken checkpoint
+- [x] boot test with a broken log and another the log which follow after
 - [x] transaction usage test
 - [x] for convenience of testing do WriteUnsafe
-- [x] ~~ what is WriteUnsafeRecord in Checkpoint for? (for recording at startup?) ~~ alternative to WriteListUnsafe (faster)
-- [x] benchmark entries competitive and non-competitive
+- [x] ~~ what for WriteUnsafeRecord is need in Checkpoint ? (for recording at startup?) ~~ alternative to WriteListUnsafe (faster)
+- [x] benchmark of competitive and non-competitive records
 - [x] benchmark reading competitive
 - [ ] benchmark write and read in competitive mode
-- [x] parallel competitive benchmark
-- [ ] at boot - when broken files wrn may return, not err
-- [x] deal with the log and the batch, why do records go to the next log when recording quickly
-- [x] interception of panics at the root of the application and at the level of usecases
-- [ ] ~~ during transactions, you can delete some of the entries from participating (! need for a question!) ~~
-- [x] testing helper helpers
-- [x] when creating a database, immediately add a list of handlers, because and loading from the logs also happens immediately
-- [x] add a convenient configurator when creating a database
+- [x] benchmark competitive transactions in parallel mode
+- [ ] at boot - when files are broken, the “wrn” may returns, not “err”
+- [x] study out the log and the batch, why at fast record they get to the following log
+- [x] interception of panics at the root of the application and at the level of use cases
+- [ ] ~~ during transactions, you can delete some of the records from participating (! need for a question!) ~~ 
+- [x] testing auxiliary helpers
+- [x] while creating a database immediately add a list of handlers because the uploading from logs happens instantly
+- [x] add a convenient configurator while creating a database
 - [x] translate comments into English
 - [x] clear code from old artifacts
 - [ ] create a directory for documentation
@@ -547,30 +595,29 @@ It is not very convenient to make large switches to check the received codes. Yo
 - [x] make a simple example with writing, transaction and reading
 - [x] make an example with financial transactions
 - [ ] error handling example
-- [ ] banish the linter and eliminate all incorrectness in the code
+- [ ] test the linter and eliminate all incorrectness in the code
 - [x] add Usage / Quick start text to readme
 - [x] description of error codes
 - [x] configuration description
 - [x] in the description specify third-party packages (as dependencies)
-- [x] reports add methods for checking for all errors in the spirit of IsErrBlahBlahBlah
+- [x] add methods for reports in order to check for all errors like IsErrBlahBlahBlah
 - [x] transfer all imported packages to distribution
-- [x] switch the use of WriteUnsafeRecord to WriteListUnsafe
-- [x] addReadListUnsafe for readability when the database is stopped
-- [x] add RecordsListUnsafe, which can work with the database stopped and running
-- [x] obtaining a list of keys with a condition by the prefix RecordsListWithPrefix
-- [x] obtaining a list of keys with a condition by the suffix RecordsListWithSuffix
+- [x] switch from WriteUnsafeRecord to WriteListUnsafe
+- [x] add ReadListUnsafe for an ability to read when the database is stopped
+- [x] add RecordsListUnsafe, which can work with the stopped and running database
+- [x] get a list of keys with a condition of a prefix: RecordsListWithPrefix
+- [x] get a list of keys with a condition of a suffix: RecordsListWithSuffix
 - [x] remove the Save method
-- [x] when a transaction returns new values ​​in the report
-- [x] in tests check return value
-- [x] start numbering with large digits, say with a million, or a billion (more convenient for sorting files)
-- [x] all public methods give a correct description-comment
-- [ ] return error and warning in Create method
-- [ ] pause in the batcher - check its size, set the optimal
-- [x] add in the description that the data during the operation of the database is stored both on disk and in memory
-- [ ] method for obtaining all log files and checkpoints
-- [ ] method for viewing the log file
-- [ ] method of viewing the checkpoint file
-- [ ] the method of strict entry into the database (only if the entry with such a key does not exist)
-
+- [x] returns new values in the report during a transaction
+- [x] check returned value in tests
+- [x] start numbering with big numbers, for example million or a billion (more convenient for sorting files)
+- [x] give a correct description-comment for all public methods
+- [ ] create description for error returns and warnings in the Create method
+- [ ] pause in the batcher - check its size, set the optimal size
+- [x] add in the description that the data is stored both on disk and in memory during the operation of the database
+- [ ] method for getting all log files and checkpoints
+- [ ] method for viewing a log file
+- [ ] method of viewing a checkpoint file
+- [ ] the method of strict adding record into the database (only if the record with such a key has not already existed)
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
