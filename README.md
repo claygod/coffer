@@ -2,12 +2,14 @@
 
 # Coffer
 
-Simple ACID* key-value database. At medium or even low `latency` provides
-a large `throughput` without sacrificing ACID database properties.
-The database makes it possible to create record headers at its discretion and use them as transactions.
-The maximum size of the stored data is limited by the size of the computer's RAM.
+Simply ACID* key-value database. At the medium or even low `latency` it tries to
+provide greater `throughput` without losing the ACID properties of the database. The
+database provides the ability to create record headers at own discretion and use them
+as transactions. The maximum size of stored data is limited by the size of the
+computer's RAM.
 
-*is a set of properties of database transactions intended to guarantee validity even in the event of errors, power failures, etc.
+*is a set of properties of database transactions intended to guarantee validity even in
+the event of errors, power failures, etc.
 
 Properties:
 - Great throughput
@@ -34,7 +36,7 @@ ACID:
       - [Start](#Start)
       - [Follow](#Follow)
  * [Data storage](#Data-storage)
-      - [Loading data after an incorrect shutdown](#Loading-data-after-an-incorrect-shutdown)
+      - [Data loading after an incorrect shutdown](#Data-loading-after-an-incorrect-shutdown )
  * [Error codes](#Error-codes)
       - [Code List](#Code-List)
       - [Code checks through methods](#Code-checks-through-methods)
@@ -508,7 +510,7 @@ with an error), you can continue working with the database. If the code contains
 - PanicStopped – application has been stopped
 - PanicWAL - an error occurred in the operation log
 
-### Codes checks through methods
+### Code checks through methods
 
 In order not to export data to an application (which works with a database), reports
 have methods:
