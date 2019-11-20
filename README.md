@@ -12,15 +12,15 @@ computer's RAM.
 the event of errors, power failures, etc.
 
 Properties:
-- Great throughput
-- Admissible latency
-- High reliability
+- high throughput
+- tolerated latency
+- high reliability
 
 ACID:
-- Good durabilty
-- Obligatory isolation
-- Atomic operations
-- Consistent transactions
+- good durabilty
+- compulsory isolation
+- atomic operations
+- consistent transactions
 
 ## Table of Contents
 
