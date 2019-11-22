@@ -22,46 +22,6 @@ func (c *Coffer) Write(key string, value []byte) *reports.ReportWriteList {
 	return c.WriteList(map[string][]byte{key: value}, false)
 }
 
-// /*
-// WriteList222 - write several records to the database by specifying `map` in the arguments.
-// Important: this argument is a reference; it cannot be changed in the calling code!
-// */
-// func (c *Coffer) WriteList222(input map[string][]byte) *reports.Report {
-// 	rep := &reports.Report{}
-// 	defer c.panicRecover()
-// 	if !c.hasp.Add() {
-// 		rep.Code = codes.PanicStopped
-// 		rep.Error = fmt.Errorf("Coffer is stopped")
-// 		return rep
-// 	}
-// 	defer c.hasp.Done()
-// 	for _, value := range input {
-// 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
-// 			rep.Code = codes.ErrExceedingMaxValueSize
-// 			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
-// 			return rep
-// 		}
-// 	}
-// 	keys := c.extractKeysFromMap(input)
-// 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
-// 		rep.Code = code
-// 		rep.Error = err
-// 		return rep
-// 	}
-
-// 	c.porter.Catch(keys)
-// 	defer c.porter.Throw(keys)
-// 	req := &usecases.ReqWriteList{
-// 		Time: time.Now(),
-// 		List: input,
-// 	}
-// 	rep = c.recInteractor.WriteList(req)
-// 	if rep.Code >= codes.Panic {
-// 		defer c.Stop()
-// 	}
-// 	return rep
-// }
-
 /*
 WriteList - write several records to the database by specifying `map` in the arguments.
 Strict mode (true):
@@ -227,27 +187,18 @@ func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
 Delete - remove a single record.
 */
 func (c *Coffer) Delete(key string) *reports.Report {
-	repList := c.DeleteListStrict([]string{key})
+	repList := c.DeleteList([]string{key}, true)
 	return &repList.Report
 }
 
 /*
-DeleteListStrict - delete several records, but only if they are all in the database.
+DeleteList - delete multiple entries.
+Delete list Strict - delete several records, but only if they are all in the database.
 If at least one entry is missing, then no record will be deleted.
-*/
-func (c *Coffer) DeleteListStrict(keys []string) *reports.ReportDeleteList {
-	return c.deleteList(keys, true)
-}
-
-/*
-DeleteListOptional - delete multiple entries. Those entries from the list
+Delete list Optional - delete multiple entries. Those entries from the list
 that will be found in the database will be deleted.
 */
-func (c *Coffer) DeleteListOptional(keys []string) *reports.ReportDeleteList {
-	return c.deleteList(keys, false)
-}
-
-func (c *Coffer) deleteList(keys []string, strictMode bool) *reports.ReportDeleteList {
+func (c *Coffer) DeleteList(keys []string, strictMode bool) *reports.ReportDeleteList {
 	rep := &reports.ReportDeleteList{Report: reports.Report{}}
 	defer c.panicRecover()
 	if !c.hasp.Add() {

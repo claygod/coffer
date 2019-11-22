@@ -84,44 +84,44 @@ func TestDeleteList(t *testing.T) {
 	cof1.Write("fff", []byte("333"))
 	cof1.Write("ggg", []byte("333"))
 	// -- deleteList
-	if rep := cof1.deleteList([]string{"aaa"}, true); !rep.IsCodeOk() {
+	if rep := cof1.DeleteList([]string{"aaa"}, true); !rep.IsCodeOk() {
 		t.Errorf("Operation `deleteList`(1) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
-	if rep := cof1.deleteList([]string{"ccc"}, true); !rep.IsCodeErrNotFound() {
+	if rep := cof1.DeleteList([]string{"ccc"}, true); !rep.IsCodeErrNotFound() {
 		t.Errorf("Operation `deleteList`(2) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
-	if rep := cof1.deleteList([]string{"bbb", "ccc"}, false); !rep.IsCodeOk() || rep.Error != nil ||
+	if rep := cof1.DeleteList([]string{"bbb", "ccc"}, false); !rep.IsCodeOk() || rep.Error != nil ||
 		len(rep.Removed) != 1 || rep.Removed[0] != "bbb" ||
 		len(rep.NotFound) != 1 || rep.NotFound[0] != "ccc" {
 		t.Errorf("Operation `deleteList`(3) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
 	cof1.hasp.Stop()
-	if rep := cof1.deleteList([]string{"xxx"}, true); !rep.IsCodePanicStopped() {
+	if rep := cof1.DeleteList([]string{"xxx"}, true); !rep.IsCodePanicStopped() {
 		t.Errorf("Operation `deleteList`(4) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
 	cof1.hasp.Start()
 
 	// -- DeleteList
-	if rep := cof1.DeleteListStrict([]string{"fff"}); !rep.IsCodeOk() {
+	if rep := cof1.DeleteList([]string{"fff"}, true); !rep.IsCodeOk() {
 		t.Errorf("Operation `deleteList`(1) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
-	if rep := cof1.DeleteListStrict([]string{"ccc"}); !rep.IsCodeErrNotFound() {
+	if rep := cof1.DeleteList([]string{"ccc"}, true); !rep.IsCodeErrNotFound() {
 		t.Errorf("Operation `deleteList`(2) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
-	if rep := cof1.DeleteListOptional([]string{"ggg", "ccc"}); !rep.IsCodeOk() || rep.Error != nil ||
+	if rep := cof1.DeleteList([]string{"ggg", "ccc"}, false); !rep.IsCodeOk() || rep.Error != nil ||
 		len(rep.Removed) != 1 || rep.Removed[0] != "ggg" ||
 		len(rep.NotFound) != 1 || rep.NotFound[0] != "ccc" {
 		t.Errorf("Operation `deleteList`(3) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
 	cof1.hasp.Stop()
-	if rep := cof1.DeleteListStrict([]string{"xxx"}); !rep.IsCodePanicStopped() {
+	if rep := cof1.DeleteList([]string{"xxx"}, true); !rep.IsCodePanicStopped() {
 		t.Errorf("Operation `deleteList`(4) results: code=%d , removed=%v, not_found=%v, err=%v.", rep.Code, rep.Removed, rep.NotFound, rep.Error)
 		return
 	}
@@ -799,7 +799,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 	}
 	// attempt to delete Strict at once too many records
 	t.Log("Stage3")
-	rep3 := cof1.DeleteListStrict(reqReadList)
+	rep3 := cof1.DeleteList(reqReadList, true)
 	if !rep3.IsCodeErrRecordLimitExceeded() || rep3.Error == nil {
 		t.Errorf("Want `ErrRecordLimitExceeded` have code `%d`", rep2.Code)
 		t.Error(rep3.Error)
@@ -807,7 +807,7 @@ func TestCofferMaxCountPerOperation(t *testing.T) {
 	}
 	// attempt to delete Optional at one time too many records
 	t.Log("Stage3")
-	rep3 = cof1.DeleteListOptional(reqReadList)
+	rep3 = cof1.DeleteList(reqReadList, false)
 	if !rep3.IsCodeErrRecordLimitExceeded() || rep3.Error == nil {
 		t.Errorf("Want `ErrRecordLimitExceeded` have code `%d`", rep2.Code)
 		t.Error(rep3.Error)

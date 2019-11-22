@@ -193,13 +193,13 @@ The method is not for parallel use.
 
 Remove a single record.
 
-#### DeleteListStrict
+#### DeleteList
 
+Strict mode (true):
 Delete several records. It is possible only if all records are in the database.
 If at least there is a lack of one record, none of records will be deleted.
 
-#### DeleteListOptional
-
+Optional mode (false):
 Delete several records. All found records from the list in will be deleted in DB.
 
 #### Transaction
