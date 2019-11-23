@@ -45,7 +45,6 @@ import (
 const curDir = "./"
 
 func main() {
-
 	// STEP init
 	db, err, wrn := coffer.Db(curDir).Create()
 	switch {
@@ -69,12 +68,12 @@ func main() {
 
 	// STEP read
 	rep := db.Read("foo")
+	rep.IsCodeError()
 	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
 	fmt.Println(string(rep.Data))
-
 }
 ```
 

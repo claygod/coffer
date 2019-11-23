@@ -54,13 +54,11 @@ import (
 	"fmt"
 
 	"github.com/claygod/coffer"
-	"github.com/claygod/coffer/domain"
 )
 
 const curDir = "./"
 
 func main() {
-
 	// STEP init
 	db, err, wrn := coffer.Db(curDir).Create()
 	switch {
@@ -77,18 +75,19 @@ func main() {
 	defer db.Stop()
 
 	// STEP write
-	if rep := db.Write("foo", []byte("bar")); rep.IsCodeWarning() {
+	if rep := db.Write("foo", []byte("bar")); rep.IsCodeError() {
 		fmt.Sprintf("Write error: code `%d` msg `%s`", rep.Code, rep.Error)
 		return
 	}
 
 	// STEP read
-	if rep := db.Read("foo"); rep.IsCodeWarning() {
+	rep := db.Read("foo")
+	rep.IsCodeError()
+	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
 	fmt.Println(string(rep.Data))
-
 }
 ```
 
