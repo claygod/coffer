@@ -70,6 +70,26 @@ func TestWriteList(t *testing.T) {
 	}
 }
 
+func TestWriteList100000(t *testing.T) {
+	forTestClearDir(dirPath)
+	defer forTestClearDir(dirPath)
+	cof1, err := createAndStartNewCofferTBig(t, 500000)
+	if err != nil {
+		t.Error(err)
+		return
+	}
+	defer cof1.Stop()
+	cof1.Write("aaa", []byte("111"))
+	arr := make(map[string][]byte, 100000)
+	for i := 100000; i < 200000; i++ {
+		arr[strconv.Itoa(i)] = []byte("7")
+	}
+	if rep := cof1.WriteListUnsafe(arr); !rep.IsCodeOk() {
+		t.Errorf("Operation `WriteList`(100000) results: code=%d , err=%v.", rep.Code, rep.Error)
+		return
+	}
+}
+
 func TestDeleteList(t *testing.T) {
 	forTestClearDir(dirPath)
 	defer forTestClearDir(dirPath)
@@ -1263,6 +1283,19 @@ func createAndStartNewCofferT(t *testing.T) (*Coffer, error) {
 	return cof1, nil
 }
 
+func createAndStartNewCofferTBig(t *testing.T, maxRecs int) (*Coffer, error) {
+	cof1, err, wrn := createNewCofferBig(maxRecs)
+	if err != nil {
+		return nil, err
+	} else if wrn != nil {
+		t.Log(wrn)
+	}
+	if !cof1.Start() {
+		return nil, fmt.Errorf("Failed to start (cof)")
+	}
+	return cof1, nil
+}
+
 func createAndStartNewCofferLength(t *testing.T, maxKeyLength int, maxValueLength int) (*Coffer, error) {
 	cof1, err, wrn := createNewCofferLength4(maxKeyLength, maxValueLength)
 	if err != nil {
@@ -1287,6 +1320,22 @@ func createAndStartNewCofferLengthB(t *testing.B, maxKeyLength int, maxValueLeng
 		return nil, fmt.Errorf("Failed to start (cof)")
 	}
 	return cof1, nil
+}
+
+func createNewCofferBig(maxRecs int) (*Coffer, error, error) {
+	return Db(dirPath).BatchSize(2000).
+		LimitRecordsPerLogfile(5).
+		FollowPause(400 * time.Millisecond).
+		LogsByCheckpoint(2).
+		AllowStartupErrLoadLogs(defaultAllowStartupErrLoadLogs). //--
+		MaxKeyLength(defaultMaxKeyLength).                       //--
+		MaxValueLength(defaultMaxValueLength).                   //-
+		RemoveUnlessLogs(defaultRemoveUnlessLogs).               //--
+		LimitMemory(int(defaultLimitMemory)).                    //--
+		LimitDisk(int(defaultLimitDisk)).                        //--
+		MaxRecsPerOperation(maxRecs).
+		Create()
+
 }
 
 func createNewCoffer() (*Coffer, error, error) {
