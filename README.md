@@ -68,7 +68,8 @@ func main() {
 	case wrn != nil:
 		fmt.Println("Warning:", err)
 		return
-	case !db.Start():
+	}
+	if !db.Start() {
 		fmt.Println("Error: not start")
 		return
 	}
