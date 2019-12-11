@@ -622,5 +622,6 @@ limit yourself to just three checks:
 - [ ] method for viewing a log file
 - [ ] method of viewing a checkpoint file
 - [ ] the method of strict adding record into the database (only if the record with such a key has not already existed)
+- [ ] add a method to view the status of the database
 
 ### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
