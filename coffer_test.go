@@ -211,18 +211,9 @@ func TestCofferReadListPrefixSuffix(t *testing.T) {
 	if rep := cof1.RecordsListWithPrefix("pr1"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 2 {
 		t.Errorf("Operation `RecordsListWithPrefix`(1) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
-	if rep := cof1.RecordsListWithSuffix("suf2"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 3 {
-		t.Errorf("Operation `RecordsListWithPrefix`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
-	}
-	if rep := cof1.RecordsListWithSuffix("suf7"); !rep.IsCodeOk() || rep.Error != nil || len(rep.Data) != 0 {
-		t.Errorf("Operation `RecordsListWithPrefix`(3) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
-	}
 	cof1.hasp.Stop()
 	if rep := cof1.RecordsListWithPrefix("pr1"); rep.IsCodeOk() || rep.Error == nil {
 		t.Errorf("Operation `RecordsListWithPrefix`(5) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
-	}
-	if rep := cof1.RecordsListWithSuffix("suf2"); rep.IsCodeOk() || rep.Error == nil {
-		t.Errorf("Operation `RecordsListWithPrefix`(2) results: code=%d , data=%v, err=%v.", rep.Code, rep.Data, rep.Error)
 	}
 }
 

@@ -34,29 +34,39 @@ Important: this argument is a reference; it cannot be changed in the calling cod
 */
 func (c *Coffer) WriteList(input map[string][]byte, strictMode bool) *reports.ReportWriteList {
 	rep := &reports.ReportWriteList{Report: reports.Report{}}
+
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
+
 	for _, value := range input {
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
 			rep.Code = codes.ErrExceedingMaxValueSize
 			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+
 			return rep
 		}
 	}
+
 	keys := c.extractKeysFromMap(input)
+
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
 
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
+
 	req := &usecases.ReqWriteList{
 		Time: time.Now(),
 		List: input,
@@ -71,6 +81,7 @@ func (c *Coffer) WriteList(input map[string][]byte, strictMode bool) *reports.Re
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -82,27 +93,36 @@ The method does not imply concurrent use.
 func (c *Coffer) WriteListUnsafe(input map[string][]byte) *reports.Report {
 	rep := &reports.Report{}
 	defer c.panicRecover()
+
 	for _, value := range input {
 		if ln := len(value); ln > c.config.UsecasesConfig.MaxValueLength { // контроль максимально допустимой длины значения
 			rep.Code = codes.ErrExceedingMaxValueSize
 			rep.Error = fmt.Errorf("The admissible value length is %d; there is a value with a length of %d in the request.", c.config.UsecasesConfig.MaxValueLength, ln)
+
 			return rep
 		}
 	}
+
 	keys := c.extractKeysFromMap(input)
+
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
+
 	req := &usecases.ReqWriteList{
 		Time: time.Now(),
 		List: input,
 	}
+
 	rep = c.recInteractor.WriteListUnsafe(req)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -115,13 +135,13 @@ func (c *Coffer) Read(key string) *reports.ReportRead {
 	defer c.panicRecover()
 	repList := c.ReadList([]string{key})
 	rep.Report = repList.Report
-	//rep.Code = repList.Code
-	//rep.Error = repList.Error
+
 	if len(repList.Data) == 1 {
 		if d, ok := repList.Data[key]; ok {
 			rep.Data = d
 		}
 	}
+
 	return rep
 }
 
@@ -132,29 +152,36 @@ In addition to the found records, a list of not found records is returned.
 func (c *Coffer) ReadList(keys []string) *reports.ReportReadList {
 	rep := &reports.ReportReadList{Report: reports.Report{}}
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
 
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
+
 	req := &usecases.ReqLoadList{
 		Time: time.Now(),
 		Keys: keys,
 	}
 	rep = c.recInteractor.ReadList(req)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -169,6 +196,7 @@ func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
 
@@ -177,9 +205,11 @@ func (c *Coffer) ReadListUnsafe(keys []string) *reports.ReportReadList {
 		Keys: keys,
 	}
 	rep = c.recInteractor.ReadListUnsafe(req)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -188,6 +218,7 @@ Delete - remove a single record.
 */
 func (c *Coffer) Delete(key string) *reports.Report {
 	repList := c.DeleteList([]string{key}, true)
+
 	return &repList.Report
 }
 
@@ -200,30 +231,39 @@ that will be found in the database will be deleted.
 */
 func (c *Coffer) DeleteList(keys []string, strictMode bool) *reports.ReportDeleteList {
 	rep := &reports.ReportDeleteList{Report: reports.Report{}}
+
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
 
 	c.porter.Catch(keys)
 	defer c.porter.Throw(keys)
+
 	req := &usecases.ReqDeleteList{
 		Time: time.Now(),
 		Keys: keys,
 	}
+
 	rep = c.recInteractor.DeleteList(req, strictMode)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -234,25 +274,28 @@ of transaction handlers between different database launches rests with the datab
 The transaction returns the new values stored in the database.
 */
 func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *reports.ReportTransaction {
-	// tStart := time.Now().UnixNano()
-	// defer fmt.Println("Operation time ", time.Now().UnixNano()-tStart)
-
 	rep := &reports.ReportTransaction{Report: reports.Report{}}
+
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	if code, err := c.checkLenCountKeys(keys); code != codes.Ok {
 		rep.Code = code
 		rep.Error = err
+
 		return rep
 	}
 
 	c.porter.Catch(keys)
+
 	defer c.porter.Throw(keys)
 
 	req := &usecases.ReqTransaction{
@@ -262,9 +305,11 @@ func (c *Coffer) Transaction(handlerName string, keys []string, arg []byte) *rep
 		Value:       arg,
 	}
 	rep = c.recInteractor.Transaction(req)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -274,18 +319,24 @@ A query can only be made to a running database
 */
 func (c *Coffer) Count() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
+
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	rep = c.recInteractor.RecordsCount()
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -295,18 +346,24 @@ Queries to a stopped / not running database cannot be done in parallel!
 */
 func (c *Coffer) CountUnsafe() *reports.ReportRecordsCount {
 	rep := &reports.ReportRecordsCount{Report: reports.Report{}}
+
 	defer c.panicRecover()
+
 	if !c.hasp.IsReady() && !c.hasp.Add() {
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is started, !c.hasp.Add()")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	rep = c.recInteractor.RecordsCount()
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -317,18 +374,23 @@ The method only works when the database is running.
 */
 func (c *Coffer) RecordsList() *reports.ReportRecordsList {
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep := &reports.ReportRecordsList{Report: reports.Report{}}
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	rep := c.recInteractor.RecordsList()
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -339,10 +401,13 @@ a stopped/not_running database, competitiveness prohibited.
 */
 func (c *Coffer) RecordsListUnsafe() *reports.ReportRecordsList {
 	defer c.panicRecover()
+
 	rep := c.recInteractor.RecordsList()
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
+
 	return rep
 }
 
@@ -352,37 +417,22 @@ specified in the argument (start with that string).
 */
 func (c *Coffer) RecordsListWithPrefix(prefix string) *reports.ReportRecordsList {
 	defer c.panicRecover()
+
 	if !c.hasp.Add() {
 		rep := &reports.ReportRecordsList{Report: reports.Report{}}
 		rep.Code = codes.PanicStopped
 		rep.Error = fmt.Errorf("Coffer is stopped")
+
 		return rep
 	}
+
 	defer c.hasp.Done()
 
 	rep := c.recInteractor.RecordsListWithPrefix(prefix)
+
 	if rep.Code >= codes.Panic {
 		defer c.Stop()
 	}
-	return rep
-}
 
-/*
-RecordsListWithSuffix - get a list of all the keys that have the specified argument suffix (ending).
-*/
-func (c *Coffer) RecordsListWithSuffix(suffix string) *reports.ReportRecordsList {
-	defer c.panicRecover()
-	if !c.hasp.Add() {
-		rep := &reports.ReportRecordsList{Report: reports.Report{}}
-		rep.Code = codes.PanicStopped
-		rep.Error = fmt.Errorf("Coffer is stopped")
-		return rep
-	}
-	defer c.hasp.Done()
-
-	rep := c.recInteractor.RecordsListWithSuffix(suffix)
-	if rep.Code >= codes.Panic {
-		defer c.Stop()
-	}
 	return rep
 }

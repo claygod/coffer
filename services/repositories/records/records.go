@@ -144,12 +144,3 @@ func (s *Records) RecordsListWithPrefix(prefix string) []string {
 	defer s.mtx.Unlock()
 	return s.store.keysListWithPrefix(prefix)
 }
-
-/*
-RecordsListWithSuffix - get total keys list with suffix.
-*/
-func (s *Records) RecordsListWithSuffix(suffix string) []string {
-	s.mtx.Lock()
-	defer s.mtx.Unlock()
-	return s.store.keysListWithSuffix(suffix)
-}

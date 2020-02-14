@@ -23,7 +23,6 @@ type RecordsRepository interface {
 	CountRecords() int
 	RecordsList() []string
 	RecordsListWithPrefix(string) []string
-	RecordsListWithSuffix(string) []string
 }
 
 /*

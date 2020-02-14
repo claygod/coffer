@@ -136,13 +136,3 @@ func (r *storage) keysListWithPrefix(prefix string) []string {
 	}
 	return list
 }
-
-func (r *storage) keysListWithSuffix(suffix string) []string {
-	list := make([]string, 0, len(r.data))
-	for key := range r.data {
-		if strings.HasSuffix(key, suffix) {
-			list = append(list, key)
-		}
-	}
-	return list
-}

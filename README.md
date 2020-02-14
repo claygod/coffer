@@ -235,10 +235,6 @@ while using a request when database is stopped (or not running).
 
 Get a list of all keys with prefix specified in the argument (prefix is the begging of record string).
 
-#### RecordsListWithSuffix
-
-Get a list of all the keys with specified suffix in the argument (Suffix is in the ending of record string).
-
 ## Config
 
 If you specify the path to the database directory all configuration parameters will be
