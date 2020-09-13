@@ -27,17 +27,21 @@ func main() {
 	hdlTransfer := domain.Handler(HandlerTransfer)
 	hdlMultiTransfer := domain.Handler(HandlerMultiTransfer)
 	db, err, wrn := coffer.Db(curDir).Handler("credit", &hdlCredit).Handler("debit", &hdlDebit).Handler("transfer", &hdlTransfer).Handler("multi_transfer", &hdlMultiTransfer).Create()
+
 	switch {
 	case err != nil:
 		fmt.Println("Error:", err)
 		return
+
 	case wrn != nil:
 		fmt.Println("Warning:", err)
 		return
+
 	case !db.Start():
 		fmt.Println("Error: not start")
 		return
 	}
+
 	defer db.Stop()
 
 	//STEP create accounts
@@ -48,10 +52,12 @@ func main() {
 
 	//STEP initial
 	rep := db.ReadList([]string{"john_usd", "alice_usd", "john_stock", "alice_stock"})
+
 	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
+
 	fmt.Printf(" initial: John's usd=%d stocks=%d  Alice's usd=%d stocks=%d\n",
 		bytesToUint64(rep.Data["john_usd"]),
 		bytesToUint64(rep.Data["john_stock"]),
@@ -64,6 +70,7 @@ func main() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
+
 	fmt.Println(" credit: 5 usd were withdrawn from John’s account")
 	showState(db)
 
@@ -79,14 +86,17 @@ func main() {
 	req1 := ReqTransfer{From: "john_usd", To: "alice_usd", Amount: 3}
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
+
 	if err := enc.Encode(req1); err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	if rep := db.Transaction("transfer", []string{"john_usd", "alice_usd"}, buf.Bytes()); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
+
 	fmt.Println(" transfer: John transferred Alice $ 3")
 	showState(db)
 
@@ -96,24 +106,29 @@ func main() {
 	req2 := []ReqTransfer{t1, t2}
 	buf.Reset()
 	enc = gob.NewEncoder(&buf)
+
 	if err := enc.Encode(req2); err != nil {
 		fmt.Println(err)
 		return
 	}
+
 	if rep := db.Transaction("multi_transfer", []string{"john_usd", "alice_usd", "john_stock", "alice_stock"}, buf.Bytes()); rep.IsCodeError() {
 		fmt.Printf("Transaction error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
+
 	fmt.Println(" purchase/sale: John bought 5 stocks from Alice for $ 50")
 	showState(db)
 }
 
 func showState(db *coffer.Coffer) {
 	rep := db.ReadList([]string{"john_usd", "alice_usd", "john_stock", "alice_stock"})
+
 	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
 	}
+
 	fmt.Printf("-------------------------------------------------------------->>>  John's usd:%3d stocks:%3d  Alice's usd:%3d stocks:%3d\n",
 		bytesToUint64(rep.Data["john_usd"]),
 		bytesToUint64(rep.Data["john_stock"]),
