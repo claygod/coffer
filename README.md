@@ -83,7 +83,6 @@ func main() {
 
 	// STEP read
 	rep := db.Read("foo")
-	rep.IsCodeError()
 	if rep.IsCodeError() {
 		fmt.Sprintf("Read error: code `%v` msg `%v`", rep.Code, rep.Error)
 		return
