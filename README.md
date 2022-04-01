@@ -619,4 +619,4 @@ limit yourself to just three checks:
 - [ ] the method of strict adding record into the database (only if the record with such a key has not already existed)
 - [ ] add a method to view the status of the database
 
-### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
+### Copyright © 2019-2022 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
