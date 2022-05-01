@@ -568,4 +568,4 @@ func HandlerDebit(arg []byte, recs map[string][]byte) (map[string][]byte, error)
 - [ ] метод строгой записи в базу (только если запись с таким ключём не существует)
 - [ ] добавить метод для просмотра статуса БД
 
-### Copyright © 2019 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
+### Copyright © 2019-2022 Eduard Sesigin. All rights reserved. Contacts: <claygod@yandex.ru>
