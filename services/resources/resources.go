@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/claygod/coffer/services/startstop"
-	"github.com/shirou/gopsutil/disk"
-	"github.com/shirou/gopsutil/mem"
+	"github.com/shirou/gopsutil/v3/disk"
+	"github.com/shirou/gopsutil/v3/mem"
 )
 
 /*

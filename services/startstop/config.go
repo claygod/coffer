@@ -12,7 +12,7 @@ const (
 	stateBlocked   int64 = -2
 	stateReady     int64 = -1
 	stateRun       int64 = 0
-	maxIterations  int   = 1e10
+	maxIterations  int64 = 1e10
 	blockedBarrier int64 = 1e15
 )
 

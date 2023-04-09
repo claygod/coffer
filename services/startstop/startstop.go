@@ -36,7 +36,7 @@ func New(args ...time.Duration) *StartStop {
 Start - launch.
 */
 func (s *StartStop) Start() bool {
-	for i := 0; i < maxIterations; i++ {
+	for i := int64(0); i < maxIterations; i++ {
 		if atomic.LoadInt64(&s.enumerator) == stateRun || atomic.CompareAndSwapInt64(&s.enumerator, stateReady, stateRun) {
 			return true
 		}
@@ -50,7 +50,7 @@ func (s *StartStop) Start() bool {
 Stop - stopped.
 */
 func (s *StartStop) Stop() bool {
-	for i := 0; i < maxIterations; i++ {
+	for i := int64(0); i < maxIterations; i++ {
 		curNum := atomic.LoadInt64(&s.enumerator)
 		switch {
 		case curNum == -blockedBarrier: // after blocking all tasks finally completed
@@ -76,7 +76,7 @@ func (s *StartStop) Stop() bool {
 Block - block access.
 */
 func (s *StartStop) Block() bool {
-	for i := 0; i < maxIterations; i++ {
+	for i := int64(0); i < maxIterations; i++ {
 		if s.Stop() && atomic.CompareAndSwapInt64(&s.enumerator, stateReady, stateBlocked) {
 			return true
 		}
@@ -90,7 +90,7 @@ func (s *StartStop) Block() bool {
 Unblock - unblock access.
 */
 func (s *StartStop) Unblock() bool {
-	for i := 0; i < maxIterations; i++ {
+	for i := int64(0); i < maxIterations; i++ {
 		if atomic.CompareAndSwapInt64(&s.enumerator, stateBlocked, stateReady) {
 			return true
 		}
