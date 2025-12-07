@@ -5,7 +5,7 @@ go 1.17
 require (
 	github.com/claygod/tools v0.0.0-20211125200027-91c5d269978c
 	github.com/shirou/gopsutil/v3 v3.23.3
-	github.com/sirupsen/logrus v1.9.0
+	github.com/sirupsen/logrus v1.9.1
 )
 
 require (
